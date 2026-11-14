@@ -18,6 +18,8 @@
 
 ## The two-minute command path
 
+**Check the launcher version:** run `fabric-amper.bat` without arguments or `fabric-amper.bat -V` (also `--version` / `version`). Both print `v0.1.3` and exit without Gradle, downloads, or project changes. Use `fabric-amper.bat help` for the full command list; an empty invocation displays the version instead of help.
+
 **Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository does not require a bundled Gradle Wrapper. The launcher finds installed/cached Gradle; **`doctor --fix` explicitly opts into repairing a missing JDK 25 or Gradle**, while `doctor --fix --dry-run` only previews the actions. From the checked-out **`Fabric Amper` producer folder**, run:
 
 ```bat
@@ -330,7 +332,8 @@ Run `fabric-amper.bat init` from the checkout or another working directory. For 
 
 | Wrapper command | Actual action / impact |
 | --- | --- |
-| `help` / `docs` / `version` | Show usage, documentation locations or launcher version |
+| *(no arguments)* / `-V` / `--version` / `version` | Print `v0.1.3` and exit without calling Gradle or changing files |
+| `help` / `--help` / `docs` | Show full usage or documentation locations (empty invocation now prints only the version) |
 | `doctor` | Check available Java/Gradle and report the JitPack coordinate, without contacting the network or clearing caches |
 | `doctor --paths` / `--full` | Estimate Windows path risks; `--full` also prints JDK/toolchain hints |
 | `doctor --fix --dry-run` | **Read-only, no network**. If PS1 is missing, show only its GitHub URL; if verified PS1 exists, preview JDK25/Gradle and missing consumer Settings/VS Code files |

@@ -27,6 +27,9 @@ shift
 shift
 
 :dispatch
+if "%~1"=="" goto :version
+if /i "%~1"=="-V" goto :version
+if /i "%~1"=="--version" goto :version
 if /i "%~1"=="help" goto :help
 if /i "%~1"=="--help" goto :help
 if /i "%~1"=="/?" goto :help
@@ -48,7 +51,6 @@ if /i "%~1"=="clean" goto :clean
 if /i "%~1"=="run" goto :run
 if /i "%~1"=="server" goto :server
 if /i "%~1"=="publish" goto :publish
-if "%~1"=="" goto :help
 echo ERROR: Unknown command "%~1".
 goto :usageError
 
@@ -57,6 +59,9 @@ echo.
 echo Fabric Amper %FA_VERSION% - Windows convenience wrapper
 echo.
 echo Usage:
+echo   fabric-amper.bat            Show the release version and exit
+echo   fabric-amper.bat -V         Show the release version and exit
+echo   fabric-amper.bat --version  Show the release version and exit
 echo   fabric-amper.bat help
 echo   fabric-amper.bat doctor [-C consumer_folder] [--full^|--paths^|--fix [--dry-run]]
 echo   fabric-amper.bat doctor -C consumer_folder doctor
@@ -86,7 +91,7 @@ echo   server      Gradle runServer; user must review the Minecraft EULA
 echo   publish local^|maven^|modrinth^|curseforge^|all
 echo               Only remote targets ask for typed confirmation.
 echo.
-echo Other commands: docs, version.
+echo Other commands: docs, version, -V, --version.
 echo   doctor             Check local Java and Gradle availability.
 echo   doctor --full      Also inspect JDK hints and Windows paths.
 echo   doctor --paths     Inspect local path lengths without running Gradle.
@@ -108,7 +113,7 @@ echo Run fabric-amper.bat help for examples.
 exit /b 2
 
 :version
-echo Fabric Amper wrapper %FA_VERSION%
+echo v%FA_VERSION%
 exit /b 0
 
 :docs
