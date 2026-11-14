@@ -807,8 +807,8 @@ Or select a consumer explicitly with `-C` or `--project` **before the subcommand
 | --- | --- |
 | `help`, `version`, `docs` | Display usage/version/document paths |
 | `doctor`, `doctor --full`, `doctor --paths` | Local Java/Gradle checks plus configured JitPack coordinate (network availability not checked); optional Windows path/JDK hints |
-| `doctor --fix --dry-run` | Preview JDK25/Gradle installation and missing consumer Settings/editor files without changing anything |
-| `doctor --fix` | Explicit opt-in: winget JDK25/Gradle attempts, checksum-verified official Gradle9.7.1 ZIP user-only fallback, missing consumer bootstrap repair; **not** a silent installation |
+| `doctor --fix --dry-run` | Preview JDK25/Gradle and missing consumer Settings/editor files without changing anything; with no local PS1, preview the planned GitHub helper download only |
+| `doctor --fix` | Explicit opt-in: first download the single version-matched `fabric-amper-doctor-fix.ps1` GitHub Release asset beside the BAT if missing, verify its pinned SHA-256 (or refuse a tampered local file), then winget JDK25/Gradle attempts, official checksum-verified Gradle9.7.1 ZIP fallback and missing consumer bootstrap repair; **not** a silent installation |
 | `init <id> [folder] [mod|api]` | Create a new Java consumer; never overwrite existing destination |
 | `init <id> --here [mod|api]` | Initialize the current tools-only folder, preserving unrelated files; reject any existing project file or `src` |
 | `tasks`, `validate` | Run `tasks --all`, `validateFabricAmper` |

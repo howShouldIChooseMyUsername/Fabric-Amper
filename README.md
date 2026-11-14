@@ -95,8 +95,9 @@ On the [Releases page](https://github.com/howShouldIChooseMyUsername/Fabric-Ampe
 | `fabric-amper-0.1.2-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
 | `fabric-amper-0.1.2.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
 | `fabric-amper-0.1.2-sources.jar` | Source archive for IDE inspection |
-| `fabric-amper.bat` | Windows convenience script for a **full source checkout**; it is **not a standalone installer** |
-| `fabric-amper-0.1.2-windows-tools.zip` | Optional bundled BAT, its required `scripts/fabric-amper-doctor-fix.ps1`, schema and AI skill guides; extract together (BAT and `scripts/` must stay in relative positions) |
+| `fabric-amper.bat` | Windows convenience script; `doctor --fix` downloads the matching helper on first use. Other commands may require a full checkout, schema and installed Gradle |
+| `fabric-amper-doctor-fix.ps1` | Single opt-in Windows repair helper; BAT downloads **only this file** from its matching version's GitHub Release into the BAT directory when absent and checks the pinned SHA-256 before execution |
+| `fabric-amper-0.1.2-windows-tools.zip` | Optional BAT, matching flat `fabric-amper-doctor-fix.ps1`, schema and AI skills/guides, pre-bundled for offline extraction |
 | `fabric-amper.schema.json` | Latest schema snapshot for YAML editor completion |
 | `SHA256SUMS.txt` | SHA-256 checksums of the uploaded release assets |
 

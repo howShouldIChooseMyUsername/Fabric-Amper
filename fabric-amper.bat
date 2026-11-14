@@ -6,6 +6,9 @@ set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
 set "FA_VERSION=0.1.2"
+rem Verified SHA-256 of the v0.1.2 GitHub Release doctor helper.
+rem Update this checksum alongside the script when publishing a new version.
+set "FA_DOCTOR_SHA256=0ba5a683058f58e6c7f98366460f019571dc8c2839c36a1a03fb567d09eaf045"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -78,6 +81,8 @@ echo   doctor --full      Also inspect JDK hints and Windows paths.
 echo   doctor --paths     Inspect local path lengths without running Gradle.
 echo   doctor --fix       Opt-in JDK 25/Gradle repair and missing consumer setup.
 echo   doctor --fix --dry-run   Preview the repair without changes or downloads.
+echo                        First --fix downloads one SHA-256 checked PS1 from
+echo                        this version's GitHub Release beside this BAT.
 echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
@@ -164,20 +169,44 @@ if not "%~3"=="" if /i not "%~3"=="--dry-run" (
     echo ERROR: doctor --fix accepts only the optional --dry-run flag.
     exit /b 2
 )
-if not exist "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1" (
-    echo ERROR: The doctor repair helper is missing from this Fabric Amper checkout.
-    exit /b 1
-)
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required for opt-in repair.
     exit /b 1
 )
-if /i "%~3"=="--dry-run" (
-    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1" -Preview
-) else (
-    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1"
+if /i "%~3"=="--dry-run" goto :doctorFixPreview
+if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
+    call :doctorFetchHelper
+    if errorlevel 1 exit /b 1
 )
+call :doctorVerifyHelper
+if errorlevel 1 exit /b 1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1"
+exit /b %errorlevel%
+
+:doctorFixPreview
+if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
+    echo [preview] Would fetch exactly fabric-amper-doctor-fix.ps1 from:
+    echo [preview] https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v%FA_VERSION%/fabric-amper-doctor-fix.ps1
+    echo [preview] Would SHA-256 check it and store it beside this BAT before any repair.
+    echo [preview] Helper is missing; toolchain checks require the helper. No downloads or writes performed.
+    exit /b 0
+)
+call :doctorVerifyHelper
+if errorlevel 1 exit /b 1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1" -Preview
+exit /b %errorlevel%
+
+:doctorVerifyHelper
+rem Never execute a pre-existing helper if it differs from the pinned release hash.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop; $p=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { throw 'Doctor helper file is unavailable.' }; if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash -ine $env:FA_DOCTOR_SHA256) { throw 'Doctor helper SHA-256 mismatch. File was not executed or overwritten.' }; [Console]::Out.WriteLine('[OK] Verified doctor helper SHA-256.') } catch { [Console]::Error.WriteLine('[ERROR] '+$_.Exception.Message); exit 1 }"
+exit /b %errorlevel%
+
+:doctorFetchHelper
+rem The remote .ps1 is only downloaded for explicitly requested --fix.
+rem Download to a unique temporary file, pin the exact bytes, then move it in place.
+echo [doctor --fix] Fetching the v%FA_VERSION% helper from GitHub Release.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dest=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-doctor-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop; if (Test-Path -LiteralPath $dest) { throw 'Doctor helper appeared during download; refusing to overwrite it.' }; $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/fabric-amper-doctor-fix.ps1'; Invoke-WebRequest -Uri $url -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; if ((Get-FileHash -LiteralPath $tmp -Algorithm SHA256).Hash -ine $env:FA_DOCTOR_SHA256) { throw 'Downloaded doctor helper SHA-256 mismatch.' }; if (Test-Path -LiteralPath $dest) { throw 'Doctor helper already exists; refusing to overwrite it.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved verified doctor helper beside fabric-amper.bat.') } catch { [Console]::Error.WriteLine('[ERROR] Doctor helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
 exit /b %errorlevel%
 
 :doctorToolchains

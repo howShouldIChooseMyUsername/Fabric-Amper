@@ -12,6 +12,7 @@ import org.junit.jupiter.api.condition.OS
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 /** Real Windows batch init without Gradle builds, downloads or remote publishing. */
@@ -138,7 +139,7 @@ class FabricAmperInitSchemaUnitTest {
 
         val powershell = ProcessBuilder(
             "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-            "-File", root.resolve("scripts/fabric-amper-doctor-fix.ps1").toString(),
+            "-File", root.resolve("fabric-amper-doctor-fix.ps1").toString(),
             "-Preview", "-AssumeMissing",
         ).directory(root.toFile()).redirectErrorStream(true)
         powershell.environment()["FA_ROOT"] = root.toString()
@@ -151,6 +152,40 @@ class FabricAmperInitSchemaUnitTest {
         assertTrue(output.contains("winget EclipseAdoptium.Temurin.25.JDK"), output)
         assertTrue(output.contains("official Gradle 9.7.1 ZIP with SHA-256"), output)
         assertFalse(Files.exists(folder.resolve("settings.gradle.kts")))
+    }
+
+    @Test
+    fun `doctor fix standalone BAT previews exact release download and rejects corrupted helper`() {
+        val root = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batSource = root.resolve("fabric-amper.bat")
+        val scriptSource = root.resolve("fabric-amper-doctor-fix.ps1")
+        val expectedHash = MessageDigest.getInstance("SHA-256")
+            .digest(Files.readAllBytes(scriptSource))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val batchSource = Files.readString(batSource, StandardCharsets.UTF_8)
+        assertTrue(batchSource.contains("FA_DOCTOR_SHA256=$expectedHash"), "BAT must pin the exact release PS1")
+        assertTrue(
+            batchSource.contains("releases/download/v'+\$env:FA_VERSION+'/fabric-amper-doctor-fix.ps1"),
+            "Downloader must use this BAT version's GitHub Release asset",
+        )
+
+        val folder = Files.createTempDirectory(Files.createDirectories(root.resolve("build")), "fabric-amper-remote-helper-")
+        val batch = folder.resolve("fabric-amper.bat")
+        Files.copy(batSource, batch)
+        val missingPreview = runBat(batch, "doctor --fix --dry-run")
+        assertEquals(0, missingPreview.first, "Missing helper must preview without fetching: ${missingPreview.second}")
+        assertTrue(missingPreview.second.contains("Would fetch exactly fabric-amper-doctor-fix.ps1"))
+        assertTrue(missingPreview.second.contains("/releases/download/v0.1.2/fabric-amper-doctor-fix.ps1"))
+        assertFalse(Files.exists(folder.resolve("fabric-amper-doctor-fix.ps1")))
+        assertEquals(2, runBat(batch, "doctor --fix --unknown").first)
+
+        val script = folder.resolve("fabric-amper-doctor-fix.ps1")
+        val corrupted = "throw 'UNTRUSTED SCRIPT'\n"
+        Files.writeString(script, corrupted)
+        val corruptPreview = runBat(batch, "doctor --fix --dry-run")
+        assertEquals(1, corruptPreview.first, "Existing unexpected PS1 must never execute: ${corruptPreview.second}")
+        assertTrue(corruptPreview.second.contains("SHA-256 mismatch"))
+        assertEquals(corrupted, Files.readString(script), "Corrupted helper must not be silently overwritten")
     }
 
     private fun runInit(batch: Path, id: String, target: Path, profile: String): Pair<Int, String> {

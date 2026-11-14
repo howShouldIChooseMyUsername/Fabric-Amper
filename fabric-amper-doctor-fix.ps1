@@ -1,4 +1,6 @@
 # Fabric Amper --fix is an explicit, opt-in Windows repair operation.
+# v0.1.2: The BAT wrapper pins this file's SHA-256 and fetches this one asset
+# from its matching GitHub Release into the BAT directory if it is missing.
 # The batch wrapper supplies FA_ROOT, FA_CONSUMER and FA_VERSION through
 # environment variables so paths never need interpolation into PowerShell.
 param(
@@ -8,6 +10,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
 
 if ($AssumeMissing -and -not $Preview) {
     throw '-AssumeMissing is only available in read-only preview mode.'
