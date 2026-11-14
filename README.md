@@ -6,7 +6,7 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. It takes care of Fabric Loom, Minecraft/Loader configuration, Java and optional Kotlin, dependency scopes, generated Loader metadata, JAR verification, and opt-in publishing. You still write your mod's Java/Kotlin code, Mixins, resources, and tests.
 
-> **Release status:** `v0.1.1` is a **development preview**, not a fully approved G1–G30 production release. The previous `v0.1.0` JitPack release successfully built isolated mod/API consumers; no additional tests were run for the `v0.1.1` release, as requested. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
+> **Release status:** `v0.1.2` is a **development preview**, not a fully approved G1–G30 production release. This release adds opt-in Windows environment repair, safe in-place initialization, and explicit AI skill command precedence. Producer tests and a real Settings-only consumer build are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
 
 ## Why Fabric Amper?
 
@@ -38,7 +38,7 @@ cd ..\example_mod
 ```
 
 - `doctor` checks your Java/Gradle launcher and reports the JitPack coordinate without contacting JitPack.
-- `init` creates a **new** consumer directory; it never overwrites an existing one. The generated project includes `settings.gradle.kts`, `mod.yaml`, `schemas/mod.schema.json`, and a minimal Java entrypoint.
+- `init` creates a **new** consumer directory. `init night_vision --here` also supports a current tools-only folder; any existing project YAML, Settings/build script, source tree or conflicting schema blocks it. Existing unrelated tools and notes are preserved. Starters include `.vscode/settings.json` YAML mapping when missing.
 - `build` resolves the plugin from JitPack on first use, validates YAML, compiles your mod, and verifies the resulting JAR. It does **not** upload anything.
 
 The first line of generated `mod.yaml` is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor autocomplete. The local JSON Schema is copied from this producer at project creation. `init` deliberately **omits `schema: 1`** so the plugin's latest implemented YAML grammar is selected (currently v1); existing editor schema copies need manual refresh after future upgrades.
@@ -80,7 +80,7 @@ repositories:
   - mavenCentral
 ```
 
-The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.1.1"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
+The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.1.2"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
 
 Run `gradle validateFabricAmper`, `gradle build` and `gradle verifyFabricAmperJar` directly if you prefer Gradle commands. A valid production JAR contains **one root-level generated `fabric.mod.json`**; it is not a Minecraft mod unless it also includes actual mod code.
 
@@ -92,10 +92,11 @@ On the [Releases page](https://github.com/howShouldIChooseMyUsername/Fabric-Ampe
 
 | Asset | Purpose |
 | --- | --- |
-| `fabric-amper-0.1.1-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
-| `fabric-amper-0.1.1.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
-| `fabric-amper-0.1.1-sources.jar` | Source archive for IDE inspection |
+| `fabric-amper-0.1.2-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
+| `fabric-amper-0.1.2.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
+| `fabric-amper-0.1.2-sources.jar` | Source archive for IDE inspection |
 | `fabric-amper.bat` | Windows convenience script for a **full source checkout**; it is **not a standalone installer** |
+| `fabric-amper-0.1.2-windows-tools.zip` | Optional bundled BAT, its required `scripts/fabric-amper-doctor-fix.ps1`, schema and AI skill guides; extract together (BAT and `scripts/` must stay in relative positions) |
 | `fabric-amper.schema.json` | Latest schema snapshot for YAML editor completion |
 | `SHA256SUMS.txt` | SHA-256 checksums of the uploaded release assets |
 
@@ -112,13 +113,13 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
             }
         }
     }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.1"
+    id("dev.fabric-amper.settings") version "0.1.2"
 }
 ```
 
@@ -131,7 +132,9 @@ Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consume
 | Command | Purpose |
 | --- | --- |
 | `help`, `doctor`, `doctor --full`, `doctor --paths` | Usage, local toolchain checks, and Windows path diagnostics |
+| `doctor --fix --dry-run` / `doctor --fix` | Read-only repair preview / **explicit opt-in** JDK25 and Gradle repair plus missing consumer editor/Settings bootstrap; never run `--fix` silently |
 | `init <mod_id> [folder] [mod\|api]` | Create a new mod or API project with JitPack plugin resolution; `setup` is no longer needed |
+| `init <mod_id> --here [mod\|api]` | Initialize a tools-only directory without overwriting existing project files |
 | `validate` / `build` / `verify` / `test` | Validate YAML, build and verify JAR, or run tests |
 | `diagnose` / `explain` | Read-only toolchain and dependency explanations |
 | `plan` / `port 1.21.11` | Inspect local release metadata / manual migration checklist; no upload or automatic porting |
@@ -169,4 +172,4 @@ The producer Gradle build uses Java 25. Several integration/runtime tests are op
 
 ## Release notes and limitations
 
-`v0.1.1` is a **preview release** for developers evaluating the settings-only workflow and JitPack bootstrap. No GitHub Release substitutes for Gradle Plugin Portal publication, official Fabric Loader runtime verification for every profile, or testing an authenticated third-party upload. No tests were run for this release. Please review the [QA report](QA_REPORT.md) before relying on Fabric Amper for public production releases.
+`v0.1.2` is a **preview release** for developers evaluating the settings-only workflow and JitPack bootstrap. No GitHub Release substitutes for Gradle Plugin Portal publication, official Fabric Loader runtime verification for every profile, or testing an authenticated third-party upload. Producer and consumer verification is recorded in [QA_REPORT.md](QA_REPORT.md); skipped/opt-in acceptance gates remain open. Please review the [QA report](QA_REPORT.md) before relying on Fabric Amper for public production releases.

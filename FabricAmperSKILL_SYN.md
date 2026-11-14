@@ -23,7 +23,7 @@ This file is a **custom root AI guide**; its filename is not the standardized au
 - `mod.environment` is Loader's whole-mod side; `dependencies[].target` is a Gradle dependency source set. `dependencies` ≠ `mod.depends` ≠ `publish.modrinth.dependencies`.
 - Only real fixed published dependency versions, verified Loader IDs, known Maven repositories and real Modrinth/CurseForge project IDs. No secrets or source-path escapes. Do not change an unrelated user's dependency or generated file.
 - **Do not publish without explicit authorization.** `help`/`build`/`test` are not remote uploads; publish tasks are. Do not auto-accept EULA or use personal Minecraft worlds. Never claim a successful build proves GUI/runtime/remote publishing.
-- Project `0.1.1` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
+- Project `0.1.2` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
 
 ## Fast intent → YAML / file / check
 
@@ -132,15 +132,15 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
             }
         }
     }
 }
-plugins { id("dev.fabric-amper.settings") version "0.1.1" }
+plugins { id("dev.fabric-amper.settings") version "0.1.2" }
 ```
 
-The Git tag in the JitPack module is `v0.1.1` and the Gradle plugin request is `0.1.1`. The removed `fabric-amper.bat setup` command is not needed. Check that JitPack **actually serves** the tagged module before claiming the generated project builds; it is not published on the public Plugin Portal.
+The Git tag in the JitPack module is `v0.1.2` and the Gradle plugin request is `0.1.2`. The removed `fabric-amper.bat setup` command is not needed. Check that JitPack **actually serves** the tagged module before claiming the generated project builds; it is not published on the public Plugin Portal.
 
 `mod.yaml` (complete **Java-only** sample; create `src/main/java/org/example/ExampleMod.java` with an actual `ModInitializer`):
 

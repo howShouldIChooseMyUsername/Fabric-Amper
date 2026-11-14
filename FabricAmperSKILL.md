@@ -120,18 +120,18 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
             }
         }
     }
 }
 
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.1"
+    id("dev.fabric-amper.settings") version "0.1.2"
 }
 ```
 
-The Settings plugin is redirected to JitPack using the GitHub tag `v0.1.1`, while the public plugin ID is requested with version `0.1.1`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check JitPack's actual tagged-module availability before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
+The Settings plugin is redirected to JitPack using the GitHub tag `v0.1.2`, while the public plugin ID is requested with version `0.1.2`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check JitPack's actual tagged-module availability before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
 
 **Consumer `mod.yaml`**:
 
@@ -810,7 +810,7 @@ rem Call from any other directory; provide full script path and consumer root.
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build
 ```
 
-`init <id> [new_folder] [mod|api]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real Java `ExampleMod.java`; it refuses an existing destination. `init <id> --here [mod|api]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
+`init <id> [new_folder] [mod|api]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real Java `ExampleMod.java`; it refuses an existing destination. `init <id> --here [mod|api]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
 
 | User intent | Wrapper command | Actual effect |
 | --- | --- | --- |

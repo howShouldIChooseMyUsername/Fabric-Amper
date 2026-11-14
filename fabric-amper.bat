@@ -5,7 +5,7 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.1"
+set "FA_VERSION=0.1.2"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -82,7 +82,7 @@ echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
-echo Generated Settings projects resolve Fabric Amper v0.1.1 from JitPack.
+echo Generated Settings projects resolve Fabric Amper v0.1.2 from JitPack.
 echo Use --project or -C to run consumer commands from any directory.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -119,7 +119,7 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2
 echo [INFO] Remote JitPack availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
@@ -356,13 +356,13 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
 >> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
->> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
 >> "%FA_TARGET%\settings.gradle.kts" echo(            }
 >> "%FA_TARGET%\settings.gradle.kts" echo(        }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.1"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.2"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 rem New projects default to a Java-only Minecraft 26.3 fixture.
@@ -408,7 +408,7 @@ echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Settings plugin: JitPack Fabric-Amper v0.1.1 ^(Internet required on first resolution^).
+echo [init] Settings plugin: JitPack Fabric-Amper v0.1.2 ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.
 exit /b 0
 

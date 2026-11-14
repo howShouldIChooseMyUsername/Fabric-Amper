@@ -2,7 +2,7 @@
 
 **A five-minute Quick Start and a feature-by-feature cheat sheet, in one place.** This guide is for Windows developers who want to start a Fabric mod immediately and then look up YAML keys or commands without reading the entire manual. For complete explanations, see [the Human Guide](HUMAN.md); for exact YAML types, see [the schema](fabric-amper.schema.json).
 
-> **Status:** Fabric Amper `0.1.1` is a **development preview** Gradle plugin, not a public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. See [QA_REPORT.md](QA_REPORT.md) for earlier verification evidence and limitations. No new test run is claimed for the `v0.1.1` packaging update.
+> **Status:** Fabric Amper `0.1.2` is a **development preview** Gradle plugin, not a public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. See [QA_REPORT.md](QA_REPORT.md) for earlier verification evidence and limitations. The release validation is recorded in [QA_REPORT.md](QA_REPORT.md); the skipped G gates are not silently treated as passes.
 
 ## Contents
 
@@ -26,7 +26,7 @@ cd ..\quick_mod
 "..\Fabric Amper\fabric-amper.bat" build
 ```
 
-**What happened?** `doctor` checks local Java/Gradle without contacting JitPack. `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the checkout's schema, and a Java source file; the Settings script resolves `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` from **JitPack**, not a local producer Maven repository. `build` validates, builds and checks the JAR. Internet access is required on the first uncached plugin/dependency resolution. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` outside the checkout folder, it creates the new project under your current directory instead.
+**What happened?** `doctor` checks local Java/Gradle without contacting JitPack. `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the checkout's schema, and a Java source file; the Settings script resolves `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` from **JitPack**, not a local producer Maven repository. `build` validates, builds and checks the JAR. Internet access is required on the first uncached plugin/dependency resolution. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` outside the checkout folder, it creates the new project under your current directory instead.
 
 Useful follow-ups from inside `quick_mod`:
 
@@ -70,17 +70,17 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
             }
         }
     }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.1"
+    id("dev.fabric-amper.settings") version "0.1.2"
 }
 ```
 
-The `resolutionStrategy` redirects only the public Settings plugin ID to the tagged JitPack module. The `plugins` version is `0.1.1`, while the Git tag in the JitPack coordinate is `v0.1.1`. Do not apply `dev.fabric-amper.project` yourself. Unlike the previous local-bootstrap workflow, **no `setup` command is needed**.
+The `resolutionStrategy` redirects only the public Settings plugin ID to the tagged JitPack module. The `plugins` version is `0.1.2`, while the Git tag in the JitPack coordinate is `v0.1.2`. Do not apply `dev.fabric-amper.project` yourself. Unlike the previous local-bootstrap workflow, **no `setup` command is needed**.
 
 **`mod.yaml`** — a complete, Java-only Minecraft 26.3 example (the optional `schema: 1` is intentionally omitted). The first-line editor directive refers to a file that must exist:
 

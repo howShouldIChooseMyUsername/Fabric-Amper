@@ -4,7 +4,7 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. Instead of hand-maintaining a project-specific `build.gradle.kts` and `fabric.mod.json`, you write `settings.gradle.kts` and **exactly one** `mod.yaml` or `mod.yml`. Fabric Amper selects and configures Fabric Loom, Java, optional Kotlin, dependencies, source sets, generated Fabric Loader metadata, packaging, and optional publishing tasks.
 
-> **Project status — development / not approved for a complete release.** Version `0.1.1` is a preview maintenance release following the `0.1.0` JitPack consumer checks. No new tests were requested for this release. Fabric Amper is **not published on the Gradle Plugin Portal**. Some acceptance gates still need evidence (notably IntelliJ GUI import/synchronization, historical runtime cases, and authenticated remote Maven publishing with configuration-cache reuse). See [Verification and known limits](#verification-and-known-limits) before relying on it for production releases.
+> **Project status — development / not approved for a complete release.** Version `0.1.2` adds safe Windows `doctor --fix` and `init --here` operations with AI-agent command precedence. Producer and consumer validation is documented in the QA report; remaining opt-in runtime and IDE gates are not certified. Fabric Amper is **not published on the Gradle Plugin Portal**. Some acceptance gates still need evidence (notably IntelliJ GUI import/synchronization, historical runtime cases, and authenticated remote Maven publishing with configuration-cache reuse). See [Verification and known limits](#verification-and-known-limits) before relying on it for production releases.
 
 This is the **user-facing** guide. For source-of-truth field constraints, see [`fabric-amper.schema.json`](fabric-amper.schema.json); for the actual implementation, see `src/main/kotlin/dev/fabricamper/config/`; for implementation acceptance, see [`specs.md`](specs.md) and [`QA_REPORT.md`](QA_REPORT.md). Agents generating configurations should also read [`FabricAmperSKILL.md`](FabricAmperSKILL.md). For the **single English, Windows-first quick start and feature cheat sheet**, see [`HUMAN_QuickGuide.md`](HUMAN_QuickGuide.md); the former `HUMAN_QuickStart.md` is retained only as a link redirect.
 
@@ -48,7 +48,7 @@ The **single entry plugin** is `dev.fabric-amper.settings`. Do not separately ap
 
 | Component | Current documented example | Notes |
 | --- | --- | --- |
-| Fabric Amper | `0.1.1` | GitHub/JitPack development preview; not available via the Gradle Plugin Portal |
+| Fabric Amper | `0.1.2` | GitHub/JitPack development preview; not available via the Gradle Plugin Portal |
 | Minecraft | `26.3` | Non-remapping, Mojang official names |
 | Java/JDK | **25** | Gradle itself must run on Java 25 or newer for Minecraft 26.3; YAML release must be 25 |
 | Fabric Loader | `0.20.1` | Fixed version, not `latest.release` |
@@ -61,7 +61,7 @@ Use a project Gradle Wrapper when one is actually installed. If the consumer doe
 
 ### How to obtain the plugin today
 
-A plugin repository normally supplies both a Gradle plugin marker and its binary. **Fabric Amper is not published to the Gradle Plugin Portal**. The current Windows `init` command instead redirects `dev.fabric-amper.settings` to the tagged JitPack module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` via `pluginManagement.resolutionStrategy.eachPlugin`. The `plugins` declaration itself requests version `0.1.1`. Verify that JitPack actually serves the tag before relying on network installation; creating a GitHub release/tag alone does not prove the Maven artifact is resolvable.
+A plugin repository normally supplies both a Gradle plugin marker and its binary. **Fabric Amper is not published to the Gradle Plugin Portal**. The current Windows `init` command instead redirects `dev.fabric-amper.settings` to the tagged JitPack module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` via `pluginManagement.resolutionStrategy.eachPlugin`. The `plugins` declaration itself requests version `0.1.2`. Verify that JitPack actually serves the tag before relying on network installation; creating a GitHub release/tag alone does not prove the Maven artifact is resolvable.
 
 For **local producer development / offline integration tests only**, a separate direct Gradle publication still exists. From the Fabric Amper source project:
 
@@ -101,18 +101,18 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
             }
         }
     }
 }
 
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.1"
+    id("dev.fabric-amper.settings") version "0.1.2"
 }
 ```
 
-The Git tag in the JitPack module is `v0.1.1` while the Gradle plugin request is `0.1.1`. `pluginManagement.repositories` is for resolving plugins; `repositories` in `mod.yaml` is for resolving your mod's libraries. They are not interchangeable. This example is only usable once the corresponding JitPack Maven artifact can actually be resolved.
+The Git tag in the JitPack module is `v0.1.2` while the Gradle plugin request is `0.1.2`. `pluginManagement.repositories` is for resolving plugins; `repositories` in `mod.yaml` is for resolving your mod's libraries. They are not interchangeable. This example is only usable once the corresponding JitPack Maven artifact can actually be resolved.
 
 ### 3. Write `mod.yaml`
 
@@ -787,7 +787,7 @@ fabric-amper.bat init example_mod
 fabric-amper.bat init example_api "C:\work\example_api" api
 ```
 
-`init <id> [new_folder] [mod|api]` generates a **new** consumer folder containing `settings.gradle.kts`, `mod.yaml`, `schemas/mod.schema.json`, `.vscode/settings.json` (unless existing) and `src/main/java/org/example/ExampleMod.java`; existing destinations are rejected. **`init <id> --here [mod|api]` works inside an existing tools-only directory**, preserving any BAT/skill/`.md`/`.gitignore` and existing `.vscode/settings.json`, but it refuses to overwrite when any existing `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path is present. The generated Settings script resolves the `v0.1.1` JitPack module using `resolutionStrategy` instead of a local Maven repository; `fabric-amper.bat setup` has been **removed**. `mod.yaml` begins with the exact editor directive `# yaml-language-server: $schema=./schemas/mod.schema.json` and **omits `schema: 1`** so the plugin parses with the latest version it supports. The schema file is copied **byte-for-byte from the current checkout's `fabric-amper.schema.json` each time `init` runs**; it is a local snapshot for autocomplete, not a file that automatically updates existing projects when the plugin is upgraded. Without an explicit folder or `--here`, `init` creates a sibling when run from the checkout or a child of the current working directory elsewhere. API mode selects `product: fabric/api` and example `mod.group: org.example`.
+`init <id> [new_folder] [mod|api]` generates a **new** consumer folder containing `settings.gradle.kts`, `mod.yaml`, `schemas/mod.schema.json`, `.vscode/settings.json` (unless existing) and `src/main/java/org/example/ExampleMod.java`; existing destinations are rejected. **`init <id> --here [mod|api]` works inside an existing tools-only directory**, preserving any BAT/skill/`.md`/`.gitignore` and existing `.vscode/settings.json`, but it refuses to overwrite when any existing `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path is present. The generated Settings script resolves the `v0.1.2` JitPack module using `resolutionStrategy` instead of a local Maven repository; `fabric-amper.bat setup` has been **removed**. `mod.yaml` begins with the exact editor directive `# yaml-language-server: $schema=./schemas/mod.schema.json` and **omits `schema: 1`** so the plugin parses with the latest version it supports. The schema file is copied **byte-for-byte from the current checkout's `fabric-amper.schema.json` each time `init` runs**; it is a local snapshot for autocomplete, not a file that automatically updates existing projects when the plugin is upgraded. Without an explicit folder or `--here`, `init` creates a sibling when run from the checkout or a child of the current working directory elsewhere. API mode selects `product: fabric/api` and example `mod.group: org.example`.
 
 From the **consumer directory**, use the batch file's full path (unless its directory is on `PATH`):
 
@@ -1319,7 +1319,7 @@ Fabric Amper prints diagnostic codes `FA001`–`FA015` for its own strict YAML, 
 
 ### Plugin marker cannot be resolved
 
-If Gradle cannot resolve `dev.fabric-amper.settings:0.1.1` **before** it reads `mod.yaml`, this is not necessarily a parser bug. For new JitPack-generated consumers, inspect `pluginManagement.repositories` (`https://jitpack.io`) and `resolutionStrategy.eachPlugin` (exact `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1`), network availability, Git tag/build status and JDK compatibility. `fabric-amper.bat setup` no longer exists. A separate direct producer-local Gradle publication remains for isolated development but is not what `init` uses. Public Gradle Plugin Portal installation is not established for this project.
+If Gradle cannot resolve `dev.fabric-amper.settings:0.1.2` **before** it reads `mod.yaml`, this is not necessarily a parser bug. For new JitPack-generated consumers, inspect `pluginManagement.repositories` (`https://jitpack.io`) and `resolutionStrategy.eachPlugin` (exact `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2`), network availability, Git tag/build status and JDK compatibility. `fabric-amper.bat setup` no longer exists. A separate direct producer-local Gradle publication remains for isolated development but is not what `init` uses. Public Gradle Plugin Portal installation is not established for this project.
 
 ### The YAML parses but the build rejects it
 
