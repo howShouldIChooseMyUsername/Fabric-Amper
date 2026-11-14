@@ -160,7 +160,14 @@ function Install-Gradle {
         Invoke-WebRequest -Uri ($url + '.sha256') -OutFile $hashFile -MaximumRedirection 8 -TimeoutSec 60 -UseBasicParsing
         $expected = (Get-Content -LiteralPath $hashFile -Raw).Trim()
         if ($expected -notmatch '^[a-fA-F0-9]{64}$') { throw 'Official Gradle SHA-256 response was malformed.' }
-        $actual = (Get-FileHash -LiteralPath $zipFile -Algorithm SHA256).Hash
+        # Stream the official distribution instead of loading the entire ZIP
+        # or depending on Get-FileHash cmdlet discovery in child PowerShell.
+        $stream = [IO.File]::OpenRead($zipFile)
+        try {
+            $actual = [BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash($stream)).Replace('-', '')
+        } finally {
+            $stream.Dispose()
+        }
         if ($actual -ine $expected) { throw 'Gradle archive SHA-256 did not match the official checksum.' }
         Say '[fix] Official Gradle SHA-256 verified.'
         $unpacked = Join-Path $temp 'expanded'
