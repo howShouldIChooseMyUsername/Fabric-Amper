@@ -6,7 +6,7 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. It takes care of Fabric Loom, Minecraft/Loader configuration, Java and optional Kotlin, dependency scopes, generated Loader metadata, JAR verification, and opt-in publishing. You still write your mod's Java/Kotlin code, Mixins, resources, and tests.
 
-> **Release status:** `v0.1.2` is a **development preview**, not a fully approved G1–G30 production release. This release adds Windows environment repair (automatic for AI agents when required tools are missing), safe in-place initialization, and explicit AI skill command precedence. Producer tests and a real Settings-only consumer build are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
+> **Release status:** `v0.1.3` is a **development preview**, not a fully approved G1–G30 production release. It adds conservative migration of existing Kotlin/Groovy Fabric Gradle projects, on top of v0.1.2's Windows environment repair and safe initialization. Producer tests and Settings-only consumer builds are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
 
 ## Why Fabric Amper?
 
@@ -80,7 +80,7 @@ repositories:
   - mavenCentral
 ```
 
-The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.1.2"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
+The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.1.3"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
 
 Run `gradle validateFabricAmper`, `gradle build` and `gradle verifyFabricAmperJar` directly if you prefer Gradle commands. A valid production JAR contains **one root-level generated `fabric.mod.json`**; it is not a Minecraft mod unless it also includes actual mod code.
 
@@ -92,12 +92,13 @@ On the [Releases page](https://github.com/howShouldIChooseMyUsername/Fabric-Ampe
 
 | Asset | Purpose |
 | --- | --- |
-| `fabric-amper-0.1.2-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
-| `fabric-amper-0.1.2.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
-| `fabric-amper-0.1.2-sources.jar` | Source archive for IDE inspection |
-| `fabric-amper.bat` | Windows convenience script; `doctor --fix` downloads the matching helper on first use. Other commands may require a full checkout, schema and installed Gradle |
+| `fabric-amper-0.1.3-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
+| `fabric-amper-0.1.3.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
+| `fabric-amper-0.1.3-sources.jar` | Source archive for IDE inspection |
+| `fabric-amper.bat` | Windows convenience script; `doctor --fix` downloads the matching helper on first use. `migrate` requires the separate matching PowerShell script beside this BAT |
+| `fabric-amper-migrate.ps1` | Standalone conservative migration engine for Kotlin/Groovy Gradle scripts and Loader JSON; no Gradle script execution |
 | `fabric-amper-doctor-fix.ps1` | Single opt-in Windows repair helper; BAT downloads **only this file** from its matching version's GitHub Release into the BAT directory when absent and checks the pinned SHA-256 before execution |
-| `fabric-amper-0.1.2-windows-tools.zip` | Optional BAT, matching flat `fabric-amper-doctor-fix.ps1`, schema and AI skills/guides, pre-bundled for offline extraction |
+| `fabric-amper-0.1.3-windows-tools.zip` | Optional BAT, both matching PowerShell helpers, schema and AI skills/guides, pre-bundled for extraction |
 | `fabric-amper.schema.json` | Latest schema snapshot for YAML editor completion |
 | `SHA256SUMS.txt` | SHA-256 checksums of the uploaded release assets |
 
@@ -114,13 +115,13 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
             }
         }
     }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.2"
+    id("dev.fabric-amper.settings") version "0.1.3"
 }
 ```
 
@@ -128,7 +129,7 @@ For an **optional local binary distribution**, extract the Maven repository ZIP 
 
 ## Everyday commands
 
-Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consumer"` before the command. **For `doctor` only**, `-C` / `--project` may also follow the command: `fabric-amper.bat doctor -C ".\httpmod"`. The redundant trailing `doctor` in `doctor -C ".\httpmod" doctor` is accepted for compatibility. Relative paths are resolved from the **current terminal directory**, not the BAT location. If its directory is not on your `PATH`, call the script with its full path.
+Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consumer"` before the command. **For `doctor` and `migrate`**, `-C` / `--project` may also follow the command: `fabric-amper.bat doctor -C ".\httpmod"` or `fabric-amper.bat migrate -C ".\httpmod"`. The redundant trailing `doctor` in `doctor -C ".\httpmod" doctor` is accepted for compatibility. Relative paths are resolved from the **current terminal directory**, not the BAT location. If its directory is not on your `PATH`, call the script with its full path.
 
 | Command | Purpose |
 | --- | --- |
@@ -136,6 +137,7 @@ Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consume
 | `doctor --fix --dry-run` / `doctor --fix` | Read-only repair preview / missing JDK25 and Gradle repair plus missing consumer editor/Settings bootstrap; an AI agent may run `--fix` automatically after `doctor` finds a required tool missing |
 | `init <mod_id> [folder] [mod\|api]` | Create a new mod or API project with JitPack plugin resolution; `setup` is no longer needed |
 | `init <mod_id> --here [mod\|api]` | Initialize a tools-only directory without overwriting existing project files |
+| `migrate [--dry-run] [-D\|--delete]` | Convert a supported existing Kotlin/Groovy Fabric Gradle project; preview without changes; default backup to `gradle_backup`, or delete originals after successful conversion |
 | `validate` / `build` / `verify` / `test` | Validate YAML, build and verify JAR, or run tests |
 | `diagnose` / `explain` | Read-only toolchain and dependency explanations |
 | `plan` / `port 1.21.11` | Inspect local release metadata / manual migration checklist; no upload or automatic porting |
@@ -144,6 +146,18 @@ Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consume
 | `publish maven`, `publish modrinth`, `publish curseforge`, `publish all` | **Real external uploads** after confirmation and validation — never use them just to check syntax |
 
 **AI agent automatic toolchain recovery (Windows):** Before a task requiring JDK or Gradle, run `fabric-amper.bat doctor`. If the required tools are available, continue the task. If a required JDK/Gradle tool is missing or unusable, inspect `fabric-amper.bat doctor --fix --dry-run` and then **run `fabric-amper.bat doctor --fix` automatically without asking for a separate confirmation**. This automatic-repair policy applies only to Fabric Amper's missing-toolchain/bootstrap repair, **not** to publishing, game EULA acceptance, arbitrary software installation, overwriting existing project files, or other unrelated changes. The BAT downloads only its version-matched PowerShell helper if missing, verifies its pinned SHA-256 before execution, and stops on a hash mismatch or download failure. Re-run `doctor` after repair (reopen the terminal if PATH/JAVA_HOME changes require it); resume the original task only when its prerequisites are verified. If repair fails, report the blocker instead of retrying indefinitely. With no local helper, `--dry-run` previews only the helper download, not the actual toolchain repair.
+
+### Migrate an existing Fabric Gradle mod
+
+Place `fabric-amper.bat` and **the matching `fabric-amper-migrate.ps1`** side by side. From a classic Fabric project with one `build.gradle.kts` **or** Groovy `build.gradle` and one `src/main/resources/fabric.mod.json`, run:
+
+```bat
+C:\path\to\Fabric-Amper\fabric-amper.bat migrate --dry-run
+C:\path\to\Fabric-Amper\fabric-amper.bat migrate
+C:\path\to\Fabric-Amper\fabric-amper.bat migrate -C ".\another-mod" --delete
+```
+
+`migrate -D` is an alias for `--delete`; `-C`/`--project` can also go before `migrate`. **Without** a delete flag, original Gradle/Loader metadata (including existing Settings, if present) is saved in `gradle_backup/`; the source `fabric.mod.json` is moved out to avoid FA008. **With** a delete flag, originals are removed only after outputs are generated. Existing Java/Kotlin sources and other resources are not intentionally changed. The static analyzer refuses unsupported/dynamic build logic, unexpected metadata, ambiguous source layouts, conflicting outputs or an existing backup folder rather than silently discarding behavior. A successful conversion is **not** proof that the new consumer will build: review the generated YAML and run `validate`, `build`, and `verify` before relying on it. Keep your own backup before using `--delete`.
 
 ## Configuration and features
 
@@ -175,4 +189,4 @@ The producer Gradle build uses Java 25. Several integration/runtime tests are op
 
 ## Release notes and limitations
 
-`v0.1.2` is a **preview release** for developers evaluating the settings-only workflow and JitPack bootstrap. No GitHub Release substitutes for Gradle Plugin Portal publication, official Fabric Loader runtime verification for every profile, or testing an authenticated third-party upload. Producer and consumer verification is recorded in [QA_REPORT.md](QA_REPORT.md); skipped/opt-in acceptance gates remain open. Please review the [QA report](QA_REPORT.md) before relying on Fabric Amper for public production releases.
+`v0.1.3` is a **preview release** for developers evaluating the settings-only workflow, JitPack bootstrap and conservative Gradle-to-YAML migration. The earlier [v0.1.2 prerelease](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2) remains available. No GitHub Release substitutes for Gradle Plugin Portal publication, official Fabric Loader runtime verification for every profile, or testing an authenticated third-party upload. Producer and consumer verification is recorded in [QA_REPORT.md](QA_REPORT.md); skipped/opt-in acceptance gates remain open. Please review the [QA report](QA_REPORT.md) before relying on Fabric Amper for public production releases.

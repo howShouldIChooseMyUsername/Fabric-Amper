@@ -40,7 +40,7 @@ When documentation and implementation disagree, **inspect the current implementa
 
 ### Command precedence: prefer Fabric Amper's wrapper when supported
 
-**When operating on Windows with an available complete Fabric Amper checkout, FIRST look for `fabric-amper.bat` and use it for any supported operation.** This is a binding execution-routing rule, not an optional shorthand: `help`, `version`, `docs`, `doctor` (including `--full`, `--paths`, opt-in `--fix`), `init` (including `--here`), `tasks`, `validate`, `build`, `verify`, `test`, `clean`, `run`, `server`, `diagnose`, `explain`, `plan`, `port` and explicitly requested `publish` variants. Use `-C "consumer_path"` **before** most subcommands when necessary; `doctor` also accepts `doctor -C ".\httpmod"` and `doctor --project ".\httpmod"`, with the path relative to the current terminal directory. The repeated form `doctor -C ".\httpmod" doctor` is supported. For an operation **not supported by the BAT wrapper** (such as a custom Gradle task, `validatePlugins`, a special TestKit filter, or direct producer-only publication), use its **original supported Gradle, Java, Kotlin, or other native command**. Do not claim the wrapper supports arbitrary Gradle tasks or invent a wrapper command.
+**When operating on Windows with an available complete Fabric Amper checkout, FIRST look for `fabric-amper.bat` and use it for any supported operation.** This is a binding execution-routing rule, not an optional shorthand: `help`, `version`, `docs`, `doctor` (including `--full`, `--paths`, opt-in `--fix`), `init` (including `--here`), `migrate` (including `-C`, `-D`, `--delete`, `--dry-run`), `tasks`, `validate`, `build`, `verify`, `test`, `clean`, `run`, `server`, `diagnose`, `explain`, `plan`, `port` and explicitly requested `publish` variants. Use `-C "consumer_path"` **before** most subcommands when necessary; `migrate` accepts `-C` / `--project` before **or after** the verb, and `doctor` also accepts `doctor -C ".\httpmod"` and `doctor --project ".\httpmod"`, with the path relative to the current terminal directory. The repeated form `doctor -C ".\httpmod" doctor` is supported. For an operation **not supported by the BAT wrapper** (such as a custom Gradle task, `validatePlugins`, a special TestKit filter, or direct producer-only publication), use its **original supported Gradle, Java, Kotlin, or other native command**. Do not claim the wrapper supports arbitrary Gradle tasks or invent a wrapper command.
 
 **Never reflexively type `./gradlew` / `gradlew.bat`.** Only use a Gradle Wrapper when its files actually exist in the chosen project and are trusted/appropriate. Otherwise allow the BAT launcher to select a known compatible installed/cached Gradle, or use the native Gradle launcher for unsupported work. The presence of an unrelated `gradlew` in a parent or neighbor directory does not authorize using it. **Automatic repair policy:** when `doctor` confirms a required JDK/Gradle toolchain is missing or unusable, the AI agent should preview and then run `doctor --fix` **without asking for an additional consent step**, as part of the requested Fabric Amper development workflow. Do not expand this policy to unrelated installations, publication, accepting EULAs, or overwriting existing user files. The BAT first fetches only the version-matched `fabric-amper-doctor-fix.ps1` from its GitHub Release to the **BAT directory** if absent, then checks the pinned SHA-256 before executing. An unexpected existing helper is not overwritten or executed; a missing/stale asset, wrong hash or non-writable folder causes an error **before installation**. A checksum-keyed query/no-cache headers avoid stale replaced assets. `doctor --fix --dry-run` never downloads; **without a local PS1 it only previews the download**, not the missing toolchains. `init --here` may preserve existing tool files but must refuse if project files already exist. Do not bypass the protection by renaming/deleting user files.
 
@@ -128,18 +128,18 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
             }
         }
     }
 }
 
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.2"
+    id("dev.fabric-amper.settings") version "0.1.3"
 }
 ```
 
-The Settings plugin is redirected to JitPack using the GitHub tag `v0.1.2`, while the public plugin ID is requested with version `0.1.2`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check JitPack's actual tagged-module availability before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
+The Settings plugin is redirected to JitPack using the **intended** GitHub tag `v0.1.3`, while the public plugin ID is requested with version `0.1.3`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check that the `v0.1.3` tag exists and that JitPack actually serves its module before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
 
 **Consumer `mod.yaml`**:
 
@@ -814,17 +814,51 @@ rem Create within the current tools-only folder without replacing existing proje
 fabric-amper.bat init night_vision --here
 fabric-amper.bat init example_api "C:\work\example_api" api
 
+rem Convert an existing Fabric Gradle mod; review first, preserve originals by default:
+fabric-amper.bat migrate -C "C:\work\legacy_mod" --dry-run
+fabric-amper.bat migrate -C "C:\work\legacy_mod"
+
 rem Call from any other directory; provide full script path and consumer root.
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build
 ```
 
-`init <id> [new_folder] [mod|api]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real Java `ExampleMod.java`; it refuses an existing destination. `init <id> --here [mod|api]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
+`init <id> [new_folder] [mod|api]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real Java `ExampleMod.java`; it refuses an existing destination. `init <id> --here [mod|api]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script targets JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
+
+### Convert a legacy Fabric Gradle mod with `migrate` (v0.1.3)
+
+Use `migrate` when the user has an **existing** Fabric mod with exactly one `build.gradle.kts` **or** Groovy `build.gradle`, and exactly one supported `src/main/resources/fabric.mod.json` (or `src/client/resources/fabric.mod.json`). This differs from `init`, which starts a new project, and `port`, which only prints a manual Minecraft version checklist. The migration helper is `fabric-amper-migrate.ps1` alongside `fabric-amper.bat`; it statically interprets a limited Gradle DSL subset and **never evaluates the original build script or starts Gradle**. It produces `mod.yaml` and `settings.gradle.kts` using the v0.1.3 JitPack plugin coordinates. A successful conversion alone does **not** establish that JitPack serves the tag, that the mod compiles, or that it runs.
+
+```bat
+rem Run these from the legacy project directory with the BAT on PATH or by full path:
+fabric-amper.bat migrate --dry-run
+fabric-amper.bat migrate
+
+rem Run from elsewhere (a single project selector, before or after migrate):
+"C:\path\to\Fabric Amper\fabric-amper.bat" migrate -C "C:\work\legacy_mod" --dry-run
+"C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\legacy_mod" migrate
+"C:\path\to\Fabric Amper\fabric-amper.bat" migrate --project "C:\work\legacy_mod"
+
+rem Only if the user explicitly requests removal of the originals:
+"C:\path\to\Fabric Amper\fabric-amper.bat" migrate -C "C:\work\legacy_mod" -D
+"C:\path\to\Fabric Amper\fabric-amper.bat" migrate -C "C:\work\legacy_mod" --delete
+rem Preview deletion semantics with no writes:
+"C:\path\to\Fabric Amper\fabric-amper.bat" migrate -C "C:\work\legacy_mod" --delete --dry-run
+```
+
+**File effects:** `--dry-run` validates the supported inputs and prints proposed YAML without creating, moving, deleting, or replacing files. The default actual `migrate` writes `mod.yaml` and new `settings.gradle.kts`, then preserves the original `build.gradle[.kts]`, any prior `settings.gradle[.kts]`, and original source `fabric.mod.json` in a new `gradle_backup/` directory. `-D` is synonymous with `--delete`; it instead removes **only these original configuration/metadata files** after staged conversion. It does not delete Java/Kotlin sources, other resources, or `gradle.properties`. The helper tries to roll back moved files if conversion cannot commit; a rollback failure requires manual recovery, with the staging path reported. Never delete `gradle_backup/` or select `-D` automatically merely to make a clean build possible.
+
+**Preconditions and limits:** Reject an existing `mod.yaml`/`mod.yml`, pre-existing `gradle_backup/`, zero or two build scripts, two Settings files, missing or multiple source `fabric.mod.json`, unsupported resource locations, and symlinks/junctions in input paths. Only Fabric Loader `schemaVersion: 1`, statically resolvable fixed Minecraft/Loader/API/Kotlin/mapping versions, supported `fabric-loom` flavor and known declarative Gradle blocks can be converted safely. Unknown plugins, custom Gradle tasks, dynamic properties/interpolation, arbitrary script logic, multi-project setups, nonstandard repositories, or metadata that cannot be translated without loss **fail for manual migration**; the helper does not guess an equivalent YAML field. The generated product is `fabric/mod`; API/library publishing and external publishing targets must be reviewed and configured separately when truly requested. No `fabric.mod.json` is authored after conversion—the Amper plugin generates it for the JAR.
+
+**After migration:** Inspect the generated YAML (especially dependency `scope`, `kind`, `include`, `exported`, client split source sets, Kotlin entrypoints and mappings) and confirm the v0.1.3 JitPack artifact actually resolves. On Windows, use the established `doctor` → optional `doctor --fix --dry-run` → automatic `doctor --fix` → `doctor` recheck policy **only if a required toolchain is missing**. Then run `fabric-amper.bat -C "C:\work\legacy_mod" validate` and `build`, inspect the produced JAR for a single root `fabric.mod.json`, and perform separate client/server or IDE tests as required. A failed `validate`/`build` never justifies removing sources or silently modifying third-party Gradle logic. When a project falls outside the static converter's supported subset, report the exact blocker and give the user a manual conversion plan.
 
 | User intent | Wrapper command | Actual effect |
 | --- | --- | --- |
 | Inspect usage and diagnostics | `help`, `version`, `docs`, `doctor`, `doctor --full`, `doctor --paths` | Local toolchain and optional path/JDK checks; no global cache deletion |
 | Repair missing Windows toolchain | `doctor --fix` **automatically after `doctor` detects a missing required tool** | Preview first; without extra consent prompt, download exactly the versioned GitHub PS1 if missing, save beside BAT after pinned SHA-256, then try JDK25 via winget/Gradle via winget or official hash-verified ZIP and optional missing consumer files; recheck with `doctor` |
 | Preview repair without changing anything | `doctor --fix --dry-run` | No download, installation or file/registry mutation; without a local PS1 **only the proposed download** is shown |
+| Preview existing Fabric Gradle project conversion | `migrate --dry-run` or `migrate -C "C:\work\legacy_mod" --dry-run` | Parse the input statically and print the proposed YAML; no file mutation or Gradle execution |
+| Convert an existing Fabric Gradle project | `migrate` or `-C "C:\work\legacy_mod" migrate` | Write `mod.yaml` and `settings.gradle.kts`; move original build script, existing settings and source `fabric.mod.json` into `gradle_backup/` by default |
+| Convert and discard original build configuration | `migrate -D` or `migrate --delete` | Explicitly remove those original files only after staging and conversion; does not delete Java/Kotlin source or unrelated resources |
 | Initialize in current tools-only folder | `init <id> --here [mod\|api]` | Preserve tools; hard fail on any existing consumer project file |
 | Generate a new mod or API | `init <id> [folder] [mod|api]` | New starter only; no overwrite; no `build.gradle` or authored `fabric.mod.json` |
 | List/test/validate | `tasks`, `test`, `validate`, `verify` | `tasks --all` / `test` / `validateFabricAmper` / `verifyFabricAmperJar` |
@@ -838,7 +872,7 @@ rem Call from any other directory; provide full script path and consumer root.
 | Publish one remote target | `publish maven` / `modrinth` / `curseforge` | Exact matching `publishFabricAmper...` task only after typed `PUBLISH` confirmation |
 | Publish all configured new remote targets | `publish all` | `publishFabricAmper` aggregator, **not** Gradle's broader `publish` |
 
-For consumer operations, `-C "C:\path\to\consumer"` or `--project "C:\path\to\consumer"` generally appears **before** the command; `doctor` also accepts the project selector **after** its name or diagnostic option. For compatibility, a single extra `doctor` after a project selector is ignored. Relative project paths use the current working directory; without a selector the wrapper uses that directory as consumer root. A consumer wrapper requires one YAML, a settings script, and no `build.gradle(.kts)`/source `fabric.mod.json`; these preflight checks do not replace Gradle semantic validation. The launcher uses `FABRIC_AMPER_GRADLE`, a consumer `gradlew.bat`, `GRADLE_HOME`, `PATH` or a known cached compatible Gradle version. Run read-only `doctor` to diagnose; after it detects a missing required tool, preview and automatically run `doctor --fix` as described above, without a separate consent prompt. A child BAT/PowerShell process cannot change its parent's live environment: the fixer saves user settings and updates its own process only, and advises opening a new terminal if necessary.
+For normal consumer operations, `-C "C:\path\to\consumer"` or `--project "C:\path\to\consumer"` generally appears **before** the command. `migrate` and `doctor` also accept the project selector **after** their names; `migrate` requires it at most once. For `doctor` compatibility, a single extra `doctor` after a project selector is ignored. Relative project paths use the current working directory; without a selector the wrapper uses that directory as consumer root. Existing consumer commands require one YAML, a settings script, and no `build.gradle(.kts)`/source `fabric.mod.json`; **`migrate` is specifically for the opposite starting state** (one legacy build script and one source `fabric.mod.json`). These preflight checks do not replace Gradle semantic validation. The launcher uses `FABRIC_AMPER_GRADLE`, a consumer `gradlew.bat`, `GRADLE_HOME`, `PATH` or a known cached compatible Gradle version. Run read-only `doctor` to diagnose; after it detects a missing required tool, preview and automatically run `doctor --fix` as described above, without a separate consent prompt. A child BAT/PowerShell process cannot change its parent's live environment: the fixer saves user settings and updates its own process only, and advises opening a new terminal if necessary.
 
 **Remote publication protocol:** an explicit `publish maven|modrinth|curseforge|all` command shows the selected destination, asks the user to type exact `PUBLISH`, runs `validateFabricAmper build verifyFabricAmperJar`, then invokes the target task if validation succeeds. This confirmation is a second safeguard, **not** permission for an AI agent to initiate release tasks without the user's own explicit intent. Do not use `publish all` as a replacement for testing YAML or assume multi-platform uploads are transactional. `publish local` has no remote confirmation because it writes into the consumer's build directory; it still must be intentional. See [the human Windows quick guide](HUMAN_QuickGuide.md) and the detailed publishing section above.
 

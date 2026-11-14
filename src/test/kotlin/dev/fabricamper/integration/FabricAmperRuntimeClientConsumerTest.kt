@@ -266,10 +266,10 @@ class FabricAmperRuntimeClientConsumerTest {
         val published = buildRoot.resolve("g29-probe/maven-repo").toRealPath()
         require(published.startsWith(buildRoot)) { "The published plugin repo must stay inside build/" }
         val marker = published.resolve(
-            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.1.1/" +
-                "dev.fabric-amper.settings.gradle.plugin-0.1.1.pom",
+            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.1.3/" +
+                "dev.fabric-amper.settings.gradle.plugin-0.1.3.pom",
         )
-        val moduleJar = published.resolve("dev/fabricamper/fabric-amper/0.1.1/fabric-amper-0.1.1.jar")
+        val moduleJar = published.resolve("dev/fabricamper/fabric-amper/0.1.3/fabric-amper-0.1.3.jar")
         require(Files.isRegularFile(marker) && Files.isRegularFile(moduleJar)) {
             "Prime must first publish the existing G29 local marker, POM and plugin JAR; no substitute or remote publish"
         }
@@ -283,7 +283,7 @@ class FabricAmperRuntimeClientConsumerTest {
                     mavenCentral()
                 }
             }
-            plugins { id("dev.fabric-amper.settings") version "0.1.1" }
+            plugins { id("dev.fabric-amper.settings") version "0.1.3" }
         """.trimIndent() + "\n")
         val yaml = TestKitFixture(root).resource(resource)
         write(root, "mod.yaml", yaml)

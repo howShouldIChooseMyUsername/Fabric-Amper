@@ -5,9 +5,10 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.2"
-rem Verified SHA-256 of the v0.1.2 GitHub Release doctor helper.
-rem Update this checksum alongside the script when publishing a new version.
+set "FA_VERSION=0.1.3"
+set "FA_MIGRATE_PROJECT_PREFIX=0"
+rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
+rem helper bytes change; releases must publish the matching verified script.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
 
 if /i "%~1"=="-C" goto :projectOption
@@ -21,6 +22,7 @@ if "%~2"=="" (
 )
 set "FA_CONSUMER=%~f2"
 set "FA_DOCTOR_PROJECT_SEEN=1"
+set "FA_MIGRATE_PROJECT_PREFIX=1"
 shift
 shift
 
@@ -30,6 +32,7 @@ if /i "%~1"=="--help" goto :help
 if /i "%~1"=="/?" goto :help
 if /i "%~1"=="version" goto :version
 if /i "%~1"=="doctor" goto :doctor
+if /i "%~1"=="migrate" goto :migrate
 if /i "%~1"=="docs" goto :docs
 if /i "%~1"=="init" goto :init
 if /i "%~1"=="tasks" goto :tasks
@@ -57,6 +60,9 @@ echo Usage:
 echo   fabric-amper.bat help
 echo   fabric-amper.bat doctor [-C consumer_folder] [--full^|--paths^|--fix [--dry-run]]
 echo   fabric-amper.bat doctor -C consumer_folder doctor
+echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
+echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
+echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
 echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
@@ -71,6 +77,9 @@ echo   diagnose    Gradle fabricAmperDoctor for the consumer
 echo   explain     Gradle fabricAmperExplain dependency report
 echo   plan        Gradle fabricAmperReleasePlan local release preview
 echo   port ^<target_version^>  Gradle fabricAmperPortingReport (e.g. 26.3)
+echo   migrate     Convert an existing Gradle Fabric mod to settings + mod.yaml
+echo               Use --dry-run to preview; -D/--delete removes originals only
+echo               after the migration helper validates all generated outputs.
 echo   clean       Gradle clean
 echo   run         Gradle runClient in the consumer development directory
 echo   server      Gradle runServer; user must review the Minecraft EULA
@@ -89,7 +98,7 @@ echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
-echo Generated Settings projects resolve Fabric Amper v0.1.2 from JitPack.
+echo Generated Settings projects resolve Fabric Amper v0.1.3 from JitPack.
 echo Use --project or -C before consumer commands; doctor also accepts them after its name.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -108,6 +117,79 @@ echo Human manual: "%FA_ROOT%HUMAN.md"
 echo Compact skill: "%FA_ROOT%FabricAmperSKILL_SYN.md"
 echo Full skill: "%FA_ROOT%FabricAmperSKILL.md"
 exit /b 0
+
+:migrate
+rem The dedicated migration script performs all reads, conversion, validation
+rem and optional original-file deletion. BAT only parses arguments and routes;
+rem neither Gradle nor any Gradle DSL is executed here.
+set "FA_MIGRATE_PROJECT_SEEN=%FA_MIGRATE_PROJECT_PREFIX%"
+set "FA_MIGRATE_DELETE=0"
+set "FA_MIGRATE_DRY_RUN=0"
+shift
+:migrateOptions
+if "%~1"=="" goto :migrateOptionsDone
+if /i "%~1"=="-C" goto :migrateProjectOption
+if /i "%~1"=="--project" goto :migrateProjectOption
+if /i "%~1"=="-D" goto :migrateFlagDelete
+if /i "%~1"=="--delete" goto :migrateFlagDelete
+if /i "%~1"=="--dry-run" goto :migrateFlagDryRun
+echo ERROR: Unknown migrate argument "%~1". Use -C, -D, --delete or --dry-run.
+exit /b 2
+
+:migrateProjectOption
+if "%FA_MIGRATE_PROJECT_SEEN%"=="1" goto :migrateDuplicateOption
+if "%~2"=="" goto :migrateMissingProject
+if /i "%~2"=="-C" goto :migrateMissingProject
+if /i "%~2"=="--project" goto :migrateMissingProject
+if /i "%~2"=="-D" goto :migrateMissingProject
+if /i "%~2"=="--delete" goto :migrateMissingProject
+if /i "%~2"=="--dry-run" goto :migrateMissingProject
+set "FA_CONSUMER=%~f2"
+set "FA_MIGRATE_PROJECT_SEEN=1"
+shift
+shift
+goto :migrateOptions
+
+:migrateMissingProject
+echo ERROR: migrate -C/--project requires a consumer directory path.
+exit /b 2
+
+:migrateFlagDelete
+if "%FA_MIGRATE_DELETE%"=="1" goto :migrateDuplicateOption
+set "FA_MIGRATE_DELETE=1"
+shift
+goto :migrateOptions
+
+:migrateFlagDryRun
+if "%FA_MIGRATE_DRY_RUN%"=="1" goto :migrateDuplicateOption
+set "FA_MIGRATE_DRY_RUN=1"
+shift
+goto :migrateOptions
+
+:migrateDuplicateOption
+echo ERROR: Duplicate migrate arguments or conflicting consumer directories.
+exit /b 2
+
+:migrateOptionsDone
+if not exist "%FA_CONSUMER%\" (
+    echo ERROR: Migration consumer directory does not exist: "%FA_CONSUMER%".
+    exit /b 2
+)
+if not exist "%FA_ROOT%fabric-amper-migrate.ps1" (
+    echo ERROR: Missing fabric-amper-migrate.ps1 beside fabric-amper.bat.
+    echo        Copy the matching v%FA_VERSION% migration script next to this BAT.
+    exit /b 1
+)
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Windows PowerShell is required for migration.
+    exit /b 1
+)
+set "FA_MIGRATE_ARGS="
+if "%FA_MIGRATE_DELETE%"=="1" set "FA_MIGRATE_ARGS=-Delete"
+if "%FA_MIGRATE_DRY_RUN%"=="1" set "FA_MIGRATE_ARGS=%FA_MIGRATE_ARGS% -Preview"
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-migrate.ps1" %FA_MIGRATE_ARGS%
+exit /b %errorlevel%
 
 :doctor
 rem Parse doctor options in any order; support -C both before and after doctor.
@@ -194,7 +276,7 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3
 echo [INFO] Remote JitPack availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
@@ -447,13 +529,13 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
 >> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
->> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
 >> "%FA_TARGET%\settings.gradle.kts" echo(            }
 >> "%FA_TARGET%\settings.gradle.kts" echo(        }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.2"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.3"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 rem New projects default to a Java-only Minecraft 26.3 fixture.
@@ -499,7 +581,7 @@ echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Settings plugin: JitPack Fabric-Amper v0.1.2 ^(Internet required on first resolution^).
+echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.
 exit /b 0
 
