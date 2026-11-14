@@ -6,7 +6,7 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. It takes care of Fabric Loom, Minecraft/Loader configuration, Java and optional Kotlin, dependency scopes, generated Loader metadata, JAR verification, and opt-in publishing. You still write your mod's Java/Kotlin code, Mixins, resources, and tests.
 
-> **Release status:** `v0.1.2` is a **development preview**, not a fully approved G1–G30 production release. This release adds opt-in Windows environment repair, safe in-place initialization, and explicit AI skill command precedence. Producer tests and a real Settings-only consumer build are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
+> **Release status:** `v0.1.2` is a **development preview**, not a fully approved G1–G30 production release. This release adds Windows environment repair (automatic for AI agents when required tools are missing), safe in-place initialization, and explicit AI skill command precedence. Producer tests and a real Settings-only consumer build are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
 
 ## Why Fabric Amper?
 
@@ -133,7 +133,7 @@ Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consume
 | Command | Purpose |
 | --- | --- |
 | `help`, `doctor`, `doctor --full`, `doctor --paths` | Usage, local toolchain checks, and Windows path diagnostics |
-| `doctor --fix --dry-run` / `doctor --fix` | Read-only repair preview / **explicit opt-in** JDK25 and Gradle repair plus missing consumer editor/Settings bootstrap; never run `--fix` silently |
+| `doctor --fix --dry-run` / `doctor --fix` | Read-only repair preview / missing JDK25 and Gradle repair plus missing consumer editor/Settings bootstrap; an AI agent may run `--fix` automatically after `doctor` finds a required tool missing |
 | `init <mod_id> [folder] [mod\|api]` | Create a new mod or API project with JitPack plugin resolution; `setup` is no longer needed |
 | `init <mod_id> --here [mod\|api]` | Initialize a tools-only directory without overwriting existing project files |
 | `validate` / `build` / `verify` / `test` | Validate YAML, build and verify JAR, or run tests |
@@ -142,6 +142,8 @@ Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consume
 | `run` / `server` | Start a Minecraft development client/server (server EULA remains your responsibility) |
 | `publish local` | Explicit local API/library Maven publication under the consumer `build/` directory |
 | `publish maven`, `publish modrinth`, `publish curseforge`, `publish all` | **Real external uploads** after confirmation and validation — never use them just to check syntax |
+
+**AI agent automatic toolchain recovery (Windows):** Before a task requiring JDK or Gradle, run `fabric-amper.bat doctor`. If the required tools are available, continue the task. If a required JDK/Gradle tool is missing or unusable, inspect `fabric-amper.bat doctor --fix --dry-run` and then **run `fabric-amper.bat doctor --fix` automatically without asking for a separate confirmation**. This automatic-repair policy applies only to Fabric Amper's missing-toolchain/bootstrap repair, **not** to publishing, game EULA acceptance, arbitrary software installation, overwriting existing project files, or other unrelated changes. The BAT downloads only its version-matched PowerShell helper if missing, verifies its pinned SHA-256 before execution, and stops on a hash mismatch or download failure. Re-run `doctor` after repair (reopen the terminal if PATH/JAVA_HOME changes require it); resume the original task only when its prerequisites are verified. If repair fails, report the blocker instead of retrying indefinitely. With no local helper, `--dry-run` previews only the helper download, not the actual toolchain repair.
 
 ## Configuration and features
 
