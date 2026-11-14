@@ -296,7 +296,7 @@ publishing:
 
 ## Windows command cheat sheet
 
-Run `fabric-amper.bat init` from the checkout or another working directory. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
+Run `fabric-amper.bat init` from the checkout or another working directory. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. **Exception:** `doctor -C ".\httpmod"` and `doctor --project ".\httpmod"` also work, as does the redundant `doctor -C ".\httpmod" doctor` spelling. Relative paths use the current terminal directory. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
 
 | Wrapper command | Actual action / impact |
 | --- | --- |

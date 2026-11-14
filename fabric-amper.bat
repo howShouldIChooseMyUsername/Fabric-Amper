@@ -20,6 +20,7 @@ if "%~2"=="" (
     exit /b 2
 )
 set "FA_CONSUMER=%~f2"
+set "FA_DOCTOR_PROJECT_SEEN=1"
 shift
 shift
 
@@ -54,7 +55,8 @@ echo Fabric Amper %FA_VERSION% - Windows convenience wrapper
 echo.
 echo Usage:
 echo   fabric-amper.bat help
-echo   fabric-amper.bat doctor [--full^|--paths^|--fix [--dry-run]]
+echo   fabric-amper.bat doctor [-C consumer_folder] [--full^|--paths^|--fix [--dry-run]]
+echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
 echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
@@ -88,7 +90,7 @@ echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
 echo Generated Settings projects resolve Fabric Amper v0.1.2 from JitPack.
-echo Use --project or -C to run consumer commands from any directory.
+echo Use --project or -C before consumer commands; doctor also accepts them after its name.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
 
@@ -108,18 +110,86 @@ echo Full skill: "%FA_ROOT%FabricAmperSKILL.md"
 exit /b 0
 
 :doctor
-if /i "%~2"=="--fix" goto :doctorFix
+rem Parse doctor options in any order; support -C both before and after doctor.
+rem Accept one redundant trailing "doctor" when a project path was supplied,
+rem matching the common "doctor -C folder doctor" invocation.
 set "FA_DOCTOR_MODE=basic"
-if /i "%~2"=="--full" set "FA_DOCTOR_MODE=full"
-if /i "%~2"=="--paths" set "FA_DOCTOR_MODE=paths"
-if not "%~2"=="" if /i "%FA_DOCTOR_MODE%"=="basic" (
-    echo ERROR: Unknown doctor option "%~2". Use --full or --paths.
+set "FA_DOCTOR_FIX=0"
+set "FA_DOCTOR_DRY_RUN=0"
+set "FA_DOCTOR_REPEAT_SEEN=0"
+if not defined FA_DOCTOR_PROJECT_SEEN set "FA_DOCTOR_PROJECT_SEEN=0"
+shift
+:doctorOptions
+if "%~1"=="" goto :doctorOptionsDone
+if /i "%~1"=="-C" goto :doctorProjectOption
+if /i "%~1"=="--project" goto :doctorProjectOption
+if /i "%~1"=="--full" goto :doctorModeFull
+if /i "%~1"=="--paths" goto :doctorModePaths
+if /i "%~1"=="--fix" goto :doctorFlagFix
+if /i "%~1"=="--dry-run" goto :doctorFlagDryRun
+if /i "%~1"=="doctor" goto :doctorRepeatedCommand
+echo ERROR: Unknown doctor option "%~1". Use --full, --paths, --fix, --dry-run or -C.
+exit /b 2
+
+:doctorProjectOption
+if "%~2"=="" (
+    echo ERROR: -C or --project requires a consumer directory.
     exit /b 2
 )
-if not "%~3"=="" (
-    echo ERROR: doctor accepts at most one option: --full or --paths.
+if "%FA_DOCTOR_PROJECT_SEEN%"=="1" (
+    echo ERROR: doctor accepts only one -C or --project option.
     exit /b 2
 )
+set "FA_CONSUMER=%~f2"
+set "FA_DOCTOR_PROJECT_SEEN=1"
+shift
+shift
+goto :doctorOptions
+
+:doctorRepeatedCommand
+if not "%FA_DOCTOR_PROJECT_SEEN%"=="1" goto :doctorOptionConflict
+if "%FA_DOCTOR_REPEAT_SEEN%"=="1" goto :doctorOptionConflict
+set "FA_DOCTOR_REPEAT_SEEN=1"
+shift
+goto :doctorOptions
+
+:doctorModeFull
+if not "%FA_DOCTOR_MODE%"=="basic" goto :doctorOptionConflict
+if "%FA_DOCTOR_FIX%"=="1" goto :doctorOptionConflict
+set "FA_DOCTOR_MODE=full"
+shift
+goto :doctorOptions
+
+:doctorModePaths
+if not "%FA_DOCTOR_MODE%"=="basic" goto :doctorOptionConflict
+if "%FA_DOCTOR_FIX%"=="1" goto :doctorOptionConflict
+set "FA_DOCTOR_MODE=paths"
+shift
+goto :doctorOptions
+
+:doctorFlagFix
+if "%FA_DOCTOR_FIX%"=="1" goto :doctorOptionConflict
+if not "%FA_DOCTOR_MODE%"=="basic" goto :doctorOptionConflict
+set "FA_DOCTOR_FIX=1"
+shift
+goto :doctorOptions
+
+:doctorFlagDryRun
+if "%FA_DOCTOR_DRY_RUN%"=="1" goto :doctorOptionConflict
+set "FA_DOCTOR_DRY_RUN=1"
+shift
+goto :doctorOptions
+
+:doctorOptionConflict
+echo ERROR: Conflicting or duplicate doctor arguments.
+exit /b 2
+
+:doctorOptionsDone
+if "%FA_DOCTOR_DRY_RUN%"=="1" if not "%FA_DOCTOR_FIX%"=="1" (
+    echo ERROR: --dry-run requires doctor --fix.
+    exit /b 2
+)
+if "%FA_DOCTOR_FIX%"=="1" goto :doctorFix
 echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
@@ -161,20 +231,12 @@ if "%FA_DOCTOR_ERROR%"=="1" exit /b 1
 exit /b 0
 
 :doctorFix
-if not "%~4"=="" (
-    echo ERROR: doctor --fix accepts at most --dry-run.
-    exit /b 2
-)
-if not "%~3"=="" if /i not "%~3"=="--dry-run" (
-    echo ERROR: doctor --fix accepts only the optional --dry-run flag.
-    exit /b 2
-)
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required for opt-in repair.
     exit /b 1
 )
-if /i "%~3"=="--dry-run" goto :doctorFixPreview
+if "%FA_DOCTOR_DRY_RUN%"=="1" goto :doctorFixPreview
 if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
     call :doctorFetchHelper
     if errorlevel 1 exit /b 1

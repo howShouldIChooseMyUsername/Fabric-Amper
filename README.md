@@ -128,7 +128,7 @@ For an **optional local binary distribution**, extract the Maven repository ZIP 
 
 ## Everyday commands
 
-Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consumer"` before the command. If its directory is not on your `PATH`, call the script with its full path.
+Run `fabric-amper.bat` from the consumer folder, or pass `-C "C:\path\to\consumer"` before the command. **For `doctor` only**, `-C` / `--project` may also follow the command: `fabric-amper.bat doctor -C ".\httpmod"`. The redundant trailing `doctor` in `doctor -C ".\httpmod" doctor` is accepted for compatibility. Relative paths are resolved from the **current terminal directory**, not the BAT location. If its directory is not on your `PATH`, call the script with its full path.
 
 | Command | Purpose |
 | --- | --- |
