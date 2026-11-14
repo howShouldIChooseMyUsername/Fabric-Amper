@@ -39,6 +39,17 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(Regex("(?m)^schema:").containsMatchIn(yaml), "init must not pin schema: 1")
             assertArrayEquals(originalSchema, Files.readAllBytes(consumer.resolve("schemas/mod.schema.json")))
             assertTrue(Files.isRegularFile(consumer.resolve("settings.gradle.kts")))
+            val settings = Files.readString(consumer.resolve("settings.gradle.kts"), StandardCharsets.UTF_8)
+            assertTrue(settings.contains("maven(\"https://jitpack.io\")"))
+            assertTrue(settings.contains("maven(\"https://maven.fabricmc.net/\")"))
+            assertTrue(settings.contains("gradlePluginPortal()"))
+            assertTrue(settings.contains("mavenCentral()"))
+            assertTrue(settings.contains("resolutionStrategy {"))
+            assertTrue(settings.contains("if (requested.id.id == \"dev.fabric-amper.settings\") {"))
+            assertTrue(settings.contains("useModule(\"com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1\")"))
+            assertTrue(settings.contains("id(\"dev.fabric-amper.settings\") version \"0.1.1\""))
+            assertFalse(settings.contains("build/g29-probe"), "init must not rely on local Maven setup")
+            assertFalse(settings.contains("https://fabricmc.net\""), "Fabric Maven requires maven.fabricmc.net")
             assertTrue(Files.isRegularFile(consumer.resolve("src/main/java/org/example/ExampleMod.java")))
             assertFalse(Files.exists(consumer.resolve("build.gradle")))
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
@@ -49,10 +60,21 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals(yaml, Files.readString(yamlFile, StandardCharsets.UTF_8))
             assertArrayEquals(originalSchema, Files.readAllBytes(consumer.resolve("schemas/mod.schema.json")))
         }
+
+        val removedSetup = runBat(batch, "setup")
+        assertEquals(2, removedSetup.first, "setup must no longer run a producer publication")
+        assertTrue(removedSetup.second.contains("Unknown command"))
+        val help = runBat(batch, "help")
+        assertEquals(0, help.first)
+        assertFalse(Regex("(?m)^\\s*fabric-amper\\.bat setup\\s*$").containsMatchIn(help.second))
     }
 
     private fun runInit(batch: Path, id: String, target: Path, profile: String): Pair<Int, String> {
-        val command = "\"$batch\" init $id \"$target\" $profile"
+        return runBat(batch, "init $id \"$target\" $profile")
+    }
+
+    private fun runBat(batch: Path, args: String): Pair<Int, String> {
+        val command = "\"$batch\" $args"
         val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
             .directory(batch.parent.toFile())
             .redirectErrorStream(true)

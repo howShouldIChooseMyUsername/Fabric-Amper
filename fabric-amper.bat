@@ -5,7 +5,7 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.0"
+set "FA_VERSION=0.1.1"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -27,7 +27,6 @@ if /i "%~1"=="/?" goto :help
 if /i "%~1"=="version" goto :version
 if /i "%~1"=="doctor" goto :doctor
 if /i "%~1"=="docs" goto :docs
-if /i "%~1"=="setup" goto :setup
 if /i "%~1"=="init" goto :init
 if /i "%~1"=="tasks" goto :tasks
 if /i "%~1"=="diagnose" goto :diagnose
@@ -53,7 +52,6 @@ echo.
 echo Usage:
 echo   fabric-amper.bat help
 echo   fabric-amper.bat doctor [--full^|--paths]
-echo   fabric-amper.bat setup
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
@@ -75,11 +73,12 @@ echo               Only remote targets ask for typed confirmation.
 echo.
 echo Other commands: docs, version.
 echo   doctor             Check local Java and Gradle availability.
-echo   doctor --full      Also inspect JDK hints, Windows paths and plugin marker.
-echo   doctor --paths     Inspect local path lengths and marker without Gradle.
+echo   doctor --full      Also inspect JDK hints and Windows paths.
+echo   doctor --paths     Inspect local path lengths without running Gradle.
 echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
+echo Generated Settings projects resolve Fabric Amper v0.1.1 from JitPack.
 echo Use --project or -C to run consumer commands from any directory.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -115,7 +114,8 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-call :doctorMarker
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1
+echo [INFO] Remote JitPack availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
 if /i "%FA_DOCTOR_MODE%"=="paths" (
@@ -148,21 +148,6 @@ if /i "%FA_GRADLE_LEAF%"=="gradlew.bat" (
     if errorlevel 1 exit /b 1
 )
 if "%FA_DOCTOR_ERROR%"=="1" exit /b 1
-exit /b 0
-
-:doctorMarker
-set "FA_MARKER_REPO=%FA_ROOT%build\g29-probe\maven-repo"
-set "FA_SETTINGS_MARKER=%FA_MARKER_REPO%\dev\fabric-amper\settings\dev.fabric-amper.settings.gradle.plugin\%FA_VERSION%\dev.fabric-amper.settings.gradle.plugin-%FA_VERSION%.pom"
-if exist "%FA_MARKER_REPO%\" (
-    echo [OK] Producer local plugin Maven repository exists.
-) else (
-    echo [INFO] Local plugin Maven repository not found. Run setup if using local init.
-)
-if exist "%FA_SETTINGS_MARKER%" (
-    echo [OK] Local settings-plugin marker POM exists for version %FA_VERSION%.
-) else (
-    echo [INFO] Settings-plugin marker POM for %FA_VERSION% is missing; run setup if using local init.
-)
 exit /b 0
 
 :doctorToolchains
@@ -222,25 +207,6 @@ powershell.exe -NoProfile -NonInteractive -Command "$found=$false; foreach($line
 if errorlevel 1 echo [INFO] Could not read Wrapper version; no Wrapper run attempted.
 exit /b 0
 
-:setup
-echo [setup] Publishing producer plugin/markers to build\g29-probe\maven-repo ONLY.
-pushd "%FA_ROOT%" || exit /b 1
-call :resolveGradle
-if errorlevel 1 (
-    popd
-    exit /b 1
-)
-call "%FA_GRADLE%" publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true
-set "FA_RESULT=%errorlevel%"
-popd
-if not "%FA_RESULT%"=="0" exit /b %FA_RESULT%
-if not exist "%FA_ROOT%build\g29-probe\maven-repo\" (
-    echo ERROR: Gradle exited successfully but the local repository is missing.
-    exit /b 1
-)
-echo [setup] Local repository ready: "%FA_ROOT%build\g29-probe\maven-repo"
-exit /b 0
-
 :init
 if "%~2"=="" (
     echo ERROR: init requires a lowercase Fabric mod ID.
@@ -296,20 +262,25 @@ if errorlevel 1 (
     echo ERROR: Cannot create target: "%FA_TARGET%"
     exit /b 1
 )
-set "FA_REPO_FILE=%FA_ROOT%build\g29-probe\maven-repo"
-set "FA_REPO_FILE=%FA_REPO_FILE:\=/%"
-
-rem Gradle plugin bootstrap. Absolute path avoids sibling-only assumptions.
+rem GitHub JitPack module provides the Settings plugin without a local setup.
+rem Keep the GitHub owner spelling and tagged artifact version exact.
 > "%FA_TARGET%\settings.gradle.kts" echo(pluginManagement {
 >> "%FA_TARGET%\settings.gradle.kts" echo(    repositories {
->> "%FA_TARGET%\settings.gradle.kts" echo(        maven { url = uri(file("%FA_REPO_FILE%")) }
+>> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://jitpack.io")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.fabricmc.net/")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        gradlePluginPortal()
 >> "%FA_TARGET%\settings.gradle.kts" echo(        mavenCentral()
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
+>> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
+>> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
+>> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+>> "%FA_TARGET%\settings.gradle.kts" echo(            }
+>> "%FA_TARGET%\settings.gradle.kts" echo(        }
+>> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.0"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.1"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 rem New projects default to a Java-only Minecraft 26.3 fixture.
@@ -354,8 +325,8 @@ if not exist "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" exit /b 1
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Next: run setup if necessary, then cd to the new folder and run build.
-if not exist "%FA_ROOT%build\g29-probe\maven-repo\" echo [init] NOTE: The local producer plugin repository is absent; setup is required.
+echo [init] Settings plugin: JitPack Fabric-Amper v0.1.1 ^(Internet required on first resolution^).
+echo [init] Next: cd to the new folder and run build.
 exit /b 0
 
 :tasks

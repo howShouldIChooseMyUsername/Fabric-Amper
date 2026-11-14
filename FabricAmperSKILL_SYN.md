@@ -21,7 +21,7 @@ This file is a **custom root AI guide**; its filename is not the standardized au
 - `mod.environment` is Loader's whole-mod side; `dependencies[].target` is a Gradle dependency source set. `dependencies` ≠ `mod.depends` ≠ `publish.modrinth.dependencies`.
 - Only real fixed published dependency versions, verified Loader IDs, known Maven repositories and real Modrinth/CurseForge project IDs. No secrets or source-path escapes. Do not change an unrelated user's dependency or generated file.
 - **Do not publish without explicit authorization.** `help`/`build`/`test` are not remote uploads; publish tasks are. Do not auto-accept EULA or use personal Minecraft worlds. Never claim a successful build proves GUI/runtime/remote publishing.
-- Project `0.1.0` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
+- Project `0.1.1` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
 
 ## Fast intent → YAML / file / check
 
@@ -117,21 +117,28 @@ publish:
 
 ## Two complete starter files (copy only for a new consumer)
 
-`settings.gradle.kts` (the producer is a sibling folder named `Fabric Amper`):
+`settings.gradle.kts` (JitPack-tagged bootstrap, no local producer Maven repository):
 
 ```kotlin
 pluginManagement {
     repositories {
-        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+            }
+        }
+    }
 }
-plugins { id("dev.fabric-amper.settings") version "0.1.0" }
+plugins { id("dev.fabric-amper.settings") version "0.1.1" }
 ```
 
-Before creating the consumer, publish the **producer plugin locally** with `gradle publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true`. It is not published on the public Plugin Portal.
+The Git tag in the JitPack module is `v0.1.1` and the Gradle plugin request is `0.1.1`. The removed `fabric-amper.bat setup` command is not needed. Check that JitPack **actually serves** the tagged module before claiming the generated project builds; it is not published on the public Plugin Portal.
 
 `mod.yaml` (complete **Java-only** sample; create `src/main/java/org/example/ExampleMod.java` with an actual `ModInitializer`):
 
@@ -167,9 +174,8 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat). This is a **W
 
 | Intent | Command / action | Boundary |
 | --- | --- | --- |
-| Show usage / installed tools | `fabric-amper.bat help` / `doctor` / `docs` / `version` | `doctor` checks Java/Gradle + producer-local repo |
-| Additional local environment diagnosis | `doctor --full` / `doctor --paths` | Windows path/JDK/marker hints; `--paths` does not execute Gradle |
-| Make plugin available locally | `fabric-amper.bat setup` | In **producer**: Gradle `publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true`, local output only |
+| Show usage / installed tools | `fabric-amper.bat help` / `doctor` / `docs` / `version` | `doctor` checks Java/Gradle; it **does not** connect to JitPack |
+| Additional local environment diagnosis | `doctor --full` / `doctor --paths` | Windows path/JDK hints; `--paths` does not execute Gradle |
 | Start new Java mod | `fabric-amper.bat init example_mod` | New folder with Settings/YAML/Java source; never overwrite |
 | Start new API project | `fabric-amper.bat init example_api "C:\work\example_api" api` | `fabric/api` and example `org.example` group; must customize |
 | Select an existing consumer | `"C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build` | `-C` / `--project` **before** subcommand; default consumer = current directory |

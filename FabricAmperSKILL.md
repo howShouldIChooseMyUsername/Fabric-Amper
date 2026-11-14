@@ -99,26 +99,33 @@ The **next table is the decision index**, not a substitute for the runnable reci
 
 ## Complete starter files: Java-only Minecraft 26.3
 
-This is the **standalone, structurally valid baseline**, not a fragment. Use real source files and an accessible plugin marker repository; the local path here assumes the consumer is a sibling of the plugin producer named `Fabric Amper`.
+This is the **standalone, structurally valid baseline**, not a fragment. Use real source files and an available tagged JitPack module. A `plugins` block alone does not resolve the plugin from the Gradle Plugin Portal.
 
 **Consumer `settings.gradle.kts`**:
 
 ```kotlin
 pluginManagement {
     repositories {
-        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+            }
+        }
+    }
 }
 
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.0"
+    id("dev.fabric-amper.settings") version "0.1.1"
 }
 ```
 
-The example repository is made **in the producer**, not the consumer, by explicitly running `gradle publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true`. This is a *local plugin marker repository*, not a public Plugin Portal release. Do not blindly paste the relative path if the folders are arranged differently. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
+The Settings plugin is redirected to JitPack using the GitHub tag `v0.1.1`, while the public plugin ID is requested with version `0.1.1`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check JitPack's actual tagged-module availability before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
 
 **Consumer `mod.yaml`**:
 
@@ -786,7 +793,6 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat), a **Windows C
 ```bat
 rem Run inside the Fabric Amper producer directory.
 fabric-amper.bat doctor
-fabric-amper.bat setup
 fabric-amper.bat init example_mod
 fabric-amper.bat init example_api "C:\work\example_api" api
 
@@ -794,12 +800,11 @@ rem Call from any other directory; provide full script path and consumer root.
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build
 ```
 
-`setup` invokes `publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true` in the producer and writes to `build/g29-probe/maven-repo` **locally**, not to the Gradle Plugin Portal. `init <id> [new_folder] [mod|api]` creates only a **new** target folder with `settings.gradle.kts`, `mod.yaml` and a real Java `ExampleMod.java`; it refuses an existing destination. Default placement is a sibling of the producer when launched from there or a child of the current working directory elsewhere. The generated Settings script points to the producer's **absolute** local plugin repository; relocation requires fixing that URI. The API profile uses a placeholder `org.example` group that the developer must replace.
+`init <id> [new_folder] [mod|api]` creates only a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, and a real Java `ExampleMod.java`; it refuses an existing destination. Default placement is a sibling of the checkout when launched from there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group that the developer must replace.
 
 | User intent | Wrapper command | Actual effect |
 | --- | --- | --- |
 | Inspect usage/setup | `help`, `version`, `docs`, `doctor`, `doctor --full`, `doctor --paths` | Local toolchain and optional path/JDK checks; no global cache deletion |
-| Locally supply plugin marker | `setup` | Producer local Maven marker/binary publication |
 | Generate a new mod or API | `init <id> [folder] [mod|api]` | New starter only; no overwrite; no `build.gradle` or authored `fabric.mod.json` |
 | List/test/validate | `tasks`, `test`, `validate`, `verify` | `tasks --all` / `test` / `validateFabricAmper` / `verifyFabricAmperJar` |
 | Diagnose the consumer | `diagnose` / `explain` | `fabricAmperDoctor` toolchain summary / `fabricAmperExplain` independent dependency categories, no network lookups |

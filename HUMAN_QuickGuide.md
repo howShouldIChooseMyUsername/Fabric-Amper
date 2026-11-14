@@ -2,7 +2,7 @@
 
 **A five-minute Quick Start and a feature-by-feature cheat sheet, in one place.** This guide is for Windows developers who want to start a Fabric mod immediately and then look up YAML keys or commands without reading the entire manual. For complete explanations, see [the Human Guide](HUMAN.md); for exact YAML types, see [the schema](fabric-amper.schema.json).
 
-> **Status:** Fabric Amper `0.1.0` is a locally tested **development** Gradle plugin, not a confirmed public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. Consult [QA_REPORT.md](QA_REPORT.md) for the verification boundaries. Commands that build or inspect locally are not proof of a working Minecraft runtime, IntelliJ GUI Sync, or a successful external release.
+> **Status:** Fabric Amper `0.1.1` is a **development preview** Gradle plugin, not a public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. See [QA_REPORT.md](QA_REPORT.md) for earlier verification evidence and limitations. No new test run is claimed for the `v0.1.1` packaging update.
 
 ## Contents
 
@@ -21,13 +21,12 @@
 
 ```bat
 fabric-amper.bat doctor
-fabric-amper.bat setup
 fabric-amper.bat init quick_mod
 cd ..\quick_mod
 "..\Fabric Amper\fabric-amper.bat" build
 ```
 
-**What happened?** `doctor` checks local Java/Gradle and the plugin marker; `setup` publishes the plugin binary **and Gradle plugin markers only to this producer's** `build/g29-probe/maven-repo/` (it does not publish to the Internet); `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the producer's current schema, and a Java source file; `build` validates, builds and checks the JAR. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` so compatible YAML editors can provide schema-based suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` somewhere other than the producer folder, it creates the new project under your current directory instead.
+**What happened?** `doctor` checks local Java/Gradle without contacting JitPack. `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the checkout's schema, and a Java source file; the Settings script resolves `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` from **JitPack**, not a local producer Maven repository. `build` validates, builds and checks the JAR. Internet access is required on the first uncached plugin/dependency resolution. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` outside the checkout folder, it creates the new project under your current directory instead.
 
 Useful follow-ups from inside `quick_mod`:
 
@@ -48,13 +47,10 @@ Useful follow-ups from inside `quick_mod`:
 
 ## Minimal project: copy and run
 
-Skip this section if you used `init`; it already created the three authored files **and** the local schema file for editor completion. For a **manual** consumer, create the following structure as a **sibling** of the producer:
+Skip this section if you used `init`; it already created the three authored files **and** the local schema file for editor completion. For a **manual** consumer, create the following structure (copy the editor schema from the Fabric Amper checkout):
 
 ```text
-parent/
-├── Fabric Amper/
-│   └── build/g29-probe/maven-repo/       (from setup)
-└── quick_mod/
+quick_mod/
     ├── settings.gradle.kts
     ├── mod.yaml
     ├── schemas/mod.schema.json              (copy from producer)
@@ -66,18 +62,25 @@ parent/
 ```kotlin
 pluginManagement {
     repositories {
-        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")
+            }
+        }
+    }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.0"
+    id("dev.fabric-amper.settings") version "0.1.1"
 }
 ```
 
-The relative Maven repository path above is correct **only for this sibling layout**. Change it if the producer/consumer directories differ; `init` writes the producer's actual local path automatically. Do not apply `dev.fabric-amper.project` yourself.
+The `resolutionStrategy` redirects only the public Settings plugin ID to the tagged JitPack module. The `plugins` version is `0.1.1`, while the Git tag in the JitPack coordinate is `v0.1.1`. Do not apply `dev.fabric-amper.project` yourself. Unlike the previous local-bootstrap workflow, **no `setup` command is needed**.
 
 **`mod.yaml`** — a complete, Java-only Minecraft 26.3 example (the optional `schema: 1` is intentionally omitted). The first-line editor directive refers to a file that must exist:
 
@@ -291,14 +294,13 @@ publishing:
 
 ## Windows command cheat sheet
 
-Run `fabric-amper.bat` in the **producer** for `setup` / `init`. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
+Run `fabric-amper.bat init` from the checkout or another working directory. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
 
 | Wrapper command | Actual action / impact |
 | --- | --- |
 | `help` / `docs` / `version` | Show usage, documentation locations or launcher version |
-| `doctor` | Check available Java/Gradle and local plugin marker; no cache cleanup |
+| `doctor` | Check available Java/Gradle and report the JitPack coordinate, without contacting the network or clearing caches |
 | `doctor --paths` / `--full` | Estimate Windows path risks; `--full` also prints JDK/toolchain hints |
-| `setup` | Publish producer plugin and markers to its **local** `build/g29-probe/maven-repo/` |
 | `init <mod_id> [folder] [mod\|api]` | Create a **new** settings-only Java consumer; never overwrite an existing folder |
 | `tasks` | `gradle tasks --all` in the consumer |
 | `validate` | `gradle validateFabricAmper` |
@@ -319,7 +321,7 @@ The wrapper performs its own preflight checks for a missing or duplicated YAML, 
 
 | Symptom | Fast check |
 | --- | --- |
-| Settings plugin or marker not found | Run producer `setup`; check the local Maven `pluginManagement.repositories` URI and producer location |
+| Settings plugin not found | Check the JitPack tag and coordinate in `pluginManagement.resolutionStrategy`, Internet access, JitPack build status, Gradle/JDK compatibility and repository availability |
 | Missing/duplicate YAML (`FA001` / `FA002`) | Use exactly one `mod.yaml` or `mod.yml`; check UTF-8, aliases and duplicate keys |
 | Invalid field, fixed version or publish URL (`FA003`) | Check [Draft-07 schema](fabric-amper.schema.json) and the project's strict Kotlin validator |
 | Minecraft mapping / Java / Kotlin (`FA004`–`FA006`) | For 26.3 use Mojang mappings, Java **25**, pinned optional Kotlin versions |

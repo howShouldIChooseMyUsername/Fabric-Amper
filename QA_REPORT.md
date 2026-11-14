@@ -1408,3 +1408,52 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 - `python analysis/schema-contract-2026-11-14/verify.py`: **EXIT0**, Draft-07/54 positive-negative/스키마 예제 3/매뉴얼 완전 YAML 12 PASS. `fabric-amper.bat` **560 CRLF 줄/0 bare LF** 보존. 수정 bat 22,758 bytes, SHA-256 `27936da15e2dbb72aa14c993b4292b92d97f7a8ef29f4cb2e0fad6e93cad9a15`.
 
 **범위:** 현재 플러그인의 실제 스키마 v1 및 init 기본 Minecraft 26.3 프로필에서 검증했다. 미래 **새로운 필수 YAML 필드, Gradle 플러그인 바이너리/버전 호환성**은 미래 릴리스에 맞게 init 구현과 producer schema 자체를 유지보수해야 한다. 이번 수정은 **schema 버전 고정 및 깨진 에디터 참조 문제를 해결**하지만, 무조건적인 미래 비호환 설정의 자동 변환 기능을 의미하지 않는다. 글로벌 캐시 삭제·원격 게시·실제 게임 실행은 하지 않았다. §29의 전체 출하 판정은 `NOT APPROVED`로 유지한다.
+
+---
+
+## 33. develop 전용 Windows init의 JitPack 전환 (2026-11-14)
+
+사용자 요구: 메인 브랜치를 **수정하지 않고 `develop`에서만** `fabric-amper.bat setup`을 제거하고, 새 `init` 소비자의 `settings.gradle.kts`가 **GitHub JitPack `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.0`** 을 `pluginManagement.resolutionStrategy.eachPlugin { useModule(...) }`로 사용하도록 변경. 단순 생성 여부뿐 아니라 실제 Gradle 초기화를 검사하며 **커밋·푸시 없이 검증까지만** 진행.
+
+**변경:**
+- `fabric-amper.bat`: `setup` 명령 분기·레이블·로컬 프로듀서 Maven bootstrap 및 관련 프롬프트 제거. `doctor`에서 producer 마커 유무를 JitPack 유무로 오인하지 않도록 로컬 마커 검사를 없애고 사용 좌표만 안내한다(원격 실시간 확인이라고 주장하지 않음).
+- `init`이 생성하는 Settings: `maven("https://jitpack.io")`, `maven("https://maven.fabricmc.net/")` (사용자 예시의 `https://fabricmc.net`이 아닌 **정확한 Fabric Maven**), `gradlePluginPortal()`, `mavenCentral()`; `resolutionStrategy.eachPlugin` 안에서 `dev.fabric-amper.settings` 요청에 `useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.0")` 사용. `plugins` 요청 ID/버전 `dev.fabric-amper.settings:0.1.0` 유지. GitHub 계정명은 원격 URL에 실제 표시되는 **`howShouldIChooseMyUsername`** 대소문자를 적용.
+- 이전 자동완성 첫 줄 `# yaml-language-server: $schema=./schemas/mod.schema.json`, 로컬 JSON Schema 복사, 스키마 필드 미작성 및 Java/API 프로필은 보존했다.
+- Windows 실제 생성 회귀 `FabricAmperInitSchemaUnitTest`에 JitPack 좌표·URL·pluginManagement mapping·기존 로컬 마커 경로 제거·`setup` 미지원 검증을 추가. 영어 `HUMAN_QuickGuide.md`, `HUMAN.md`와 두 AI 스킬 안내를 새 Settings 형식에 맞게 보완.
+
+**실행 결과:**
+- `git switch develop` 성공. 작업 시작 시 `develop=a44c889`, `main=9f87842` (사용자가 main에서 별도로 `jitpack.yml`을 추가한 이력)이며 `develop`에서만 위 파일을 수정했다. 태그 `v0.1.0`은 원격 main의 `9f87842`를 가리킨다.
+- `cmd /c fabric-amper.bat init jitpackprobe build\jitpack-init-probe-2026-11-14 mod`: **EXIT0**, 실제 생성된 `settings.gradle.kts` 18행의 URL/좌표/플러그인 조건문 모두 확인. YAML 편집기 주석/JSON schema 포함. `cmd /c fabric-amper.bat setup`: 예상한 **EXIT2 / Unknown command**, help에는 setup 미표시.
+- 실제 생성 프로젝트에서 Gradle 9.7.1 / JDK25 `help --no-daemon --no-build-cache --console=plain --refresh-dependencies`: **EXIT1 / BUILD FAILED in 1m 41s**, 요청 ID는 올바르게 `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.0`로 치환됐으나 모든 플러그인 저장소에서 해당 아티팩트 해석에 실패. 정확한 메시지: `could not resolve plugin artifact 'com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.0'`. 별도 HTTPS HEAD `https://jitpack.io/com/github/howShouldIChooseMyUsername/Fabric-Amper/v0.1.0/Fabric-Amper-v0.1.0.pom`은 15초 동안 0바이트 수신 후 **curl exit28 timeout**. 따라서 오류가 **태그 아티팩트 미게시·JitPack 서비스/프라이빗 캐시·현재 네트워크 제한 중 무엇 때문인지 확정 불가**. 태그만 생성했다고 실제 JitPack Maven 모듈 준비가 입증되지는 않는다. `build` 및 게임 런타임 **미검증**.
+- `test --tests dev.fabricamper.unit.FabricAmperInitSchemaUnitTest --tests dev.fabricamper.unit.FabricAmperDocumentationContractUnitTest --offline --no-daemon --no-build-cache --console=plain`: **EXIT0 / BUILD SUCCESSFUL in 32s**, 2개 suite 합계 **3 tests / 3 PASS / 0 FAIL / 0 ERROR / 0 SKIP**. 실제 Windows BAT mod/API init과 같은 대상 재실행 무덮어쓰기를 포함한다.
+- `python analysis/schema-contract-2026-11-14/verify.py`: **EXIT0**, Draft-07/54 fixture/3 schema examples/12 manual YAML fences PASS.
+
+**결론 및 제한:** 이 단계에서는 **Windows 명령 인터페이스와 JitPack 템플릿 생성은 PASS**, **실제 원격 플러그인 해석은 FAIL/원인 미확정**이므로 JitPack 기반 소비자 `help/build` 성공이라고 선언하지 않는다. JitPack의 태그 빌드 로그/해당 좌표 POM/JAR 접근성 및 공개 전환 직후의 캐시 상태를 확인하고 다시 실행해야 한다. `main` 수정, 새 태그·원격 게시, 삭제/전역 캐시 정리 없음. 전체 G1–G30 출하 판정은 여전히 **NOT APPROVED**.
+
+---
+
+## 34. JitPack 아티팩트 게시 완료 이후 실제 Settings 플러그인·mod/API 소비자 재검증 (2026-11-14)
+
+사용자가 JitPack 페이지의 `dependencyResolutionManagement { repositories { maven { url = uri("https://jitpack.io") } } }` 및 `implementation("com.github.howShouldIChooseMyUsername:Fabric-Amper:Tag")` 예시를 제시하며 재시험을 요청함. **그 예시는 일반 라이브러리 의존성용**이고 Fabric Amper의 `settings.gradle.kts`에서 사용하는 **Settings 플러그인의 `plugins {}` 해석용이 아님**. Gradle의 `pluginManagement.repositories` + `resolutionStrategy.eachPlugin { useModule(...) }` 방식은 유지했다. 이후 나온 실제 성공 결과가 **직전 §33의 일시적 JitPack 미해석 실패를 대체한다**. 이전 오류 기록은 원본 증거로 보존한다.
+
+**원격 게시 상태 확인:** JitPack API `https://jitpack.io/api/builds/com.github.howShouldIChooseMyUsername/Fabric-Amper/v0.1.0` 반환 `status=ok`, `version=v0.1.0`, `commit=9f87842329bf8a2d4b6c674b15b6191642e41421`, JDK 25, `private=false`, 모듈 `dev.fabric-amper.project.gradle.plugin`, `dev.fabric-amper.settings.gradle.plugin`, `fabric-amper`. `https://jitpack.io/com/github/howShouldIChooseMyUsername/Fabric-Amper/v0.1.0/Fabric-Amper-v0.1.0.pom` **HTTP 200**, 최상위 POM은 집합 모듈 의존성 `com.github.howShouldIChooseMyUsername.Fabric-Amper:fabric-amper:v0.1.0`을 참조함. 실제 구현 모듈 `.../Fabric-Amper/fabric-amper/v0.1.0/fabric-amper-v0.1.0.pom`, `.jar` **HTTP 200**이며 JAR **368,061 bytes**, POM은 Loom/Kotlin/SnakeYAML/Gson 런타임 의존성을 기록. 별도 JitPack `0.1.0` 경로도 HTTP 200이었지만 `init`은 기존 요구대로 Git 태그 **`v0.1.0`**을 고정한다. 네트워크가 응답한 이후 동일한 `useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.0")` 템플릿이 실제로 동작했으므로 아티팩트 집합/구현 모듈을 억지로 변경하지 않았다.
+
+**신규 실제 소비자 증거:**
+- 앞서 `init`으로 만들어진 `build/jitpack-init-probe-2026-11-14` (`fabric/mod`)의 **기존 생성 Settings를 수정하지 않고** Gradle **9.7.1/JDK25** `help --no-daemon --no-build-cache --console=plain --refresh-dependencies`: **EXIT0 / BUILD SUCCESSFUL in 28s**, Loom 1.17.21 적용. 이어 `validateFabricAmper build verifyFabricAmperJar`: **EXIT0 / BUILD SUCCESSFUL in 12s** (컴파일/메타데이터 생성/검증 포함). 실제 Windows 래퍼 `cmd /c ..\..\fabric-amper.bat build`도 **EXIT0 / BUILD SUCCESSFUL in 6s** (해당 래퍼가 캐시된 Gradle 9.9.1을 자동 선택했으며 빌드/검증 성공).
+- `cmd /c fabric-amper.bat init jitpacktestapi build\jitpack-api-probe-2026-11-14 api`: **EXIT0**, 별도 API 소비자 생성. 이 API 프로젝트에서 Gradle 9.7.1/JDK25 `help validateFabricAmper build verifyFabricAmperJar --no-daemon --no-build-cache --console=plain`: **EXIT0 / BUILD SUCCESSFUL in 10s**.
+- 두 소비자의 실제 배포 JAR (`jitpackprobe-1.0.0+26.3.jar`, `jitpacktestapi-1.0.0+26.3.jar`)을 ZIP으로 열어 root `fabric.mod.json`이 **정확히 1개**이고 YAML에서 생성한 정확한 ID/version(`jitpackprobe`, `jitpacktestapi`, `1.0.0+26.3`)을 보유하는 것까지 확인했다.
+- producer 선별 회귀 `test --tests dev.fabricamper.unit.FabricAmperInitSchemaUnitTest --tests dev.fabricamper.unit.FabricAmperDocumentationContractUnitTest --offline --no-daemon --no-build-cache --console=plain`: **EXIT0 / BUILD SUCCESSFUL in 32s**, Windows 실제 init 및 문서 단위 회귀. `main` 또는 JitPack에 재게시/변경은 전혀 하지 않음.
+
+**최종 판정:** 이 버전에서 `fabric-amper.bat init`의 JitPack 플러그인 해석, **Java-only mod/API 생성→Gradle 구성→컴파일→메타데이터→JAR 검증은 실제로 PASS**. 직전의 실패는 해당 시점의 JitPack 아티팩트 미준비/접근 지연으로 보는 것이 타당하나 단일 원인 확정은 하지 않는다. GUI Sync, Minecraft 실제 실행, 원격 게시, 나머지 G1–G30 출하 조건이 완료됐다는 의미는 아니다. 작업 범위는 **`develop`의 미커밋 파일 변경·검증만**이며 `main`, 기존 tag, 원격 게시 상태는 변경하지 않았다.
+
+---
+
+## 35. v0.1.1 main 공개용 이관·릴리스 패키징 (2026-11-14)
+
+사용자 요청: 기존 `main` 이력을 `develop` 전체 이력으로 병합하지 말고 **직전 develop의 변경 파일만 선별**하여 `main`에 이관. `README.md` 맨 위에 정확히 `[![](https://jitpack.io/v/howShouldIChooseMyUsername/Fabric-Amper.svg)](https://jitpack.io/#howShouldIChooseMyUsername/Fabric-Amper)` 배지 삽입. `build.gradle.kts`의 버전과 Windows `init`의 플러그인 요청 버전은 **`0.1.1`**, JitPack Git 태그는 **`v0.1.1`**로 변경. v0.1.0과 동일한 형태의 GitHub Release를 준비하고 **추가 테스트는 실행하지 않음**.
+
+**적용 내용:** 현재 `develop` 작업 트리를 수정하거나 변경사항을 초기화하지 않도록 `main`을 **별도 Git worktree**에 열었다. 이곳에 develop의 수정된 `fabric-amper.bat`, `HUMAN.md`, `HUMAN_QuickGuide.md`, `FabricAmperSKILL.md`, `FabricAmperSKILL_SYN.md`, `QA_REPORT.md`, 두 Windows/documentation unit test 파일 **8개만** 명시적으로 복사했다. 기존 main의 README 및 `jitpack.yml` 등 다른 파일은 유지했다. main에서 release version 상수를 `0.1.1`로 올리고 Windows wrapper의 `FA_VERSION`, 출력 안내, 생성 Settings의 `useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1")` 및 `id("dev.fabric-amper.settings") version "0.1.1"`을 일치시켰다. 영문 README/사용 설명서/에이전트 가이드의 새 설치 경로와 버전 예시를 갱신했고, 로컬 G29 메타데이터 경로에 버전 `0.1.0`이 하드코딩된 **네 개 integration test 파일의 향후 기대 경로만 `0.1.1`로 갱신**했다. 각 테스트가 만드는 별도 모드의 `0.1.0+26.3` 같은 **모드 자체의 예제 버전은 유지**했다. 기록용 역사적 QA 내용 및 `legacy_README.md`도 보존했다.
+
+**실행한 명령과 제한:** 패키징만을 위해 Gradle **9.7.1 / JDK 25** 에서 `publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true -x test --offline --no-daemon --no-build-cache --console=plain` 실행: **EXIT0 / BUILD SUCCESSFUL in 28s**. 새 `fabric-amper-0.1.1.jar` (**368,061 bytes**)와 `fabric-amper-0.1.1-sources.jar` (**83,746 bytes**), v0.1.1의 Settings/Project 마커 POM, 모듈 POM 및 Gradle `.module` 생성. 별도 패키징 스크립트는 바이트 동일성, plugin marker의 실제 구현 의존성, ZIP 엔트리/CRC 및 SHA-256을 확인하였지만 이는 **배포물 파일 구조 확인일 뿐 단위·통합 테스트가 아님**. 소스 변경에 대한 `test`, `check`, Gradle TestKit, consumer `help/build`, Minecraft runtime, IntelliJ Sync 등의 테스트는 **사용자의 명령에 따라 실행하지 않았다**. 이전 §34의 `v0.1.0` 소비자 PASS가 `v0.1.1`의 새 테스트 PASS를 의미하지 않음. 모든 G1–G30 승인 게이트는 종전과 동일하게 **`NOT APPROVED`**.
+
+**릴리스 파일 준비:** `build/release/v0.1.1` 아래에 `fabric-amper-0.1.1-maven-repository.zip`, 동일 빌드의 binary/sources JAR, `fabric-amper.bat`, `fabric-amper.schema.json`, `SHA256SUMS.txt`, 영문 `RELEASE_NOTES.md`를 생성했다. ZIP에 `maven-repo/` 접두와 **두 plugin marker + 실제 구현 JAR/POM/module**이 포함됨. ZIP SHA-256 `97ca3dbd1cb1629a823603e6de981df528d48faca1bbbccf4fc6e4c294880398`, Windows wrapper SHA-256 `a9d1f2ef812389976d7bb072f6a0769609f42fd79541d79bc37f1532bc93bc04`. 릴리스 파일만 GitHub 자산으로 올리며 로컬 `build/` 전체나 `analysis/` 증거를 main 커밋에 포함하지 않음.
