@@ -1,0 +1,78 @@
+{
+  "gate": "G11/G30",
+  "status": "PASS",
+  "cases": 6,
+  "checks": "FA001/FA008/FA009/FA012, source/YAML and generated/mirror/JAR bytes unchanged; cache rejection and recovery HIT",
+  "baselineHashes": {
+    ".gradle/fabric-amper/loom/cca325c34e8029b5e4b4126a5d7477eddd872f3fa85c3f2c45053b3ec02ae358/assets/testkit_mod/icon.png": "1432C6765DEA9D78715445AC73E83E158CFC3FCE8E9D94DB16228C933EF7440B",
+    ".gradle/fabric-amper/loom/cca325c34e8029b5e4b4126a5d7477eddd872f3fa85c3f2c45053b3ec02ae358/example.classtweaker": "49D39D88772EEB7EC6BB1F5A72C845FD45BDD3DC76881182399B70AA34CB4567",
+    ".gradle/fabric-amper/loom/cca325c34e8029b5e4b4126a5d7477eddd872f3fa85c3f2c45053b3ec02ae358/example.mixins.json": "4A10CA295D2AAA81265A43D167AECEFFFF384FE72A9AFBFB0E81737D58DDF9D8",
+    ".gradle/fabric-amper/loom/cca325c34e8029b5e4b4126a5d7477eddd872f3fa85c3f2c45053b3ec02ae358/fabric.mod.json": "73F91D1CA11D059740A341A41B68CFF2CEE2755786C4936314700F68068F5666",
+    "build/generated/fabric-amper/resources/main/fabric.mod.json": "73F91D1CA11D059740A341A41B68CFF2CEE2755786C4936314700F68068F5666",
+    "build/resources/main/fabric.mod.json": "73F91D1CA11D059740A341A41B68CFF2CEE2755786C4936314700F68068F5666",
+    "build/libs/testkit-mod-1.0.0+26.3-sources.jar": "0408FDE0E0E75CEB2765BDAB50F7ABC43532128FE07BDB5B9DAD12986D33577A",
+    "build/libs/testkit-mod-1.0.0+26.3.jar": "97032B85FCD70D9C921E16D1E3A6D73DBD8A3E3D2C8F1C39A899393D732329D9"
+  },
+  "runs": [
+    {
+      "label": "01-initial",
+      "code": null,
+      "cacheHit": false,
+      "sha256": "1FE235C99763B6E9DEF09001D37FEE2A1929937BA60EE5E69B2E6F3FDBE7E127"
+    },
+    {
+      "label": "02-hit",
+      "code": null,
+      "cacheHit": true,
+      "sha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    },
+    {
+      "label": "bad-class-tweaker-header",
+      "code": "FA009",
+      "cacheHit": false,
+      "sha256": "4E7E41D066068FE96CEAD6E47F31D5066723F955F03C1B0213D51191846444FF"
+    },
+    {
+      "label": "bad-missing-icon",
+      "code": "FA009",
+      "cacheHit": false,
+      "sha256": "E98713F2B6ABD00EF3898266A0C3AC36B939B2EB688C958B4B346E9C898669DF"
+    },
+    {
+      "label": "bad-resource-path-traversal",
+      "code": "FA009",
+      "cacheHit": false,
+      "sha256": "E584B5BA5CAFA88D2ACA094825B6C62A3CC08FD77F13EC011C52B73A22233E4C"
+    },
+    {
+      "label": "bad-duplicate-dependency-scope",
+      "code": "FA012",
+      "cacheHit": false,
+      "sha256": "2F0375DDB17131F4A614579EE31361F90D2B66916A3DC9384D29DA584147F9CC"
+    },
+    {
+      "label": "bad-simultaneous-yaml-aliases",
+      "code": "FA001",
+      "cacheHit": false,
+      "sha256": "04B2A4C5D6105172CFB37F7E2EDD827E0156230C959ACBCD0901BFEAF5EE6CC4"
+    },
+    {
+      "label": "bad-source-fabric-json",
+      "code": "FA008",
+      "cacheHit": false,
+      "sha256": "206B4054AFFBB75CB14940673E64D4184F4D509BE39CC3844997AD998826DD52"
+    },
+    {
+      "label": "03-restored",
+      "code": null,
+      "cacheHit": true,
+      "sha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    },
+    {
+      "label": "04-restored-hit",
+      "code": null,
+      "cacheHit": true,
+      "sha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    }
+  ]
+}

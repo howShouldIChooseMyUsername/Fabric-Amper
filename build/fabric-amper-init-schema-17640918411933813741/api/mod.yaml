@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=./schemas/mod.schema.json
+product: fabric/api
+mod:
+  id: autocompleteapi
+  version: "1.0.0+26.3"
+  group: org.example
+  name: Example Mod
+  entrypoints:
+    main:
+      - org.example.ExampleMod
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+repositories:
+  - fabric
+  - mavenCentral

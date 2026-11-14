@@ -1,0 +1,130 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.fabricamper",
+    "module": "fabric-amper",
+    "version": "0.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.7.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "fabric-amper-0.1.0.jar",
+          "url": "fabric-amper-0.1.0.jar",
+          "size": 368061,
+          "sha512": "65e4e17ccd2e57b6bbb306a8bca4c94f1306fbcc804cfbb48edcfa01a4eb4b4848f052af00b95b28e6823c1d413e72521a7f141d8adcf05535cd9a1988776439",
+          "sha256": "d06d3d226198b5014383656b506272938acdccaa7b0125917f8ff3c3396dc3cd",
+          "sha1": "687d80982e3ba0ad681396e916b31ffe4acd09e1",
+          "md5": "f59657397290ace10db9454c008e3c5b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "net.fabricmc",
+          "module": "fabric-loom",
+          "version": {
+            "requires": "1.17.21"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-gradle-plugin",
+          "version": {
+            "requires": "2.4.21"
+          }
+        },
+        {
+          "group": "org.snakeyaml",
+          "module": "snakeyaml-engine",
+          "version": {
+            "requires": "2.10"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.14.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.4.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "fabric-amper-0.1.0.jar",
+          "url": "fabric-amper-0.1.0.jar",
+          "size": 368061,
+          "sha512": "65e4e17ccd2e57b6bbb306a8bca4c94f1306fbcc804cfbb48edcfa01a4eb4b4848f052af00b95b28e6823c1d413e72521a7f141d8adcf05535cd9a1988776439",
+          "sha256": "d06d3d226198b5014383656b506272938acdccaa7b0125917f8ff3c3396dc3cd",
+          "sha1": "687d80982e3ba0ad681396e916b31ffe4acd09e1",
+          "md5": "f59657397290ace10db9454c008e3c5b"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "fabric-amper-0.1.0-sources.jar",
+          "url": "fabric-amper-0.1.0-sources.jar",
+          "size": 83746,
+          "sha512": "8b8beeca3fb86375852f3e3b24a37186c473bf478b311c1c492b62088210174f6f924336a677c145421b5563e7938aa4ae2775057fc0e1aa5ab2b0a572bb1feb",
+          "sha256": "84dbc51b996aebf5f05647f2c39e3627a11f521d0f0b00084484f1123465227f",
+          "sha1": "5c040f9dff5c78a5f2fba7f5d6a5f5e6a0ae3bce",
+          "md5": "792a7e1d5ce0699384d46169fb14e5a7"
+        }
+      ]
+    }
+  ]
+}

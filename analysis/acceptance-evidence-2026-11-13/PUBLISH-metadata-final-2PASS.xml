@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.unit.FabricAmperPublishMetadataUnitTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-13T10:17:17.089Z" hostname="DESKTOP-QBR2EQC" time="0.205">
+  <properties/>
+  <testcase name="validated YAML determines Modrinth environment and CurseForge side tags by mod side()" classname="dev.fabricamper.unit.FabricAmperPublishMetadataUnitTest" time="0.166"/>
+  <testcase name="explicit platform overrides and relations are serialized without private changelog paths()" classname="dev.fabricamper.unit.FabricAmperPublishMetadataUnitTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

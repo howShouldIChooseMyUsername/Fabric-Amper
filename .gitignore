@@ -1,0 +1,5 @@
+.h-longcopy-1/
+.h/
+.gradle/
+.kotlin/
+*caches*/

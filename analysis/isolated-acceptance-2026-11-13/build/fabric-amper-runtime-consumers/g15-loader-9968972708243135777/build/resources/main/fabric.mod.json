@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "amper_rt_g15",
+  "version": "0.1.0+26.3",
+  "name": "Isolated Fabric Amper Loader Runtime Probe",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "org.example.runtime.ProbeClient"
+    ],
+    "main": [
+      "org.example.runtime.ProbeMain"
+    ]
+  },
+  "depends": {
+    "fabric-api": ">=0.165.2",
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}

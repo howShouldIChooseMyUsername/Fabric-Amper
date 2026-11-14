@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperApiPublishingConfigurationCacheConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T09:59:52.362Z" hostname="DESKTOP-QBR2EQC" time="52.83">
+  <properties/>
+  <testcase name="realApiLocalPublishStoreHitYamlMissHit()" classname="dev.fabricamper.integration.FabricAmperApiPublishingConfigurationCacheConsumerTest" time="52.814"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 21s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperLocalRepository
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :generatePomFileForMavenJavaPublication
+> Task :generateFabricModJson
+> Task :processIncludeJars
+> Task :processResources
+> Task :sourcesJar
+> Task :compileJava
+> Task :classes
+> Task :jar
+> Task :verifyFabricAmperJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :publishMavenJavaPublicationToFabricAmperLocalRepository
+
+BUILD SUCCESSFUL in 28s
+10 actionable tasks: 10 executed
+Configuration cache entry stored.
+Reusing configuration cache.
+> Task :generatePomFileForMavenJavaPublication
+> Task :processIncludeJars UP-TO-DATE
+> Task :sourcesJar UP-TO-DATE
+> Task :generateFabricModJson UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :verifyFabricAmperJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :publishMavenJavaPublicationToFabricAmperLocalRepository
+
+BUILD SUCCESSFUL in 266ms
+10 actionable tasks: 4 executed, 6 up-to-date
+Configuration cache entry reused.
+Calculating task graph as configuration cache cannot be reused because file 'mod.yaml' has changed.
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :processIncludeJars UP-TO-DATE
+> Task :generatePomFileForMavenJavaPublication
+> Task :generateFabricModJson
+> Task :sourcesJar
+> Task :compileJava UP-TO-DATE
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :verifyFabricAmperJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :publishMavenJavaPublicationToFabricAmperLocalRepository
+
+BUILD SUCCESSFUL in 593ms
+10 actionable tasks: 8 executed, 2 up-to-date
+Configuration cache entry stored.
+Reusing configuration cache.
+> Task :processIncludeJars UP-TO-DATE
+> Task :generateFabricModJson UP-TO-DATE
+> Task :generatePomFileForMavenJavaPublication
+> Task :sourcesJar UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :verifyFabricAmperJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :publishMavenJavaPublicationToFabricAmperLocalRepository
+
+BUILD SUCCESSFUL in 170ms
+10 actionable tasks: 4 executed, 6 up-to-date
+Configuration cache entry reused.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

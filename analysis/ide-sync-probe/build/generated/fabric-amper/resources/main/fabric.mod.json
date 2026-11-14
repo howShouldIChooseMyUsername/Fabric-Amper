@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "fabric_amper_ide_probe",
+  "version": "0.1.0+26.3",
+  "name": "Fabric Amper Isolated IDE Probe",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "org.example.ideprobe.IdeProbeClient"
+    ],
+    "main": [
+      "org.example.ideprobe.IdeProbeMod"
+    ]
+  },
+  "depends": {
+    "fabric-api": ">=0.165.2",
+    "fabric-language-kotlin": ">=1.14.2",
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}

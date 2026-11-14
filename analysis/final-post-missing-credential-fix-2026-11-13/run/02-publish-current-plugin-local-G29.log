@@ -1,0 +1,22 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :generatePomFileForFabricAmperProjectPluginMarkerMavenPublication
+> Task :publishFabricAmperProjectPluginMarkerMavenPublicationToG29ProbeRepository
+> Task :generatePomFileForFabricAmperSettingsPluginMarkerMavenPublication
+> Task :publishFabricAmperSettingsPluginMarkerMavenPublicationToG29ProbeRepository
+> Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pluginDescriptors UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :sourcesJar UP-TO-DATE
+> Task :generatePomFileForPluginMavenPublication
+> Task :compileKotlin
+> Task :compileJava NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :generateMetadataFileForPluginMavenPublication
+> Task :publishPluginMavenPublicationToG29ProbeRepository
+> Task :publishAllPublicationsToG29ProbeRepository
+
+BUILD SUCCESSFUL in 24s
+12 actionable tasks: 8 executed, 4 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html

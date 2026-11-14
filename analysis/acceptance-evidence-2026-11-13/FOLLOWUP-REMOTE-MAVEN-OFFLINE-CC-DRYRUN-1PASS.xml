@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T10:37:50.729Z" hostname="DESKTOP-QBR2EQC" time="59.018">
+  <properties/>
+  <testcase name="remoteMavenDryRunConfigCacheStoreThenHitWithMissingEnv()" classname="dev.fabricamper.integration.FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest" time="59.002"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :compileJava
+
+BUILD SUCCESSFUL in 56s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperRemoteRepository
+
+> Configure project :
+Fabric Loom: 1.17.21
+:compileJava SKIPPED
+:generateFabricModJson SKIPPED
+:processResources SKIPPED
+:classes SKIPPED
+:processIncludeJars SKIPPED
+:jar SKIPPED
+:sourcesJar SKIPPED
+:generateMetadataFileForMavenJavaPublication SKIPPED
+:generatePomFileForMavenJavaPublication SKIPPED
+:verifyFabricAmperJar SKIPPED
+:publishMavenJavaPublicationToFabricAmperRemoteRepository SKIPPED
+
+BUILD SUCCESSFUL in 1s
+Configuration cache entry stored.
+Reusing configuration cache.
+:compileJava SKIPPED
+:generateFabricModJson SKIPPED
+:processResources SKIPPED
+:classes SKIPPED
+:processIncludeJars SKIPPED
+:jar SKIPPED
+:sourcesJar SKIPPED
+:generateMetadataFileForMavenJavaPublication SKIPPED
+:generatePomFileForMavenJavaPublication SKIPPED
+:verifyFabricAmperJar SKIPPED
+:publishMavenJavaPublicationToFabricAmperRemoteRepository SKIPPED
+
+BUILD SUCCESSFUL in 208ms
+Configuration cache entry reused.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

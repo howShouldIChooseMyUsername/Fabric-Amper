@@ -1,0 +1,31 @@
+schema: 1
+product: fabric/mod
+mod:
+  id: amper_rt_g10_embedded
+  version: "0.1.0+26.3"
+  group: org.example.runtime
+  archivesName: amper-rt-g10-embedded
+  environment: "*"
+  entrypoints:
+    main:
+      - org.example.runtime.EmbeddedEntrypoint
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: false
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: false
+  resources:
+    failOnExistingFabricModJson: true
+repositories:
+  - fabric
+  - mavenCentral
+dependencies:
+  - "org.apache.commons:commons-collections4:4.5.0": include

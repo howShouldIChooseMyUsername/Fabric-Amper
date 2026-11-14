@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" tests="5" skipped="4" failures="0" errors="0" timestamp="2026-11-13T10:39:41.552Z" hostname="DESKTOP-QBR2EQC" time="56.09">
+  <properties/>
+  <testcase name="G25 Gradle 9_9_1 resolves published Loom 1_19_4 API variant()" classname="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="G13 Gradle 9_9_1 with bundled Loom 1_19_4 configures a real Amper consumer()" classname="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <testcase name="G13 Gradle 9_7_0 with bundled Loom 1_18_4 configures a real Amper consumer()" classname="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" time="56.065"/>
+  <testcase name="G25 Gradle 9_8_0 resolves published Loom 1_19_4 API variant()" classname="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" time="0.001">
+    <skipped/>
+  </testcase>
+  <testcase name="G25 Gradle 9_7_0 rejects published Loom 1_19_4 API variant()" classname="dev.fabricamper.integration.FabricAmperGradleLoomMatrixConsumerTest" time="0.0">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.18.4
+FABRIC_AMPER_ACTUAL_LOOM_JAR=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/build/fabric-amper-testkit-cache/pid-29336/matrix-g13-970-1184/testkit-home/caches/9.7.0/transforms/5b726c1e9e3ffb7bfdd2912682162319/transformed/original/fabric-loom-1.18.4.jar
+
+> Task :help
+
+Welcome to Gradle 9.7.0.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.0/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 25s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.0/userguide/configuration_cache_enabling.html
+
+> Configure project :
+Fabric Loom: 1.18.4
+
+> Task :compileJava
+> Task :generateFabricModJson
+> Task :processResources
+> Task :classes
+> Task :processIncludeJars
+> Task :jar
+> Task :sourcesJar
+> Task :verifyFabricAmperJar
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener NO-SOURCE
+> Task :validateFabricAmper
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 29s
+8 actionable tasks: 8 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.0/userguide/configuration_cache_enabling.html
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

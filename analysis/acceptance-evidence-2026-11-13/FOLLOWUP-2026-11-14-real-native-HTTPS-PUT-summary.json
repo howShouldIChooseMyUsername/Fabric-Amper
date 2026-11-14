@@ -1,0 +1,32 @@
+{
+  "status": "PASS_FOR_CHECKED_EVIDENCE_ONLY",
+  "date": "2026-11-14",
+  "nativeHttpsAuthenticatedPut": "PASS",
+  "successfulPutCount": 50,
+  "putPathsEachUploadedTwice": 25,
+  "consumer": "settings.gradle.kts + mod.yaml; fabric/api",
+  "verifiedLocalArtifactSha256": {
+    "jar": "35C2485C4D0D5F7EB426C79FC9D3F614206BAFD0C9515C489A3D30B215AFA8F9",
+    "pom": "BC570A6A4809556CD69A341BA1B9C87F14BEAE942C7A2614CA922990899C56EF",
+    "module": "65FAB6171205E344B9B54E54950082124A50EF5936AD22B6F5275C2F17457D74",
+    "sources": "F34FB68364DB455933765A14A1FEBBDC43FF59DADDAF35F2333D9B7F252A8FB2"
+  },
+  "configCacheStoreCount": 0,
+  "configCacheHitCount": 0,
+  "nativeCredentialCC": "INCOMPATIBLE_WITH_GRADLE_9_7_1",
+  "externalPlatformUploads": 0,
+  "manifestSha256": "9B35DE9FA5E04CDD245705FB88F583CBAB59A58924C25393831961AE7D3BA06E",
+  "gradleLogs": [
+    {
+      "path": "analysis/local-https-maven-probe-2026-11-13/online-loopback-2026-11-14/publish-01-with-cc.log",
+      "sha256": "E9B76F4F1EF4567A5C5950E8D0260D3CC53CC72651A7D1D53B8D28CFAB140638"
+    },
+    {
+      "path": "analysis/local-https-maven-probe-2026-11-13/online-loopback-2026-11-14/publish-02-with-cc.log",
+      "sha256": "8318B34012549D2406C8892F8BDE2FD909B52FFDE4A404B0581154C970983F1C"
+    }
+  ],
+  "producerMainJarSha256": "13022B24ADE7C9809400FC6AEBE99E7751783A9DAE7EF8B8C53780FE70B698AD",
+  "producerSourcesJarSha256": "C3E69E8188B516F4F290588B3342F1D21BB24391658A75B4E26BEA3A5175B510",
+  "G1toG30Release": "NOT_APPROVED"
+}

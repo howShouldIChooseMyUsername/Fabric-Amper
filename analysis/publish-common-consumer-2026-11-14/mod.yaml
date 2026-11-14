@@ -1,0 +1,37 @@
+product: fabric/mod
+mod:
+  id: common_probe
+  version: "1.0.0+26.3"
+  name: Publish Common Probe
+  entrypoints:
+    main:
+      - org.example.ProbeMod
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+repositories: [fabric, mavenCentral]
+publish:
+  common:
+    releaseType: beta
+    name: Common 1.0.0
+    gameVersions: ["26.3"]
+    changelog: "Local-only publishing metadata validation."
+    dependencies:
+      - slug: fabric-api
+        modrinthId: fabric-api
+        curseforgeId: "306612"
+        type: required
+  modrinth:
+    projectId: fake-project-no-upload
+    tokenEnv: DUMMY_MODRINTH_TOKEN
+    loaders: [fabric]
+    environment: client_and_server
+  curseforge:
+    projectId: 123456
+    tokenEnv: DUMMY_CURSEFORGE_TOKEN
+    gameVersionNames: ["26.3", "Fabric", "Client", "Server"]

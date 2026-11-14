@@ -1,0 +1,13 @@
+{
+  "loopbackOnly": true,
+  "events": [
+    {
+      "method": "GET",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom",
+      "status": 401,
+      "authenticated": false,
+      "bytes": 0
+    }
+  ],
+  "authenticatedSuccessfulPutCount": 0
+}

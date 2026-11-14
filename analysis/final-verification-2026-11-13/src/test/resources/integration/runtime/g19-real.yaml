@@ -1,0 +1,25 @@
+schema: 1
+product: fabric/mod
+mod:
+  id: g19_real_external_loom
+  version: "0.1.0+26.3"
+  group: org.example.g19
+  environment: "*"
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: false
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: false
+  resources:
+    failOnExistingFabricModJson: true
+repositories:
+  - fabric
+  - mavenCentral

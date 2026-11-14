@@ -1,0 +1,22 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because file 'mod.yaml' has changed.
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Settings file 'C:\Users\user\Documents\vbc\Fabric Amper\analysis\g11-resource-cc-probe-2026-11-13\consumer-v2\settings.gradle.kts' line: 9
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'dev.fabric-amper.settings', version: '0.1.0']
+> Failed to apply plugin 'dev.fabric-amper.settings'.
+   > FabricAmper FA009 mod.yaml:11:7 mod.mixins[0].config: resource must use a relative JAR-root path without traversal
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4s
+Configuration cache entry stored.

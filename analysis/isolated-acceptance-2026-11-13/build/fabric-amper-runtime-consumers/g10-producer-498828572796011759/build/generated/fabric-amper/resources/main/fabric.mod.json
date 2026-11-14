@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "amper_rt_g10_embedded",
+  "version": "0.1.0+26.3",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "org.example.runtime.EmbeddedEntrypoint"
+    ]
+  },
+  "depends": {
+    "fabric-api": ">=0.165.2",
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}

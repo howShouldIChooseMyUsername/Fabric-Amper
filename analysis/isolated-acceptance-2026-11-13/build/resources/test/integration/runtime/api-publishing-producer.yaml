@@ -1,0 +1,46 @@
+schema: 1
+product: fabric/api
+mod:
+  id: amper_api_acceptance
+  version: "1.2.3"
+  group: dev.fabricamper.acceptance
+  archivesName: api-contract
+  name: API Publishing Acceptance
+  environment: "*"
+  entrypoints:
+    main:
+      - dev.fabricamper.acceptance.PublishedApi
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: false
+  resources:
+    failOnExistingFabricModJson: true
+repositories:
+  - fabric
+  - mavenCentral
+dependencies:
+  - maven: "dev.fabricamper.testfixtures:public-token:1.0.0"
+    scope: all
+    exported: true
+  - maven: "dev.fabricamper.testfixtures:internal-helper:1.0.0"
+    scope: all
+  - maven: "dev.fabricamper.testfixtures:runtime-only-helper:1.0.0"
+    scope: runtime-only
+  - maven: "dev.fabricamper.testfixtures:compile-only-helper:1.0.0"
+    scope: compile-only
+  - maven: "dev.fabricamper.testfixtures:nested-helper:1.0.0"
+    scope: all
+    include: true
+test-dependencies:
+  - maven: "dev.fabricamper.testfixtures:test-helper:1.0.0"
+    scope: compile-only

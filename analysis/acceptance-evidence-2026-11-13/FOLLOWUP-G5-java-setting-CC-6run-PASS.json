@@ -1,0 +1,18 @@
+{
+  "gate": "G5",
+  "status": "PASS",
+  "configuration": "Minecraft 26.3 / settings.java.release:25 / settings.java.sourcesJar true -> false -> true",
+  "workflow": "warm; CC STORE; HIT; Java option MISS; HIT; revert MISS; HIT",
+  "project": "settings-only consumer, no developer-authored build script or fabric.mod.json",
+  "gradle": "Gradle 9.7.1; official deps may warm via help; measured 6 invocations strictly --offline",
+  "logsSha256": {
+    "00-help-warm": "567BED643F72242B853BCEAC91DC61EA4623530BE267475714AFA460DCD9B2FD",
+    "00b-tasks-warm": "581D3C63179AD25C31A9382CB5B98A65EEE4E2606F2A45221512D6C4FFA6CD94",
+    "01-first-store": "7921B38CD75BF764F0BD43C631CB7D50A4AF3DB4AE9D264DECEFB1CAB841D364",
+    "02-second-hit": "79DF1603755570A9E8E3B0B48D1528094504E39BB465D8769420C8C8341AA302",
+    "03-java-option-miss": "0F45DF6CB2AA44A2420FC8D807993CDE107DBD8AAB8BE5B5B03C26456F924F76",
+    "04-java-option-hit": "8CF4530039A10D944361F609223FF79FE1AF086B7BBDB0F0D64822BB6745AED6",
+    "05-restored-option-miss": "4BD8450B84829B7D66F72F91F4D427D32CAB4301998316C0BFAFDD5BFB171BF8",
+    "06-restored-option-hit": "79DF1603755570A9E8E3B0B48D1528094504E39BB465D8769420C8C8341AA302"
+  }
+}

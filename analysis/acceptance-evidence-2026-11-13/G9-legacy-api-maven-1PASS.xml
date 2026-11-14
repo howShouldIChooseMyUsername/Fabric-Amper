@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperG9LegacyApiMavenConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T09:01:55.419Z" hostname="DESKTOP-QBR2EQC" time="78.207">
+  <properties/>
+  <testcase name="legacyApiPublishesActualRemapJarAndRemappedSources()" classname="dev.fabricamper.integration.FabricAmperG9LegacyApiMavenConsumerTest" time="78.192"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using of the official minecraft mappings is at your own risk!
+Please make sure to read and understand the following license:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+G9_LEGACY_ARCHIVE_jar=C:\Users\user\AppData\Local\Temp\junit-13416630688697065201\g9-legacy-api-producer-3736389706829319564\build\devlibs\legacy-api-published-0.1.0+1.21.11-dev.jar
+G9_LEGACY_ARCHIVE_remapJar=C:\Users\user\AppData\Local\Temp\junit-13416630688697065201\g9-legacy-api-producer-3736389706829319564\build\libs\legacy-api-published-0.1.0+1.21.11.jar
+G9_LEGACY_ARCHIVE_sourcesJar=C:\Users\user\AppData\Local\Temp\junit-13416630688697065201\g9-legacy-api-producer-3736389706829319564\build\libs\legacy-api-published-0.1.0+1.21.11-sources.jar
+G9_LEGACY_ARCHIVE_remapSourcesJar=C:\Users\user\AppData\Local\Temp\junit-13416630688697065201\g9-legacy-api-producer-3736389706829319564\build\libs\legacy-api-published-0.1.0+1.21.11-sources.jar
+
+> Task :compileJava
+> Task :generateFabricModJson
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :generatePomFileForMavenJavaPublication
+> Task :remapSourcesJar
+> Task :remapJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :verifyFabricAmperJar
+> Task :publishMavenJavaPublicationToFabricAmperLocalRepository
+
+BUILD SUCCESSFUL in 1m 7s
+12 actionable tasks: 12 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+
+> Configure project :
+Fabric Loom: 1.17.21
+:remapping sources
+
+> Task :compileJava
+
+BUILD SUCCESSFUL in 9s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

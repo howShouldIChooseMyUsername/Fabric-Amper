@@ -1,0 +1,39 @@
+schema: 1
+product: fabric/mod
+mod:
+  id: amper_rt_g27
+  version: "0.1.0+26.3"
+  group: org.example.g27
+  archivesName: amper-rt-g27
+  name: "G27 Client Side Metadata Consumer"
+  environment: "*"
+  entrypoints:
+    main:
+      - org.example.g27.G27Main
+    client:
+      - org.example.g27.G27Client
+  mixins:
+    - config: g27.client.mixins.json
+      environment: client
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: false
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: true
+  resources:
+    failOnExistingFabricModJson: true
+repositories:
+  - fabric
+  - mavenCentral
+dependencies:
+  - maven: "org.apache.commons:commons-collections4:4.5.0"
+    target: client
+    scope: compile-only

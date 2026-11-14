@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-13",
+  "environment": "Gradle 9.7.1 / JDK 25 / offline / Kotlin incremental false",
+  "final_build": "clean build validatePlugins --offline; EXIT 0; BUILD SUCCESSFUL in 41s",
+  "suites": 42,
+  "junit": {
+    "tests": 242,
+    "skipped": 37,
+    "failures": 0,
+    "errors": 0
+  },
+  "passed": 205,
+  "artifacts": [
+    {
+      "path": "build/libs/fabric-amper-0.1.0.jar",
+      "bytes": 314704,
+      "sha256": "164CADA56DF0BEFBFB0AFABAE574F639A89795DFD86CA222AA8789F44C829F0A"
+    },
+    {
+      "path": "build/libs/fabric-amper-0.1.0-sources.jar",
+      "bytes": 67202,
+      "sha256": "2032A41383A3534B2FF0B087586B968189C752D74029A545E95ACAA747F2B119"
+    },
+    {
+      "path": "fabric-amper.schema.json",
+      "bytes": 26823,
+      "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+    }
+  ],
+  "xml_archive": {
+    "path": "analysis/acceptance-evidence-2026-11-13/FINAL-default-clean-42-suites.zip",
+    "bytes": 42239,
+    "sha256": "F0BF62998E0ED568A45F9DD02B7296950D615AF2FD00502036892E10846DD61A"
+  },
+  "selected_test_evidence": [
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/PUBLISH-platform-only-1PASS.xml",
+      "bytes": 8548,
+      "sha256": "B0E4F795DCC69FF6F2248D32EE7DA9571D54DEC8C8D711B54DFFCBB6136C24ED"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/API-local-publish-CC-4run-1PASS.xml",
+      "bytes": 3623,
+      "sha256": "C112192443CDD7AA584E6067A94C48F0A0A07476B3E2D1FBB251B484E8DB9356"
+    }
+  ]
+}

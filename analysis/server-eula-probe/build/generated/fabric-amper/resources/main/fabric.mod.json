@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "fabric_amper_server_probe",
+  "version": "0.1.0+26.3",
+  "name": "Fabric Amper Isolated Server Probe",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.example.serverprobe.ServerProbeMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}

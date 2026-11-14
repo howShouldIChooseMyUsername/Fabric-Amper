@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperParallelMirrorConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T12:14:55.323Z" hostname="DESKTOP-QBR2EQC" time="70.178">
+  <properties/>
+  <testcase name="G20 parallel configurations restore corrupted JSON and deleted referenced resource atomically()" classname="dev.fabricamper.integration.FabricAmperParallelMirrorConsumerTest" time="70.175"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 2s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 31s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 33s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: help
+Calculating task graph as no cached configuration is available for tasks: generateFabricModJson
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 2s
+1 actionable task: 1 executed
+Configuration cache entry stored.
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :generateFabricModJson
+
+BUILD SUCCESSFUL in 2s
+1 actionable task: 1 executed
+Configuration cache entry stored.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

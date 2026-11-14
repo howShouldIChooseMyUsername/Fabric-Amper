@@ -1,0 +1,37 @@
+G19 REAL EXTERNAL LOOM / CONTROL (2026-11-12 KST)
+
+Producer:
+  Gradle 9.7.1 / JDK 25
+  Published binary settings-plugin marker/POM/JAR 0.1.0 under build/g29-probe/maven-repo
+  Producer's declared/bundled Loom: 1.17.21
+
+Consumer:
+  build/g19-real/consumer/settings.gradle.kts + mod.yaml only
+  No build.gradle or build.gradle.kts; Minecraft version 26.3
+  Initial script: build/g19-real/preapply-external.init.gradle
+  Independent Gradle home: build/g19-real/gradle-home
+
+Negative G19 collision command (consumer working directory):
+  gradle help --init-script ../preapply-external.init.gradle -g ../gradle-home --no-daemon --console=plain
+  EXPECTED exit 1, observed exit 1 in 31s (this is a negative test PASS).
+  Exact observed key lines:
+    G19_EXTERNAL_CLASS_SOURCE=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/build/g19-real/gradle-home/caches/modules-2/files-2.1/net.fabricmc/fabric-loom/1.18.4/8a1e6af4579c6c8e7a0069f222e376e360d78395/fabric-loom-1.18.4.jar
+    G19_EXTERNAL_CLASS_VERSION_CONFIRMED=1.18.4
+    Fabric Loom: 1.18.4
+    G19_APPLIED_PLUGIN_CLASS_SOURCE=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/build/g19-real/gradle-home/caches/modules-2/files-2.1/net.fabricmc/fabric-loom/1.18.4/8a1e6af4579c6c8e7a0069f222e376e360d78395/fabric-loom-1.18.4.jar
+    G19_REAL_EXTERNAL_LOOM_APPLIED=1.18.4
+    FabricAmper FA010 Loom plugin conflict: an existing Loom installation ('loom extension') was detected before Fabric Amper applied 'net.fabricmc.fabric-loom'. Only the bundled Loom version/profile is supported
+    BUILD FAILED in 31s
+
+Control command (same settings-only consumer without -I):
+  gradle help -g ../gradle-home --no-daemon --console=plain
+  Observed:
+    Fabric Loom: 1.17.21
+    > Task :help
+    BUILD SUCCESSFUL in 17s
+
+Result: The prior probe that accidentally loaded bundled 1.17.21 was INVALID; this
+run verifies the actual independent 1.18.4 code source at both class and instance
+levels before Amper issued FA010. It does NOT prove all KGP conflicts, and it is
+NOT the final G1–G30 all-PASS or release approval. The corresponding isolated
+fixtures and source TestKit should be used for future reproducibility.

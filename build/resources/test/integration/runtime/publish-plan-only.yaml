@@ -1,0 +1,49 @@
+schema: 1
+product: __PRODUCT__
+mod:
+  id: amper_publish_plan
+  version: "0.1.0+26.3"
+  group: org.example.fabricamper
+  archivesName: amper-publish-plan
+  name: "Offline Publish Task Plan"
+  environment: "*"
+  entrypoints:
+    main:
+      - org.example.publishplan.PublishPlanMod
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: false
+  resources:
+    failOnExistingFabricModJson: true
+repositories:
+  - fabric
+  - mavenCentral
+publish:
+  maven:
+    url: https://example.invalid/fabric-amper-test-never-upload
+    credentialsFromEnv:
+      - FABRIC_AMPER_TEST_PUBLISH_PLAN_MAVEN_USERNAME_NOT_SET
+      - FABRIC_AMPER_TEST_PUBLISH_PLAN_MAVEN_PASSWORD_NOT_SET
+  modrinth:
+    projectId: "offline-publish-task-graph-only"
+    tokenEnv: FABRIC_AMPER_TEST_PUBLISH_PLAN_MODRINTH_TOKEN_NOT_SET
+    releaseType: release
+    gameVersions: ["26.3"]
+    loaders: [fabric]
+    changelog: "Local TestKit task-plan fixture. Do not upload."
+  curseforge:
+    projectId: 99999999
+    tokenEnv: FABRIC_AMPER_TEST_PUBLISH_PLAN_CURSEFORGE_TOKEN_NOT_SET
+    releaseType: release
+    gameVersionNames: ["26.3", "Fabric", "Client", "Server"]
+    changelog: "Local TestKit task-plan fixture. Do not upload."

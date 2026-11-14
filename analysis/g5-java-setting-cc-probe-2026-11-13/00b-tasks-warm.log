@@ -1,0 +1,113 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :tasks
+
+------------------------------------------------------------
+Tasks runnable from root project 'testkit-mod'
+------------------------------------------------------------
+
+Build tasks
+-----------
+assemble - Assembles the outputs of this project.
+build - Assembles and tests this project.
+buildDependents - Assembles and tests this project and all projects that depend on it.
+buildNeeded - Assembles and tests this project and all projects it depends on.
+classes - Assembles main classes.
+clean - Deletes the build directory.
+jar - Assembles a jar archive containing the classes of the 'main' feature.
+sourcesJar - Assembles a jar archive containing the main sources.
+testClasses - Assembles test classes.
+
+Build Setup tasks
+-----------------
+init - Initializes a new Gradle build.
+updateDaemonJvm - Generates or updates the Gradle Daemon JVM criteria.
+wrapper - Generates Gradle wrapper files.
+
+Documentation tasks
+-------------------
+javadoc - Generates Javadoc API documentation for the 'main' feature.
+
+Fabric tasks
+------------
+configureClientLaunch - Setup the required files to launch the Minecraft client
+configureLaunch - Setup the required files to launch Minecraft
+downloadAssets - Downloads required game assets for Minecraft.
+downloadRenderDoc
+exportClasspath
+extractRenderDoc
+generateDLIConfig - Generate the DevLaunchInjector config file
+generateLog4jConfig - Generate the log4j config file
+genSources - Decompile minecraft using the default decompiler.
+genSourcesWithCfr - Decompile minecraft using Cfr.
+genSourcesWithVineflower - Decompile minecraft using Vineflower.
+processIncludeJars
+runClient - Starts the 'client' run configuration
+runClientRenderDoc
+runServer - Starts the 'server' run configuration
+startRenderDocUI
+
+Help tasks
+----------
+artifactTransforms - Displays the Artifact Transforms that can be executed in root project 'testkit-mod'.
+buildEnvironment - Displays all buildscript dependencies declared in root project 'testkit-mod'.
+dependencies - Displays all dependencies declared in root project 'testkit-mod'.
+dependencyInsight - Displays the insight into a specific dependency in root project 'testkit-mod'.
+help - Displays a help message.
+javaToolchains - Displays the detected java toolchains.
+outgoingVariants - Displays the outgoing variants of root project 'testkit-mod'.
+projects - Displays the sub-projects of root project 'testkit-mod'.
+properties - Displays the properties of root project 'testkit-mod'.
+resolvableConfigurations - Displays the configurations that can be resolved in root project 'testkit-mod'.
+tasks - Displays the tasks runnable from root project 'testkit-mod'.
+
+IDE tasks
+---------
+cleanEclipse - Cleans all Eclipse files.
+eclipse - Generates all Eclipse files.
+genEclipseRuns - Generates Eclipse run configurations for this project.
+ideaSyncTask
+vscode - Generates VSCode launch configurations.
+
+Verification tasks
+------------------
+check - Runs all checks.
+test - Runs the test suite.
+validateAccessWidener - Validate all the rules in the access widener against the Minecraft jar
+
+Other tasks
+-----------
+cleanEclipseClasspath
+cleanEclipseJdt
+cleanEclipseProject
+compileJava - Compiles main Java source.
+compileTestJava - Compiles test Java source.
+eclipseClasspath - Generates the Eclipse classpath file.
+eclipseJdt - Generates the Eclipse JDT settings file.
+eclipseProject - Generates the Eclipse project file.
+generateFabricModJson
+prepareKotlinBuildScriptModel
+processResources - Processes main resources.
+processTestResources - Processes test resources.
+validateFabricAmper
+verifyFabricAmperJar
+
+Rules
+-----
+Pattern: clean<TaskName>: Cleans the output files of a task.
+Pattern: build<ConfigurationName>: Assembles the artifacts of a configuration.
+
+[Incubating] Problems report is available at: file:///C:/Users/user/Documents/vbc/Fabric%20Amper/analysis/g5-java-setting-cc-probe-2026-11-13/settings-only-consumer-v2/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 9s
+1 actionable task: 1 executed

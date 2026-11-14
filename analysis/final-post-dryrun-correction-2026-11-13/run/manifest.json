@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "producer": "Gradle 9.7.1; JDK25; offline; --no-build-cache; --rerun-tasks",
+  "validationTask": "validatePlugins executed",
+  "junitSuiteCount": 46,
+  "junit": {
+    "tests": 247,
+    "skipped": 40,
+    "failures": 0,
+    "errors": 0,
+    "passed": 207
+  },
+  "junitArchive": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-FINAL-JUnit-XML.zip",
+  "junitArchiveSha256": "6CF2602B2E0119BAF68FF421E1C721DA26D98345F8605408EA67F0BC68AC2127",
+  "mainJar": {
+    "size": 315071,
+    "sha256": "2DC9F20238BED6284C0D80C898F47C13B49AC897DE41D819DBE8667274E00264"
+  },
+  "sourcesJar": {
+    "size": 67690,
+    "sha256": "E31E8461EA8F57A3FCBCEB04A2892BC6387D07DC29B696F63D677BE819320803"
+  },
+  "schema": {
+    "size": 26823,
+    "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+  },
+  "uniquePluginEntries": 123,
+  "localMavenByteEqual": true,
+  "externalUploads": false,
+  "executionLogs": [
+    "01-clean-build-validatePlugins.log",
+    "02-publish-current-plugin-local-G29.log"
+  ]
+}

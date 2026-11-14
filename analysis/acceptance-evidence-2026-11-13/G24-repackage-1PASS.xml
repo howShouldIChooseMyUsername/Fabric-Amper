@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperG24RepackageConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T09:00:32.889Z" hostname="DESKTOP-QBR2EQC" time="56.599">
+  <properties/>
+  <testcase name="resourcesChangedRebuildProducesSecondRealJarAndMirrorSnapshot()" classname="dev.fabricamper.integration.FabricAmperG24RepackageConsumerTest" time="56.584"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :compileJava
+> Task :generateFabricModJson
+> Task :processResources
+> Task :classes
+> Task :processIncludeJars
+> Task :jar
+> Task :sourcesJar
+> Task :verifyFabricAmperJar
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener
+> Task :validateFabricAmper
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 52s
+9 actionable tasks: 9 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :compileJava UP-TO-DATE
+> Task :generateFabricModJson UP-TO-DATE
+> Task :processResources
+> Task :classes
+> Task :processIncludeJars UP-TO-DATE
+> Task :jar
+> Task :sourcesJar
+> Task :verifyFabricAmperJar
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :validateAccessWidener
+> Task :validateFabricAmper
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 2s
+9 actionable tasks: 6 executed, 3 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

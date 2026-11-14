@@ -1,0 +1,28 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore="C:/Users/user/Documents/vbc/Fabric Amper/analysis/local-https-maven-probe-2026-11-13/run/local-truststore.p12" -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.17.21
+Previous process has disowned the lock due to abrupt termination.
+Found existing cache lock file (ACQUIRED_PREVIOUS_OWNER_DISOWNED), rebuilding loom cache. This may have been caused by a failed or canceled build.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+A problem occurred configuring root project 'probe-api'.
+> Failed to notify project evaluation listener.
+   > Failed to calculate the value of extension 'loom' property 'minecraftJarConfiguration'.
+      > Failed download after 3 attempts
+   > Failed to calculate the value of extension 'loom' property 'minecraftJarConfiguration'.
+      > Failed download after 3 attempts
+   > Failed to calculate the value of extension 'loom' property 'minecraftJarConfiguration'.
+      > Failed download after 3 attempts
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s

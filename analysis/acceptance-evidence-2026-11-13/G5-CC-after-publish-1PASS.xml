@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T09:15:04.522Z" hostname="DESKTOP-QBR2EQC" time="52.813">
+  <properties/>
+  <testcase name="G5 configuration cache reuses then invalidates and reuses on YAML edits()" classname="dev.fabricamper.integration.FabricAmperConsumerTest" time="52.797"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 25s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: build
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :validateAccessWidener NO-SOURCE
+> Task :validateFabricAmper
+> Task :compileJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :generateFabricModJson
+> Task :processIncludeJars
+> Task :sourcesJar
+> Task :processResources
+> Task :classes
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :jar
+> Task :assemble
+> Task :verifyFabricAmperJar
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 22s
+7 actionable tasks: 7 executed
+Configuration cache entry stored.
+Reusing configuration cache.
+> Task :validateAccessWidener NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :compileJava NO-SOURCE
+> Task :validateFabricAmper
+> Task :processIncludeJars UP-TO-DATE
+> Task :generateFabricModJson UP-TO-DATE
+> Task :sourcesJar UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :assemble UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :verifyFabricAmperJar
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 254ms
+7 actionable tasks: 2 executed, 5 up-to-date
+Configuration cache entry reused.
+Calculating task graph as configuration cache cannot be reused because file 'mod.yaml' has changed.
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :validateAccessWidener NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :processIncludeJars UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :validateFabricAmper
+> Task :sourcesJar
+> Task :generateFabricModJson
+> Task :processResources
+> Task :classes
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :jar
+> Task :assemble
+> Task :verifyFabricAmperJar
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 3s
+7 actionable tasks: 6 executed, 1 up-to-date
+Configuration cache entry stored.
+Reusing configuration cache.
+> Task :validateAccessWidener NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :generateFabricModJson UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :processIncludeJars UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :sourcesJar UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :validateFabricAmper
+> Task :compileTestJava NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :jar UP-TO-DATE
+> Task :assemble UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :verifyFabricAmperJar
+> Task :check
+> Task :build
+
+BUILD SUCCESSFUL in 130ms
+7 actionable tasks: 2 executed, 5 up-to-date
+Configuration cache entry reused.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

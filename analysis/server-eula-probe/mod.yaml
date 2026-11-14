@@ -1,0 +1,23 @@
+schema: 1
+product: fabric/mod
+mod:
+  id: fabric_amper_server_probe
+  version: "0.1.0+26.3"
+  name: Fabric Amper Isolated Server Probe
+  environment: server
+  entrypoints:
+    main:
+      - org.example.serverprobe.ServerProbeMod
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+settings:
+  java:
+    release: 25
+    sourcesJar: false
+  kotlin:
+    enabled: false
+repositories:
+  - fabric
+  - mavenCentral

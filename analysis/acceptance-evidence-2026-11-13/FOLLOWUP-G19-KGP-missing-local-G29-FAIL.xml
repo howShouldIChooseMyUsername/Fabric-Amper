@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperG19RealKotlinCollisionConsumerTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-11-13T11:14:42.312Z" hostname="DESKTOP-QBR2EQC" time="0.11">
+  <properties/>
+  <testcase name="G19 genuine external KGP 2_4_20 fails FA010 and independent bundled 2_4_21 succeeds()" classname="dev.fabricamper.integration.FabricAmperG19RealKotlinCollisionConsumerTest" time="0.092">
+    <failure message="java.nio.file.NoSuchFileException: C:\Users\user\Documents\vbc\Fabric Amper\build\g29-probe\maven-repo" type="java.nio.file.NoSuchFileException">java.nio.file.NoSuchFileException: C:\Users\user\Documents\vbc\Fabric Amper\build\g29-probe\maven-repo
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:96)
+	at java.base/sun.nio.fs.WindowsLinkSupport.getRealPath(WindowsLinkSupport.java:280)
+	at java.base/sun.nio.fs.WindowsPath.toRealPath(WindowsPath.java:907)
+	at java.base/sun.nio.fs.WindowsPath.toRealPath(WindowsPath.java:42)
+	at dev.fabricamper.integration.FabricAmperG19RealKotlinCollisionConsumerTest.requirePublishedG29Plugin(FabricAmperG19RealKotlinCollisionConsumerTest.kt:109)
+	at dev.fabricamper.integration.FabricAmperG19RealKotlinCollisionConsumerTest.G19 genuine external KGP 2_4_20 fails FA010 and independent bundled 2_4_21 succeeds(FabricAmperG19RealKotlinCollisionConsumerTest.kt:43)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,35 @@
+Picked up JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore="C:/Users/user/Documents/vbc/Fabric Amper/analysis/local-https-maven-probe-2026-11-13/run/local-truststore.p12" -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperRemoteRepository
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :generatePomFileForMavenJavaPublication
+> Task :generateFabricModJson
+> Task :processIncludeJars
+> Task :processResources
+> Task :compileJava UP-TO-DATE
+> Task :classes
+> Task :sourcesJar
+> Task :jar
+> Task :verifyFabricAmperJar
+> Task :generateMetadataFileForMavenJavaPublication
+> Task :publishMavenJavaPublicationToFabricAmperRemoteRepository FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':publishMavenJavaPublicationToFabricAmperRemoteRepository' (registered by plugin 'org.gradle.maven-publish').
+> The value of this property has been discarded during serialization.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 10s
+10 actionable tasks: 9 executed, 1 up-to-date
+Configuration cache entry stored.

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-11-13T14:04:43.836Z" hostname="DESKTOP-QBR2EQC" time="56.75">
+  <properties/>
+  <testcase name="remoteMavenDryRunConfigCacheStoreThenHitWithMissingEnv()" classname="dev.fabricamper.integration.FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest" time="56.733">
+    <failure message="org.opentest4j.AssertionFailedError: The remote-Maven Provider task graph must STORE a configuration cache entry:&#10;Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperRemoteRepository&#13;&#10;&#13;&#10;&gt; Configure project :&#13;&#10;Fabric Loom: 1.17.21&#13;&#10;:compileJava SKIPPED&#13;&#10;:generateFabricModJson SKIPPED&#13;&#10;:processResources SKIPPED&#13;&#10;:classes SKIPPED&#13;&#10;:processIncludeJars SKIPPED&#13;&#10;:jar SKIPPED&#13;&#10;:sourcesJar SKIPPED&#13;&#10;:generateMetadataFileForMavenJavaPublication SKIPPED&#13;&#10;:generatePomFileForMavenJavaPublication SKIPPED&#13;&#10;:verifyFabricAmperJar SKIPPED&#13;&#10;:publishMavenJavaPublicationToFabricAmperRemoteRepository SKIPPED&#13;&#10;&#10;Some tasks or features in this build are not compatible with the configuration cache.&#10;See the complete report at file:///C:/Users/user/AppData/Local/Temp/junit-8631051620618049042/remote-maven-offline-cc-3907279777385414730/build/reports/configuration-cache/8b0pqc3ukm5k4eyb37f2tl9jk/e7fsycj5o19h1kmh1c745geie/configuration-cache-report.html&#13;&#10;&#13;&#10;BUILD SUCCESSFUL in 1s&#13;&#10;Configuration cache disabled because incompatible task was found.&#13;&#10; ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: The remote-Maven Provider task graph must STORE a configuration cache entry:
+Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperRemoteRepository
+
+&gt; Configure project :
+Fabric Loom: 1.17.21
+:compileJava SKIPPED
+:generateFabricModJson SKIPPED
+:processResources SKIPPED
+:classes SKIPPED
+:processIncludeJars SKIPPED
+:jar SKIPPED
+:sourcesJar SKIPPED
+:generateMetadataFileForMavenJavaPublication SKIPPED
+:generatePomFileForMavenJavaPublication SKIPPED
+:verifyFabricAmperJar SKIPPED
+:publishMavenJavaPublicationToFabricAmperRemoteRepository SKIPPED
+
+Some tasks or features in this build are not compatible with the configuration cache.
+See the complete report at file:///C:/Users/user/AppData/Local/Temp/junit-8631051620618049042/remote-maven-offline-cc-3907279777385414730/build/reports/configuration-cache/8b0pqc3ukm5k4eyb37f2tl9jk/e7fsycj5o19h1kmh1c745geie/configuration-cache-report.html
+
+BUILD SUCCESSFUL in 1s
+Configuration cache disabled because incompatible task was found.
+ ==&gt; expected: &lt;true&gt; but was: &lt;false&gt;
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:228)
+	at dev.fabricamper.integration.FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest.remoteMavenDryRunConfigCacheStoreThenHitWithMissingEnv(FabricAmperRemoteMavenCredentialConfigurationCacheConsumerTest.kt:106)
+</failure>
+  </testcase>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :compileJava
+
+BUILD SUCCESSFUL in 54s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: publishMavenJavaPublicationToFabricAmperRemoteRepository
+
+> Configure project :
+Fabric Loom: 1.17.21
+:compileJava SKIPPED
+:generateFabricModJson SKIPPED
+:processResources SKIPPED
+:classes SKIPPED
+:processIncludeJars SKIPPED
+:jar SKIPPED
+:sourcesJar SKIPPED
+:generateMetadataFileForMavenJavaPublication SKIPPED
+:generatePomFileForMavenJavaPublication SKIPPED
+:verifyFabricAmperJar SKIPPED
+:publishMavenJavaPublicationToFabricAmperRemoteRepository SKIPPED
+
+Some tasks or features in this build are not compatible with the configuration cache.
+See the complete report at file:///C:/Users/user/AppData/Local/Temp/junit-8631051620618049042/remote-maven-offline-cc-3907279777385414730/build/reports/configuration-cache/8b0pqc3ukm5k4eyb37f2tl9jk/e7fsycj5o19h1kmh1c745geie/configuration-cache-report.html
+
+BUILD SUCCESSFUL in 1s
+Configuration cache disabled because incompatible task was found.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

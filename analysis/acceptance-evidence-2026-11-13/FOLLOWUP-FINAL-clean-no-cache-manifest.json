@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-13",
+  "producer": "isolated source snapshot with identical root sources",
+  "command": "Gradle 9.7.1/JDK25 clean build validatePlugins --offline --no-daemon --no-build-cache --rerun-tasks -Pkotlin.incremental=false",
+  "result": "BUILD SUCCESSFUL in 1m 38s; exit 0",
+  "suites": 45,
+  "junit": {
+    "tests": 246,
+    "skipped": 39,
+    "failures": 0,
+    "errors": 0,
+    "passed": 207
+  },
+  "artifacts": [
+    {
+      "path": "build/libs/fabric-amper-0.1.0.jar",
+      "size": 314704,
+      "sha256": "164CADA56DF0BEFBFB0AFABAE574F639A89795DFD86CA222AA8789F44C829F0A"
+    },
+    {
+      "path": "build/libs/fabric-amper-0.1.0-sources.jar",
+      "size": 67202,
+      "sha256": "2032A41383A3534B2FF0B087586B968189C752D74029A545E95ACAA747F2B119"
+    },
+    {
+      "path": "fabric-amper.schema.json",
+      "size": 26823,
+      "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+    }
+  ],
+  "finalXmlArchive": {
+    "path": "C:\\Users\\user\\Documents\\vbc\\Fabric Amper\\analysis\\acceptance-evidence-2026-11-13\\FOLLOWUP-FINAL-clean-no-cache-JUnit-XML.zip",
+    "size": 44113,
+    "sha256": "BD7019624B7AC6167E6FDB8052126A82253288E34789FDB54A8DE4781D4F73D6"
+  },
+  "zipDuplicateEntries": 0
+}

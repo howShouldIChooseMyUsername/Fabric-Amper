@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "testkit_mod",
+  "version": "1.0.0+26.3",
+  "name": "Fabric Amper TestKit Mod",
+  "environment": "*",
+  "icon": "assets/testkit_mod/icon.png",
+  "entrypoints": {
+    "main": [
+      "org.example.TestkitEntry"
+    ]
+  },
+  "mixins": [
+    "example.mixins.json"
+  ],
+  "accessWidener": "example.classtweaker",
+  "depends": {
+    "fabric-api": ">=0.165.2",
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}

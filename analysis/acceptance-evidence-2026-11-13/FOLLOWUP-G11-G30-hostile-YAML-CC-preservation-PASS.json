@@ -1,0 +1,120 @@
+{
+  "gate": "G11/G30",
+  "status": "PASS",
+  "cases": 11,
+  "checks": "Every hostile input expected FA002 or FA003, source real coordinates, CC invalidation, YAML + generated/mirror/JAR unchanged, recovery CC HIT",
+  "consumer": "settings-only; published local plugin; no HTTP or game",
+  "baselineFileSha256": {
+    "build/generated/fabric-amper/resources/main/fabric.mod.json": "3B73BB498E307A4D20CC0414C655E87DAE9E0485C2FB82F8F44DB28641937C3A",
+    ".gradle/fabric-amper/loom/3e728040a8d918c0a2899adafa615d24a9f5d0f8ec8ebc57d1323e0ba5298026/fabric.mod.json": "3B73BB498E307A4D20CC0414C655E87DAE9E0485C2FB82F8F44DB28641937C3A",
+    "build/libs/testkit-mod-1.0.0+26.3-sources.jar": "C6DEADA2FAC53B8EA6523DBDA77597B128006674616F140F04DF23264C6D1AA3",
+    "build/libs/testkit-mod-1.0.0+26.3.jar": "E3B26D907B211D4AC974F772CEED011F27AB668C3A0A6D3552FB0AD22E3B7C69"
+  },
+  "runs": [
+    {
+      "name": "00-initial",
+      "exit": 0,
+      "fa": null,
+      "cacheHit": false,
+      "logSha256": "645AA3E7826A663886AE80C58813D4CE598633B94026E0BAB4D6F8329EDBD0AD"
+    },
+    {
+      "name": "01-valid-hit",
+      "exit": 0,
+      "fa": null,
+      "cacheHit": true,
+      "logSha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    },
+    {
+      "name": "bad-duplicate-nested-key",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "43007B0A527FCBDEA44AC6B11771F7296FA89DC5443BB71AD2E3214556995B98"
+    },
+    {
+      "name": "bad-scalar-alias",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "E0EC63DC9D2972AB2FBABF1B869CD15AB8B365800D2B5790FF4A2B43C76E2641"
+    },
+    {
+      "name": "bad-collection-tag",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "9902F437C7D43EA334F29B72D64E25BE8464F490D8FE9FDE45E65B03B16884CB"
+    },
+    {
+      "name": "bad-multiple-documents",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "2DB5632303A80D9BFA9399B6FD0E28E5C0429819295F687F979D4BE0F395ADFE"
+    },
+    {
+      "name": "bad-empty-document",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "598BB5A2DE1B41D2BBA9E3FB78808D06C51970CECB69E543E400B76730758E6B"
+    },
+    {
+      "name": "bad-invalid-utf8",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "84B97A9ACA0C5370E852809E877E2759A4EF08DC09EC6D56FAA730244D4A7E1C"
+    },
+    {
+      "name": "bad-number-minecraft-version",
+      "exit": 1,
+      "fa": "FA003",
+      "cacheHit": false,
+      "logSha256": "72BD043372A9767C9D63097AF4A5717A6710055E44CC1D631A4B4AEE471A1549"
+    },
+    {
+      "name": "bad-unknown-nested-field",
+      "exit": 1,
+      "fa": "FA003",
+      "cacheHit": false,
+      "logSha256": "6FAA6193E06094FEBAE56683E4E204B8570F8B8C3467C5CDB7C6CC9CEAF2B2D7"
+    },
+    {
+      "name": "bad-explicit-merge-key",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "B5CF2BDA9B942A4B9CFA19AB9F3A3AFB24652C25F3C05365A5F610054DEF7FD1"
+    },
+    {
+      "name": "bad-anchored-scalar",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "E0EC63DC9D2972AB2FBABF1B869CD15AB8B365800D2B5790FF4A2B43C76E2641"
+    },
+    {
+      "name": "bad-over-deep-yaml",
+      "exit": 1,
+      "fa": "FA002",
+      "cacheHit": false,
+      "logSha256": "20CED0F656225564CAAE25FCEACB3F11D0F17196111D093128C5625D49D6DAFE"
+    },
+    {
+      "name": "recovery-restore-store",
+      "exit": 0,
+      "fa": null,
+      "cacheHit": true,
+      "logSha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    },
+    {
+      "name": "recovery-hit",
+      "exit": 0,
+      "fa": null,
+      "cacheHit": true,
+      "logSha256": "951D7137F53D45F194674E96AB4CF23928475E0ABF6D272530E1DB8DC925AE3A"
+    }
+  ]
+}

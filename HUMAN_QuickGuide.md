@@ -1,0 +1,333 @@
+# Fabric Amper — Quick Guide
+
+**A five-minute Quick Start and a feature-by-feature cheat sheet, in one place.** This guide is for Windows developers who want to start a Fabric mod immediately and then look up YAML keys or commands without reading the entire manual. For complete explanations, see [the Human Guide](HUMAN.md); for exact YAML types, see [the schema](fabric-amper.schema.json).
+
+> **Status:** Fabric Amper `0.1.0` is a locally tested **development** Gradle plugin, not a confirmed public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. Consult [QA_REPORT.md](QA_REPORT.md) for the verification boundaries. Commands that build or inspect locally are not proof of a working Minecraft runtime, IntelliJ GUI Sync, or a successful external release.
+
+## Contents
+
+1. [The two-minute command path](#the-two-minute-command-path)
+2. [Minimal project: copy and run](#minimal-project-copy-and-run)
+3. [Feature cheat sheet](#feature-cheat-sheet)
+4. [Dependencies, side safety, and test recipes](#dependencies-side-safety-and-test-recipes)
+5. [Shared Modrinth and CurseForge release settings](#shared-modrinth-and-curseforge-release-settings)
+6. [Publishing and API/library projects](#publishing-and-apilibrary-projects)
+7. [Windows command cheat sheet](#windows-command-cheat-sheet)
+8. [Troubleshooting and next steps](#troubleshooting-and-next-steps)
+
+## The two-minute command path
+
+**Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository has **no bundled `gradlew.bat`**. The Windows launcher can find an installed Gradle or a locally cached compatible distribution; it does not itself install Java or Gradle. From the checked-out **`Fabric Amper` producer folder**, run:
+
+```bat
+fabric-amper.bat doctor
+fabric-amper.bat setup
+fabric-amper.bat init quick_mod
+cd ..\quick_mod
+"..\Fabric Amper\fabric-amper.bat" build
+```
+
+**What happened?** `doctor` checks local Java/Gradle and the plugin marker; `setup` publishes the plugin binary **and Gradle plugin markers only to this producer's** `build/g29-probe/maven-repo/` (it does not publish to the Internet); `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the producer's current schema, and a Java source file; `build` validates, builds and checks the JAR. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` so compatible YAML editors can provide schema-based suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` somewhere other than the producer folder, it creates the new project under your current directory instead.
+
+Useful follow-ups from inside `quick_mod`:
+
+```bat
+"..\Fabric Amper\fabric-amper.bat" diagnose
+"..\Fabric Amper\fabric-amper.bat" explain
+"..\Fabric Amper\fabric-amper.bat" plan
+```
+
+`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate.
+
+### Before you edit anything
+
+- A consumer maintains **only `settings.gradle.kts` and exactly one `mod.yaml` or `mod.yml` for build configuration**. Do **not** add a consumer `build.gradle`, `build.gradle.kts`, or a manually authored `src/main/resources/fabric.mod.json` (or client equivalent). You **still write** actual Java/Kotlin classes, Mixins, icons and other assets.
+- Root `schema` is **optional**: `init` intentionally **never pins `schema: 1`**, so the plugin selects its latest implemented version (**currently v1**). Other explicit versions are rejected. `schemas/mod.schema.json` is a **snapshot at initialization time**, not an automatically updating remote schema; regenerate or replace it when upgrading the plugin's YAML grammar in an existing project. Never invent YAML fields: `fabricAmperDoctor`, `fabricAmperExplain`, `fabricAmperReleasePlan` and `fabricAmperPortingReport` are **Gradle tasks**, not configuration keys.
+- Quote exact Minecraft, Loader, Fabric API and Maven version strings. Avoid YAML aliases/anchors, duplicate keys, unverified dependency coordinates and guessed platform IDs. The examples below are **demonstrations**, not guarantees that external packages or projects exist.
+- `build` does **not** upload anything. `publish maven`, `publish modrinth`, `publish curseforge`, and `publish all` **can upload real releases**; review the exact destination, author permissions and credentials first. The wrapper asks for typed `PUBLISH` for these remote commands, but that prompt is not a substitute for explicit authorization.
+
+## Minimal project: copy and run
+
+Skip this section if you used `init`; it already created the three authored files **and** the local schema file for editor completion. For a **manual** consumer, create the following structure as a **sibling** of the producer:
+
+```text
+parent/
+├── Fabric Amper/
+│   └── build/g29-probe/maven-repo/       (from setup)
+└── quick_mod/
+    ├── settings.gradle.kts
+    ├── mod.yaml
+    ├── schemas/mod.schema.json              (copy from producer)
+    └── src/main/java/org/example/ExampleMod.java
+```
+
+**`settings.gradle.kts`** — bootstrap the **single public** Settings plugin:
+
+```kotlin
+pluginManagement {
+    repositories {
+        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://maven.fabricmc.net/")
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+plugins {
+    id("dev.fabric-amper.settings") version "0.1.0"
+}
+```
+
+The relative Maven repository path above is correct **only for this sibling layout**. Change it if the producer/consumer directories differ; `init` writes the producer's actual local path automatically. Do not apply `dev.fabric-amper.project` yourself.
+
+**`mod.yaml`** — a complete, Java-only Minecraft 26.3 example (the optional `schema: 1` is intentionally omitted). The first-line editor directive refers to a file that must exist:
+
+```yaml
+# yaml-language-server: $schema=./schemas/mod.schema.json
+product: fabric/mod
+mod:
+  id: quick_mod
+  version: "1.0.0+26.3"
+  name: Quick Mod
+  entrypoints:
+    main: [org.example.ExampleMod]
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+  kotlin:
+    enabled: false
+repositories:
+  - fabric
+  - mavenCentral
+```
+
+When creating the project manually rather than using `init`, first create a `schemas` directory beside `mod.yaml` and copy the producer's current `fabric-amper.schema.json` to `schemas/mod.schema.json`. The directive is a YAML **comment** for editors, not a Fabric Amper configuration key. A newly created `init` project includes the correct schema copy automatically; the comment does not cause schema updates in existing projects after a plugin upgrade.
+
+**`src/main/java/org/example/ExampleMod.java`** — actual mod code, not generated metadata:
+
+```java
+package org.example;
+
+import net.fabricmc.api.ModInitializer;
+
+public final class ExampleMod implements ModInitializer {
+    @Override public void onInitialize() {
+        System.out.println("Quick Mod initialized");
+    }
+}
+```
+
+From the **consumer** directory, use an installed compatible Gradle:
+
+```bat
+gradle help
+gradle tasks --all
+gradle validateFabricAmper
+gradle build
+gradle verifyFabricAmperJar
+```
+
+The expected output is `build/libs/quick_mod-1.0.0+26.3.jar`. It must contain **exactly one root-level `fabric.mod.json`**, generated by Fabric Amper from `mod.yaml`, with the matching `id` and `version`. A successful command exit and archive verification establish a local build; they do **not** establish live game compatibility. Alternatively, from the consumer folder, use `"C:\path\to\Fabric Amper\fabric-amper.bat" build` when Gradle is not on `PATH` but the launcher can find it.
+
+## Feature cheat sheet
+
+**All YAML snippets after the complete example are FRAGMENTS.** Insert their fields into the existing `mod.yaml` structure. **Merge under existing top-level maps**; do not paste a second `mod:`, `settings:`, `repositories:`, or `publish:` block into the same file.
+
+| I want to… | YAML location / value | What else I must do |
+| --- | --- | --- |
+| Name my mod | `mod.name: My Mod` | Give it a real unique `mod.id` and version |
+| Add a PNG icon | `mod.icon: assets/quick_mod/icon.png` | Put the PNG under `src/main/resources/assets/quick_mod/icon.png` |
+| Add a Fabric entrypoint | `mod.entrypoints.main` or `.client` | Implement the Java/Kotlin initializer class |
+| Set a client-only mod | `mod.environment: client` | Use client-safe entrypoints/Mixins; do not load client-only code on a dedicated server |
+| Enable Kotlin | `settings.kotlin.enabled: true` | Use `src/main/kotlin`; fixed KGP `2.4.21` / Fabric Language Kotlin `1.14.2+kotlin.2.4.21` |
+| Split client source sets | `settings.loom.splitEnvironmentSourceSets: true` | Use `src/client/java` and optionally `src/client/resources` |
+| Add a client dependency | `dependencies[].target: client` | Requires split source sets; not allowed with `exported` or `include` |
+| Register a Mixin | `mod.mixins: [example.mixins.json]` | Add the actual config and mixin classes; side-qualify client-only configs |
+| Change Minecraft access | `mod.accessWidener: example.classtweaker` on 26.1+ | Actual file in `src/main/resources/`; header `classTweaker v1 official` |
+| Target a legacy remap profile | `minecraft.version: "1.21.11"` and `settings.java.release: 21` | Change mappings/Loader/API to verified compatible legacy versions; use `.accesswidener` instead |
+| Require another installed mod | `mod.depends` | Use **Fabric Loader mod ID + version predicate**, not Maven coordinates |
+| Add test libraries | `test-dependencies` | Write tests in `src/test/java` or `src/test/kotlin`; run `gradle test` |
+| Build a reusable API/library | `product: fabric/api` (alias `fabric/library`) | Set **`mod.group`**; local Maven publication becomes available |
+| Add release destinations | `publish.maven`, `.modrinth`, `.curseforge` | Configure only verified HTTPS repo/project IDs and environment-variable **names** |
+
+The 26.3 default uses **non-remapping Loom**, Mojang names and **Java release 25**. Legacy 1.21.11 uses a **remapping** Loom path with Java 21; change more than the Minecraft version when porting. You can inspect a manual migration checklist without changing code or YAML with `fabric-amper.bat port 1.21.11` (or direct Gradle `fabricAmperPortingReport -PfabricAmperPortTarget=1.21.11`).
+
+### Kotlin, Mixins and resources
+
+For Kotlin, merge **under the existing `settings` block**:
+
+```yaml
+settings:
+  kotlin:
+    enabled: true
+    pluginVersion: "2.4.21"
+    languageVersion: "2.4"
+    fabricLanguageKotlin: "1.14.2+kotlin.2.4.21"
+```
+
+If the complete starter already contains `settings.kotlin`, edit that section **rather than duplicating it**. For client-only classes, set `settings.loom.splitEnvironmentSourceSets: true`, put code under `src/client/java` or `src/client/kotlin`, and define the `client` entrypoint. A Mixin config or icon must exist inside the allowed resources source set; a global/server Mixin cannot safely reference only a client resource. A `.classtweaker` on Minecraft 26.1+ and a legacy `.accesswidener` both belong under `src/main/resources` and require profile-correct headers.
+
+## Dependencies, side safety, and test recipes
+
+**Three different dependency systems must not be conflated:**
+
+| Place in YAML | Purpose | Identifier |
+| --- | --- | --- |
+| `dependencies` / `test-dependencies` | Gradle compilation/runtime/test artifacts | Fixed Maven `group:artifact:version` or explicit Modrinth artifact data |
+| `mod.depends` (and `recommends`, `suggests`, `breaks`, `conflicts`) | Constraints verified by Fabric Loader at game runtime | Loader **mod ID** and version predicate, e.g. `fabricloader: ">=0.20.1"` |
+| `publish.modrinth.dependencies` / `publish.curseforge.relations` | External release-page project relationships | Verified **platform project ID or slug**, not Maven GAV or Loader ID |
+
+**Artifact dependency fragment** — replace fictional `org.example` coordinates with real published artifacts. These snippets belong inside a single existing `dependencies` list:
+
+```yaml
+dependencies:
+  - maven: "org.example:real-api-artifact:1.2.3"
+    scope: all
+    exported: true
+  - maven: "org.example:real-helper:2.0.0"
+    scope: all
+    include: true
+  - maven: "org.example:compiler-annotations:1.0.0"
+    scope: compile-only
+```
+
+| Option | What it does | Restriction |
+| --- | --- | --- |
+| `scope: all` | Available for compilation and runtime | Default |
+| `scope: compile-only` | Compile classpath only | Cannot combine with `include` or `exported` |
+| `scope: runtime-only` | Runtime classpath only | Cannot combine with `include` or `exported` |
+| `exported: true` | Exposes an API/library dependency to downstream consumers | `scope: all`, target `main`; not a substitute for `mod.depends` |
+| `include: true` | Embeds a **non-transitive** JAR-in-JAR artifact | `scope: all`, target `main`; verify runtime loading separately |
+| `target: client` | Client source-set dependency | Requires split source sets, non-remap profile, no `exported`/`include` |
+| `kind: mod` / `library` | Selects the supported Gradle mod/library configuration | Choose based on what the artifact actually contains |
+
+String shorthand, a one-key scope map (`"group:artifact:version": compile-only`), and typed `maven`/`modrinth` objects are supported. Fixed versions only: do not use `latest.release`, dynamic ranges, or Maven coordinates with guessed versions. `test-dependencies` follow analogous scopes but **cannot** use `target: client`, `exported: true`, or `include: true`. For a JUnit Jupiter sample and repository details, see [the complete Human Guide](HUMAN.md#repositories-and-dependencies).
+
+### Loader relationships versus build dependencies
+
+For an installed-mod requirement, merge into `mod`:
+
+```yaml
+mod:
+  depends:
+    fabricloader: ">=0.20.1"
+    minecraft: "26.3"
+```
+
+Fabric Amper injects missing core Loader requirements for Minecraft, Fabric Loader, Java, and optional Fabric API/Kotlin; it **does not overwrite explicit predicates**. Use `fabric-amper.bat explain` to see which relationships were authored versus injected. A YAML `mod.depends` requirement does **not** download the referenced mod: add an actual Gradle artifact dependency separately when needed.
+
+## Shared Modrinth and CurseForge release settings
+
+`publish.common` prevents repeating a release title, game-version list, changelog and dependency relationships. The following is a **fragment**, not a second standalone YAML document. Add it to the **same** `mod.yaml` only after you have real project IDs and have checked the release metadata:
+
+```yaml
+publish:
+  common:
+    releaseType: release
+    name: "Quick Mod 1.0.0"
+    gameVersions: ["26.3"]
+    changelogFile: CHANGELOG.md
+    dependencies:
+      - slug: fabric-api
+        modrinthId: fabric-api
+        curseforgeId: "306612"
+        type: required
+  modrinth:
+    projectId: "REPLACE_WITH_REAL_MODRINTH_PROJECT"
+    tokenEnv: MODRINTH_TOKEN
+    loaders: [fabric]
+  curseforge:
+    projectId: 123456
+    tokenEnv: CURSEFORGE_TOKEN
+    gameVersionNames: ["26.3", "Fabric", "Client", "Server"]
+```
+
+This example uses **placeholder project IDs**. `changelogFile` must be an actual safe project-relative file (for example `CHANGELOG.md`) with no escaping symlinks. Do not put a token value in YAML: `tokenEnv` names a secret-bearing environment variable provided at execution time.
+
+| Shared dependency `type` | Modrinth dependency type | CurseForge relation type |
+| --- | --- | --- |
+| `required` | `required` | `requiredDependency` |
+| `optional` | `optional` | `optionalDependency` |
+| `incompatible` | `incompatible` | `incompatible` |
+| `embedded` | `embedded` | `embeddedLibrary` |
+
+- `common.name` becomes the default Modrinth `versionName` and CurseForge `displayName`. `common.gameVersions` supplies Modrinth's **string** `gameVersions` and CurseForge's **string** `gameVersionNames`, unless overridden. CurseForge's separate `gameVersions` field is a list of **verified positive integer platform version IDs**, never inferred from `"26.3"`.
+- `slug` is the CurseForge relation slug and fallback Modrinth project ID; optional `modrinthId` can override that fallback and optional `curseforgeId` is a **numeric string** (not a Maven coordinate). Project IDs across platforms are not assumed to match.
+- Platform-specific fields **override** shared values. Platform `dependencies` / `relations` entries replace matching inherited identifiers and append new ones; an explicitly empty `[]` clears inherited relationships for that platform. A platform's `changelog` or `changelogFile` replaces the entire common changelog source. Inline `changelog` and `changelogFile` are mutually exclusive at each level.
+- `publish.common` **cannot create an upload destination by itself**. Explicit `publish.modrinth` / `publish.curseforge` entries still need their own existing `projectId` and `tokenEnv`. `releaseType` must be `release`, `beta`, or `alpha`.
+
+Preview the resolved JAR/release data with **`fabric-amper.bat plan`**. It does **not** test external credentials, confirm platform tags, create projects, or upload files.
+
+## Publishing and API/library projects
+
+Set `product: fabric/api` (or exact alias `fabric/library`) and a non-empty `mod.group` for a reusable library. The plugin creates a **consumer-project-local** Maven publication at `build/fabric-amper/maven-repository/`; the explicit local task is `publishMavenJavaPublicationToFabricAmperLocalRepository` (Windows shortcut: `fabric-amper.bat publish local`). The main artifact is the production JAR with one root `fabric.mod.json`; an optional sources JAR, POM and Gradle `.module` are also produced.
+
+For an explicitly requested **remote Maven** destination, add this **fragment** to an existing YAML with `mod.group`:
+
+```yaml
+publish:
+  maven:
+    url: https://maven.pkg.github.com/OWNER/REPOSITORY
+    credentialsFromEnv: [GITHUB_ACTOR, GITHUB_TOKEN]
+```
+
+`publish.maven.url` must be HTTPS without inline credentials, query or fragment. `credentialsFromEnv` is exactly **two different environment-variable names** (username first, password/token second), not actual secrets. A regular `fabric/mod` may use this new `publish.maven` when `mod.group` is present; it does **not** automatically enable the API product's library publishing defaults.
+
+The **legacy API/library-only** equivalent is also supported (do **not** combine a configured legacy remote repository with `publish.maven`):
+
+```yaml
+publishing:
+  repository:
+    url: https://maven.example.org/releases
+    usernameEnv: FABRIC_AMPER_MAVEN_USERNAME
+    passwordEnv: FABRIC_AMPER_MAVEN_PASSWORD
+```
+
+**Publication safety:** `gradle build` and `fabric-amper.bat plan` do not upload. Remote publishing requires an **explicit** operation (`publishFabricAmperMaven`, `publishFabricAmperModrinth`, `publishFabricAmperCurseForge` or `publishFabricAmper`); `publish all` is **not** the same as Gradle's broader standard `publish` task. Multi-platform uploads are **not atomic**: one platform could succeed while another fails. Local validation cannot guarantee credentials, external project ownership or idempotency. Native remote Maven publishing with credentials has additional Gradle configuration-cache limits; see [publishing details and limitations](HUMAN.md#explicit-maven-modrinth-and-curseforge-publishing).
+
+## Windows command cheat sheet
+
+Run `fabric-amper.bat` in the **producer** for `setup` / `init`. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
+
+| Wrapper command | Actual action / impact |
+| --- | --- |
+| `help` / `docs` / `version` | Show usage, documentation locations or launcher version |
+| `doctor` | Check available Java/Gradle and local plugin marker; no cache cleanup |
+| `doctor --paths` / `--full` | Estimate Windows path risks; `--full` also prints JDK/toolchain hints |
+| `setup` | Publish producer plugin and markers to its **local** `build/g29-probe/maven-repo/` |
+| `init <mod_id> [folder] [mod\|api]` | Create a **new** settings-only Java consumer; never overwrite an existing folder |
+| `tasks` | `gradle tasks --all` in the consumer |
+| `validate` | `gradle validateFabricAmper` |
+| `build` | `gradle validateFabricAmper build verifyFabricAmperJar` |
+| `verify` / `test` / `clean` | `verifyFabricAmperJar` / `test` / `clean` in the consumer |
+| `diagnose` | `fabricAmperDoctor`: local toolchain/project report, no upload |
+| `explain` | `fabricAmperExplain`: Gradle artifacts vs Loader requirements, no remote resolution |
+| `plan` | `fabricAmperReleasePlan`: builds/verifies local JAR and previews release metadata, **no upload** |
+| `port 1.21.11` / `port 26.3` | `fabricAmperPortingReport`: manual migration checklist, does **not** port code |
+| `run` / `server` | `runClient` / `runServer`: **launches the game**; user reviews and accepts server EULA manually |
+| `publish local` | Explicit API/library Maven publication inside consumer `build/`; **no remote upload** |
+| `publish modrinth` / `curseforge` / `maven` | **Real remote upload** to the configured destination after typed confirmation and local verification |
+| `publish all` | **Real remote upload** to all explicitly configured **new `publish` targets**; may partially succeed |
+
+The wrapper performs its own preflight checks for a missing or duplicated YAML, forbidden consumer build scripts and authored Loader JSON. For direct Gradle commands use the concrete tasks named above. Do **not** use `publish` as a way to check syntax; use `validate` or `build` instead. Server EULA acceptance, authentication, world files and personal Minecraft accounts are **never** handled automatically.
+
+## Troubleshooting and next steps
+
+| Symptom | Fast check |
+| --- | --- |
+| Settings plugin or marker not found | Run producer `setup`; check the local Maven `pluginManagement.repositories` URI and producer location |
+| Missing/duplicate YAML (`FA001` / `FA002`) | Use exactly one `mod.yaml` or `mod.yml`; check UTF-8, aliases and duplicate keys |
+| Invalid field, fixed version or publish URL (`FA003`) | Check [Draft-07 schema](fabric-amper.schema.json) and the project's strict Kotlin validator |
+| Minecraft mapping / Java / Kotlin (`FA004`–`FA006`) | For 26.3 use Mojang mappings, Java **25**, pinned optional Kotlin versions |
+| Source `fabric.mod.json` / duplicate JAR metadata (`FA008` / `FA013`) | Remove authored Loader JSON and run `verifyFabricAmperJar` |
+| Mixin/icon/Class Tweaker / client side (`FA009` / `FA014`) | Verify relative paths, file headers, actual resources and split source sets |
+| Artifact classification or conflicting declarations (`FA011` / `FA012`) | Check exact Maven repository/coordinate and repeated dependencies |
+| Metadata mirror issue (`FA015`) | Inspect project-local mirror health and cache diagnostics; avoid global cache deletion |
+| Very long Windows paths | `fabric-amper.bat doctor --paths` or `doctor --full`; consider a shorter **project** directory |
+| Build passes but game/IDE fails | Test `runClient`, `runServer` (with personally reviewed EULA) or IntelliJ GUI separately |
+
+**Where to go next:** [HUMAN.md](HUMAN.md) for the full human manual, [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md) for concise AI agent instructions, [FabricAmperSKILL.md](FabricAmperSKILL.md) for detailed agent safeguards, [fabric-amper.schema.json](fabric-amper.schema.json) for allowed YAML keys, [specs.md](specs.md) for G1–G30 acceptance, and [QA_REPORT.md](QA_REPORT.md) for actual evidence and remaining gates.

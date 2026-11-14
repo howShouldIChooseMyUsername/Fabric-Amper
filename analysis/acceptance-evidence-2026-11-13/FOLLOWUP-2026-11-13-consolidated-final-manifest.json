@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-13",
+  "overallReleaseApproval": "NOT APPROVED",
+  "producer": {
+    "status": "PASS",
+    "producer": "Gradle 9.7.1; JDK25; offline; --no-build-cache; --rerun-tasks",
+    "validationTask": "validatePlugins executed",
+    "junitSuiteCount": 46,
+    "junit": {
+      "tests": 247,
+      "skipped": 40,
+      "failures": 0,
+      "errors": 0,
+      "passed": 207
+    },
+    "junitArchive": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-FINAL-JUnit-XML.zip",
+    "junitArchiveSha256": "6CF2602B2E0119BAF68FF421E1C721DA26D98345F8605408EA67F0BC68AC2127",
+    "mainJar": {
+      "size": 315071,
+      "sha256": "2DC9F20238BED6284C0D80C898F47C13B49AC897DE41D819DBE8667274E00264"
+    },
+    "sourcesJar": {
+      "size": 67690,
+      "sha256": "E31E8461EA8F57A3FCBCEB04A2892BC6387D07DC29B696F63D677BE819320803"
+    },
+    "schema": {
+      "size": 26823,
+      "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+    },
+    "uniquePluginEntries": 123,
+    "localMavenByteEqual": true,
+    "externalUploads": false,
+    "executionLogs": [
+      "01-clean-build-validatePlugins.log",
+      "02-publish-current-plugin-local-G29.log"
+    ]
+  },
+  "confirmedSelected": {
+    "G11G30HostileYamlCases": 11,
+    "G11ResourcesDiagnosticCases": 6,
+    "G20FourFileParallelRecoveryJunitPass": 1,
+    "remoteMavenDryRunCcStoreHitJunitPass": 1
+  },
+  "remoteMavenActualAction": {
+    "tlsLoopbackBasic401Challenge": true,
+    "nativePublishAttemptedOffline": true,
+    "authenticatedSuccessfulPutCount": 0,
+    "nativeOfflineHttpUploadBlocked": true,
+    "explicitNativeCredentialsCcIncompatible": true,
+    "authenticatedRemotePublishCcHit": "NOT VERIFIED"
+  },
+  "manualGates": {
+    "intellijGuiImportAndSync": "NOT VERIFIED",
+    "dedicatedServerCompleteStartupAfterEula": "NOT RUN",
+    "legacyGameLoaderRuntime": "NOT RUN",
+    "modrinthCurseforgeExternalUploads": 0
+  },
+  "files": [
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-G11-G30-hostile-YAML-CC-preservation-PASS.json",
+      "size": 3971,
+      "sha256": "5EDA0374C0D7B1472F05375902723F483D623997E48638092591D769C4CA962E"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-G11-resource-FA001-FA008-FA009-FA012-CC-PASS.json",
+      "size": 3340,
+      "sha256": "6370060C6CFFCB5BE6E6FB9478ED81B4FAD43EFFF9B4F8CDC59A9D0EEF28D2AE"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-G20-FOUR-MIRROR-FILES-PARALLEL-CC-1PASS.xml",
+      "size": 5439,
+      "sha256": "913A9CB20947CE86E27CCDD20E5268274CD15AE5DAF116E08F89AC6F4B0104ED"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-CC-RESTORED-1PASS.xml",
+      "size": 1911,
+      "sha256": "A1EB0DE04A8C0BCC90B13E01FACC224AFE16F54339CE0DEF04FFDD2DEDCB80A1"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-HTTPS-REMOTE-CC-DRYRUN-REGRESSION-1FAIL.xml",
+      "size": 5008,
+      "sha256": "4417FFF31C2A12F15EA2DE12C20C87DC0AD5C6F86E8AA82DB8BA9446E4685560"
+    },
+    {
+      "path": "analysis/final-post-dryrun-correction-2026-11-13/run/manifest.json",
+      "size": 1085,
+      "sha256": "93C1CC859DAEC4AA27D639EFA7EF14CA71698A83B7A7AD2F8A48BFA11DA0004A"
+    },
+    {
+      "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-FINAL-JUnit-XML.zip",
+      "size": 44495,
+      "sha256": "6CF2602B2E0119BAF68FF421E1C721DA26D98345F8605408EA67F0BC68AC2127"
+    },
+    {
+      "path": "analysis/local-https-maven-probe-2026-11-13/run/01-publish-cc-store.log",
+      "size": 2261,
+      "sha256": "5CF7DF3C5C3D4AE2140118FE52ECEA105697851AA6407372B043E8099EE34804"
+    },
+    {
+      "path": "analysis/local-https-maven-probe-2026-11-13/run/server-events-on-exit.json",
+      "size": 292,
+      "sha256": "3143916CD77AF5337E6F9A5194A96A8324093B4AB0D9A4D712700BDC3111C2BD"
+    },
+    {
+      "path": "README.md",
+      "size": 42446,
+      "sha256": "11A6DA1A757E6965A4094369BA42006463FF1B389CC3B5867123F88415CF493D"
+    },
+    {
+      "path": "QA_REPORT.md",
+      "size": 254728,
+      "sha256": "B3AD45EB7BA05907B89D1819F812765CBC209B05D7746E1295440C1C8328F60B"
+    },
+    {
+      "path": "fabric-amper.schema.json",
+      "size": 26823,
+      "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+    }
+  ]
+}

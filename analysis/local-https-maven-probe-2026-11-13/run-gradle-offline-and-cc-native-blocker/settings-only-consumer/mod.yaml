@@ -1,0 +1,31 @@
+schema: 1
+product: fabric/api
+mod:
+  id: amper_local_https_probe
+  version: "0.1.0+26.3"
+  group: dev.fabricamper.localhttps
+  archivesName: probe-api
+  name: Local HTTPS Maven Probe
+  environment: "*"
+  entrypoints:
+    main:
+      - dev.fabricamper.localhttps.ProbeEntry
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+  loom:
+    splitEnvironmentSourceSets: false
+repositories:
+  - fabric
+  - mavenCentral
+publish:
+  maven:
+    url: https://127.0.0.1:2722/maven
+    credentialsFromEnv: [FABRIC_AMPER_PROBE_LOCAL_MAVEN_USERNAME, FABRIC_AMPER_PROBE_LOCAL_MAVEN_PASSWORD]

@@ -1,0 +1,31 @@
+schema: 1
+product: fabric/mod
+mod:
+  id: fabric_amper_ide_probe
+  version: "0.1.0+26.3"
+  name: Fabric Amper Isolated IDE Probe
+  environment: "*"
+  entrypoints:
+    main:
+      - org.example.ideprobe.IdeProbeMod
+    client:
+      - org.example.ideprobe.IdeProbeClient
+minecraft:
+  version: "26.3"
+  mappings: mojang
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: true
+    pluginVersion: "2.4.21"
+    languageVersion: "2.4"
+    fabricLanguageKotlin: "1.14.2+kotlin.2.4.21"
+  loom:
+    splitEnvironmentSourceSets: true
+repositories:
+  - fabric
+  - mavenCentral

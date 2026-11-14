@@ -1,0 +1,706 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Fabric Amper mod.yaml",
+  "description": "Schema v1 for Fabric Amper projects configured solely by settings.gradle.kts and mod.yaml or mod.yml. New publish.maven/modrinth/curseforge targets apply to mod and API/library products. Legacy publishing.repository applies to API/library only. Schema annotations do not apply defaults; Fabric Amper validates final semantics.",
+  "type": "object",
+  "required": ["schema", "product", "mod", "minecraft"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "integer",
+      "const": 1,
+      "description": "Fabric Amper YAML schema version.",
+      "default": 1
+    },
+    "product": {
+      "type": "string",
+      "enum": ["fabric/mod", "fabric/api", "fabric/library"],
+      "description": "fabric/api enables library-friendly Java API metadata and automatic Maven publishing. fabric/library is an exact alias for fabric/api.",
+      "default": "fabric/mod"
+    },
+    "mod": { "$ref": "#/definitions/mod" },
+    "minecraft": { "$ref": "#/definitions/minecraft" },
+    "settings": { "$ref": "#/definitions/settings" },
+    "repositories": {
+      "type": "array",
+      "description": "Dependency-resolution repositories (not Maven publishing destinations).",
+      "items": { "$ref": "#/definitions/repository" },
+      "default": []
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Main or split-client dependencies. exported controls API visibility; include additionally embeds a non-transitive JAR-in-JAR.",
+      "items": { "$ref": "#/definitions/dependency" },
+      "default": []
+    },
+    "test-dependencies": {
+      "type": "array",
+      "description": "Test-only dependencies; target: client, exported and include are not supported.",
+      "items": { "$ref": "#/definitions/testDependency" },
+      "default": []
+    },
+    "publishing": { "$ref": "#/definitions/publishing" },
+    "publish": { "$ref": "#/definitions/publish" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "product": { "enum": ["fabric/api", "fabric/library"] } },
+        "required": ["product"]
+      },
+      "then": {
+        "properties": {
+          "mod": {
+            "type": "object",
+            "required": ["group"],
+            "properties": { "group": { "type": "string", "minLength": 1 } }
+          }
+        }
+      },
+      "else": { "not": { "required": ["publishing"] } }
+    },
+    {
+      "if": {
+        "properties": {
+          "dependencies": {
+            "contains": {
+              "type": "object",
+              "properties": { "target": { "const": "client" } },
+              "required": ["target"]
+            }
+          }
+        },
+        "required": ["dependencies"]
+      },
+      "then": {
+        "properties": {
+          "settings": {
+            "type": "object",
+            "required": ["loom"],
+            "properties": {
+              "loom": {
+                "type": "object",
+                "required": ["splitEnvironmentSourceSets"],
+                "properties": { "splitEnvironmentSourceSets": { "const": true } }
+              }
+            }
+          }
+        },
+        "required": ["settings"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "publish": { "type": "object", "required": ["maven"] }
+        },
+        "required": ["publish"]
+      },
+      "then": {
+        "properties": { "mod": { "type": "object", "required": ["group"] } }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "publish": { "type": "object", "required": ["maven"] }
+        },
+        "required": ["publish"]
+      },
+      "then": {
+        "not": {
+          "properties": {
+            "publishing": { "type": "object", "required": ["repository"] }
+          },
+          "required": ["publishing"]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "nonblank": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(?:.*\\S)?$"
+    },
+    "versionToken": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S+$",
+      "description": "Quote versions in YAML when they might otherwise be interpreted as numbers."
+    },
+    "modId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+      "examples": ["sample-api", "sample_mod"]
+    },
+    "mod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/definitions/modId", "description": "Fabric Loader mod ID; also the default Maven artifact ID." },
+        "version": { "$ref": "#/definitions/versionToken", "examples": ["1.0.0", "1.0.0+26.3"] },
+        "group": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$",
+          "description": "Maven groupId. Mandatory for fabric/api or fabric/library.",
+          "examples": ["org.example.fabric"]
+        },
+        "archivesName": {
+          "type": "string",
+          "pattern": "^(?!\\.{1,2}$)[A-Za-z0-9._-]+$",
+          "description": "Output archive base name and Maven artifactId; defaults to mod.id."
+        },
+        "name": { "$ref": "#/definitions/nonblank" },
+        "description": { "type": "string" },
+        "environment": {
+          "type": "string",
+          "enum": ["*", "client", "server"],
+          "default": "*"
+        },
+        "license": {
+          "description": "Fabric Loader license name or list of license names.",
+          "oneOf": [
+            { "$ref": "#/definitions/nonblank" },
+            { "type": "array", "items": { "$ref": "#/definitions/nonblank" } }
+          ]
+        },
+        "authors": { "$ref": "#/definitions/people" },
+        "contributors": { "$ref": "#/definitions/people" },
+        "contact": { "$ref": "#/definitions/contact" },
+        "icon": {
+          "description": "PNG resource path under src/main/resources or the split client resources, or a pixel-size/path map.",
+          "oneOf": [
+            { "$ref": "#/definitions/nonblank" },
+            {
+              "type": "object",
+              "minProperties": 1,
+              "patternProperties": {
+                "^(?=.*[1-9])[0-9]+$": { "$ref": "#/definitions/nonblank" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "provides": { "type": "array", "items": { "$ref": "#/definitions/modId" } },
+        "entrypoints": {
+          "type": "object",
+          "description": "Each entrypoint list accepts a class string or {adapter, value}.",
+          "propertyNames": { "$ref": "#/definitions/nonblank" },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/definitions/entrypoint" }
+          },
+          "examples": [{ "main": ["org.example.SampleMod"], "client": [{ "adapter": "default", "value": "org.example.SampleClient" }] }]
+        },
+        "languageAdapters": { "$ref": "#/definitions/stringMap" },
+        "mixins": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/nonblank" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["config"],
+                "properties": {
+                  "config": { "$ref": "#/definitions/nonblank" },
+                  "environment": { "type": "string", "enum": ["*", "client", "server"] }
+                }
+              }
+            ]
+          }
+        },
+        "accessWidener": {
+          "$ref": "#/definitions/nonblank",
+          "description": "Minecraft 26.1+ requires a .classtweaker with classTweaker v1 official header; legacy remap uses .accesswidener."
+        },
+        "depends": { "$ref": "#/definitions/versionMap" },
+        "recommends": { "$ref": "#/definitions/versionMap" },
+        "suggests": { "$ref": "#/definitions/versionMap" },
+        "conflicts": { "$ref": "#/definitions/versionMap" },
+        "breaks": { "$ref": "#/definitions/versionMap" },
+        "custom": {
+          "type": "object",
+          "description": "Extensible Fabric Loader custom JSON metadata; arbitrary JSON-compatible values are allowed.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/nonblank" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "$ref": "#/definitions/nonblank" },
+              "contact": { "$ref": "#/definitions/contact" }
+            }
+          }
+        ]
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/nonblank" },
+      "properties": {
+        "homepage": { "type": "string", "pattern": "^https?://" },
+        "issues": { "type": "string", "pattern": "^https?://" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "stringMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/nonblank" },
+      "additionalProperties": { "$ref": "#/definitions/nonblank" }
+    },
+    "entrypoint": {
+      "oneOf": [
+        { "$ref": "#/definitions/nonblank" },
+        {
+          "type": "object",
+          "required": ["adapter", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "adapter": { "$ref": "#/definitions/nonblank" },
+            "value": { "$ref": "#/definitions/nonblank" }
+          }
+        }
+      ]
+    },
+    "versionMap": {
+      "type": "object",
+      "description": "Fabric Loader version predicates; a string means one requirement and an array means OR.",
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/definitions/nonblank" },
+          { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/nonblank" } }
+        ]
+      }
+    },
+    "minecraft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "loader"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+(?:\\.[0-9]+)?$",
+          "description": "Exact Minecraft version; must be quoted as a YAML string.",
+          "examples": ["26.3", "1.21.11"]
+        },
+        "mappings": {
+          "description": "Minecraft 26.1+ must use mojang; legacy remap may use yarn with a fixed version.",
+          "oneOf": [
+            { "type": "string", "const": "mojang" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string", "enum": ["mojang", "yarn"] },
+                "version": { "$ref": "#/definitions/nonblank" }
+              },
+              "allOf": [{
+                "if": { "properties": { "type": { "const": "yarn" } }, "required": ["type"] },
+                "then": { "required": ["version"] },
+                "else": { "not": { "required": ["version"] } }
+              }]
+            }
+          ],
+          "default": "mojang"
+        },
+        "loader": { "$ref": "#/definitions/versionToken", "examples": ["0.20.1"] },
+        "fabricApi": { "$ref": "#/definitions/versionToken", "examples": ["0.165.2+26.3"] }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "java": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "release": { "type": "integer", "minimum": 8, "maximum": 30, "default": 25 },
+            "sourcesJar": { "type": "boolean", "default": true }
+          }
+        },
+        "kotlin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "pluginVersion": { "$ref": "#/definitions/nonblank", "default": "2.4.21" },
+            "languageVersion": { "$ref": "#/definitions/nonblank", "default": "2.4" },
+            "fabricLanguageKotlin": { "$ref": "#/definitions/nonblank", "default": "1.14.2+kotlin.2.4.21" }
+          },
+          "allOf": [{
+            "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+            "then": {
+              "properties": {
+                "pluginVersion": { "const": "2.4.21" },
+                "languageVersion": { "const": "2.4" },
+                "fabricLanguageKotlin": { "const": "1.14.2+kotlin.2.4.21" }
+              }
+            }
+          }]
+        },
+        "loom": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "splitEnvironmentSourceSets": { "type": "boolean", "default": false }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "failOnExistingFabricModJson": { "type": "boolean", "const": true, "default": true }
+          }
+        }
+      }
+    },
+    "repository": {
+      "oneOf": [
+        { "type": "string", "enum": ["fabric", "mavenCentral", "modrinth"] },
+        {
+          "type": "object",
+          "required": ["maven"],
+          "additionalProperties": false,
+          "properties": { "maven": { "type": "string", "format": "uri", "pattern": "^https://.+" } }
+        }
+      ]
+    },
+    "coordinate": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:(?!\\+)(?![^:]*\\.\\+$)(?![^:]*[\\[(])(?![^:]*[Ll][Aa][Tt][Ee][Ss][Tt]\\.)[^:\\s]+$",
+      "description": "Fixed group:artifact:version Maven coordinate. Dynamic versions and ranges are rejected by Fabric Amper.",
+      "examples": ["org.apache.commons:commons-lang3:3.17.0"]
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["all", "compile-only", "runtime-only"],
+      "default": "all"
+    },
+    "dependency": {
+      "oneOf": [
+        { "$ref": "#/definitions/coordinate" },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "propertyNames": { "$ref": "#/definitions/coordinate" },
+          "additionalProperties": { "type": "string", "enum": ["all", "compile-only", "runtime-only", "exported", "include"] },
+          "description": "Shorthand: - 'org.example:lib:1.0.0': exported"
+        },
+        { "$ref": "#/definitions/dependencyObject" }
+      ]
+    },
+    "dependencyObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maven": { "$ref": "#/definitions/coordinate" },
+        "modrinth": {
+          "type": "object",
+          "required": ["project", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "project": { "$ref": "#/definitions/nonblank" },
+            "version": { "$ref": "#/definitions/versionToken" }
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["mod", "library"],
+          "description": "Gradle dependency type. Modrinth defaults to mod, ordinary Maven to library."
+        },
+        "scope": { "$ref": "#/definitions/scope" },
+        "target": { "type": "string", "enum": ["main", "client"], "default": "main" },
+        "exported": { "type": "boolean", "default": false },
+        "include": { "type": "boolean", "default": false }
+      },
+      "oneOf": [
+        { "required": ["maven"], "not": { "required": ["modrinth"] } },
+        { "required": ["modrinth"], "not": { "required": ["maven"] } }
+      ],
+      "allOf": [
+        {
+          "if": { "properties": { "exported": { "const": true } }, "required": ["exported"] },
+          "then": { "properties": { "scope": { "const": "all" }, "target": { "const": "main" } } }
+        },
+        {
+          "if": { "properties": { "include": { "const": true } }, "required": ["include"] },
+          "then": { "properties": { "scope": { "const": "all" }, "target": { "const": "main" } } }
+        },
+        {
+          "if": { "properties": { "target": { "const": "client" } }, "required": ["target"] },
+          "then": {
+            "properties": { "exported": { "const": false }, "include": { "const": false } }
+          }
+        }
+      ]
+    },
+    "testDependency": {
+      "oneOf": [
+        { "$ref": "#/definitions/coordinate" },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "propertyNames": { "$ref": "#/definitions/coordinate" },
+          "additionalProperties": { "$ref": "#/definitions/scope" }
+        },
+        {
+          "allOf": [
+            { "$ref": "#/definitions/dependencyObject" },
+            {
+              "properties": {
+                "target": { "const": "main" },
+                "exported": { "const": false },
+                "include": { "const": false }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "envName": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "description": "Environment variable NAME, not a literal username, token or password."
+    },
+    "releaseType": {
+      "type": "string",
+      "enum": ["release", "beta", "alpha"],
+      "default": "release"
+    },
+    "platformChangelog": {
+      "description": "A changelog may be written inline or in one project-local file, but never both.",
+      "not": { "required": ["changelog", "changelogFile"] }
+    },
+    "publish": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "description": "Opt-in remote destinations. Never uploads during Gradle configuration, help or build. Explicit publish tasks alone can upload.",
+      "properties": {
+        "maven": { "$ref": "#/definitions/publishMaven" },
+        "modrinth": { "$ref": "#/definitions/publishModrinth" },
+        "curseforge": { "$ref": "#/definitions/publishCurseForge" }
+      }
+    },
+    "publishMaven": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "description": "Remote Maven repository. Plugin publishes final Fabric mod JAR + optional sources + POM/.module.",
+      "properties": {
+        "url": { "$ref": "#/definitions/publishHttpsUrl" },
+        "credentialsFromEnv": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/envName" },
+          "description": "Exactly two environment variable names: Maven username followed by Maven password/token."
+        }
+      }
+    },
+    "publishHttpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]://(?:\\[[0-9a-fA-F:.]+\\]|[A-Za-z0-9][A-Za-z0-9.-]*)(?::[0-9]+)?(?:/[^?#]*)?$",
+      "description": "HTTPS only; user info, query parameters and fragments are forbidden."
+    },
+    "publishModrinthDependency": {
+      "type": "object",
+      "required": ["projectId", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "projectId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$", "description": "Explicit Modrinth project ID/slug, not Loader mod ID or Maven GAV." },
+        "type": { "type": "string", "enum": ["required", "optional", "incompatible", "embedded"] }
+      }
+    },
+    "publishModrinth": {
+      "type": "object",
+      "required": ["projectId", "tokenEnv"],
+      "additionalProperties": false,
+      "description": "Explicit Modrinth v2 /version release. Existing project ID and author token are required. No automatic API testing.",
+      "properties": {
+        "projectId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "tokenEnv": { "$ref": "#/definitions/envName" },
+        "releaseType": { "$ref": "#/definitions/releaseType" },
+        "versionName": { "$ref": "#/definitions/nonblank" },
+        "versionNumber": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$" },
+        "gameVersions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$" },
+          "description": "Defaults to the exact minecraft.version."
+        },
+        "loaders": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+          "default": ["fabric"]
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "client_and_server", "client_only", "client_only_server_optional",
+            "singleplayer_only", "server_only", "server_only_client_optional",
+            "dedicated_server_only", "client_or_server", "client_or_server_prefers_both"
+          ],
+          "description": "Overrides the conservative environment inferred from mod.environment."
+        },
+        "changelog": { "type": "string", "pattern": "\\S", "description": "Nonblank multiline release notes are permitted." },
+        "changelogFile": {
+          "$ref": "#/definitions/nonblank",
+          "description": "Path relative to project root; outside-root paths or symlinks escaping the root are forbidden."
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/publishModrinthDependency" },
+          "default": []
+        }
+      },
+      "allOf": [{ "$ref": "#/definitions/platformChangelog" }]
+    },
+    "publishCurseForgeRelation": {
+      "type": "object",
+      "required": ["slug", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "projectId": { "type": "string", "pattern": "^[1-9][0-9]*$", "description": "Exact numeric CurseForge relation project ID, serialized as a string by its author-upload API." },
+        "type": {
+          "type": "string",
+          "enum": ["embeddedLibrary", "incompatible", "optionalDependency", "requiredDependency", "tool"]
+        }
+      }
+    },
+    "publishCurseForge": {
+      "type": "object",
+      "required": ["projectId", "tokenEnv"],
+      "additionalProperties": false,
+      "description": "CurseForge AUTHOR upload API, not the public x-api-key catalog API. No automatic API testing.",
+      "properties": {
+        "projectId": { "type": "integer", "minimum": 1 },
+        "tokenEnv": { "$ref": "#/definitions/envName" },
+        "releaseType": { "$ref": "#/definitions/releaseType" },
+        "displayName": { "$ref": "#/definitions/nonblank" },
+        "gameVersionNames": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/nonblank" },
+          "description": "Defaults to Minecraft version, Fabric loader, and relevant Client/Server tags."
+        },
+        "gameVersions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 },
+          "description": "Optional verified CurseForge upload-game-version IDs, NOT Minecraft version strings or Core API enum numbers."
+        },
+        "changelog": { "type": "string", "pattern": "\\S", "description": "Nonblank multiline release notes are permitted." },
+        "changelogFile": { "$ref": "#/definitions/nonblank" },
+        "changelogType": { "type": "string", "enum": ["text", "markdown", "html"], "default": "markdown" },
+        "manualRelease": { "type": "boolean", "default": false },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/publishCurseForgeRelation" },
+          "default": []
+        }
+      },
+      "allOf": [{ "$ref": "#/definitions/platformChangelog" }]
+    },
+    "publishing": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional for fabric/api or fabric/library only. A safe local Maven repository is always configured.",
+      "properties": {
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url"],
+          "description": "Remote upload destination, only invoked by an explicit publishing task. No literal credentials in YAML.",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^[Hh][Tt][Tt][Pp][Ss]://(?:\\[[0-9a-fA-F:.]+\\]|[A-Za-z0-9][A-Za-z0-9.-]*)(?::[0-9]+)?(?:/[^?#]*)?$",
+              "description": "HTTPS Maven URL without embedded credentials, query or fragment."
+            },
+            "usernameEnv": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "description": "Name of an environment variable holding the username, not the username itself."
+            },
+            "passwordEnv": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "description": "Name of an environment variable holding the password/token, not the secret itself."
+            }
+          },
+          "allOf": [
+            {
+              "if": { "required": ["usernameEnv"] },
+              "then": { "required": ["passwordEnv"] }
+            },
+            {
+              "if": { "required": ["passwordEnv"] },
+              "then": { "required": ["usernameEnv"] }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema": 1,
+      "product": "fabric/api",
+      "mod": { "id": "sample-api", "version": "1.0.0", "group": "org.example.fabric" },
+      "minecraft": { "version": "26.3", "mappings": "mojang", "loader": "0.20.1", "fabricApi": "0.165.2+26.3" },
+      "settings": { "java": { "release": 25, "sourcesJar": true } },
+      "publishing": {}
+    },
+    {
+      "schema": 1,
+      "product": "fabric/mod",
+      "mod": { "id": "sample-mod", "name": "Sample Mod", "version": "1.0.0+26.3", "group": "org.example" },
+      "minecraft": { "version": "26.3", "mappings": "mojang", "loader": "0.20.1" },
+      "publish": {
+        "maven": {
+          "url": "https://maven.pkg.github.com/OWNER/REPOSITORY",
+          "credentialsFromEnv": ["GITHUB_ACTOR", "GITHUB_TOKEN"]
+        },
+        "modrinth": {
+          "projectId": "AABBCCDD",
+          "tokenEnv": "MODRINTH_TOKEN",
+          "releaseType": "release",
+          "gameVersions": ["26.3"],
+          "loaders": ["fabric"]
+        },
+        "curseforge": {
+          "projectId": 123456,
+          "tokenEnv": "CURSEFORGE_TOKEN",
+          "releaseType": "release",
+          "gameVersionNames": ["26.3", "Fabric", "Client", "Server"]
+        }
+      }
+    }
+  ]
+}

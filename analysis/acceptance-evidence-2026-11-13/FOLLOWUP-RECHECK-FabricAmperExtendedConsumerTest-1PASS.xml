@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperExtendedConsumerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-13T12:14:15.127Z" hostname="DESKTOP-QBR2EQC" time="40.191">
+  <properties/>
+  <testcase name="G30 switching mod yml to mod yaml invalidates and then reuses configuration cache()" classname="dev.fabricamper.integration.FabricAmperExtendedConsumerTest" time="40.171"/>
+  <system-out><![CDATA[
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 34s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
+Calculating task graph as no cached configuration is available for tasks: help
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 executed
+Configuration cache entry stored.
+Reusing configuration cache.
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 138ms
+1 actionable task: 1 executed
+Configuration cache entry reused.
+Calculating task graph as configuration cache cannot be reused because the file system entry 'mod.yaml' has been created.
+
+> Configure project :
+Fabric Loom: 1.17.21
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 1s
+1 actionable task: 1 executed
+Configuration cache entry stored.
+Reusing configuration cache.
+
+> Task :help
+
+Welcome to Gradle 9.7.1.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.7.1/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+BUILD SUCCESSFUL in 149ms
+1 actionable task: 1 executed
+Configuration cache entry reused.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,193 @@
+2026-11-13T20:42:49.583+0900 [DEBUG] [org.gradle.launcher.daemon.bootstrap.DaemonMain] Assuming the daemon was started with following jvm opts: [-XX:MaxMetaspaceSize=384m, -XX:+HeapDumpOnOutOfMemoryError, -Xms256m, -Xmx512m, -Dfile.encoding=UTF-8, -Duser.country=KR, -Duser.language=ko, -Duser.variant]
+2026-11-13T20:42:49.850+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Famatech Radmin VPN Ethernet Adapter-WFP Native MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.851+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.854+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Famatech Radmin VPN Ethernet Adapter-Npcap Packet Driver (NPCAP)-0000
+2026-11-13T20:42:49.855+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.855+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Famatech Radmin VPN Ethernet Adapter-QoS Packet Scheduler-0000
+2026-11-13T20:42:49.855+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.856+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Famatech Radmin VPN Ethernet Adapter-WFP 802.3 MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.856+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.857+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Realtek PCIe GbE Family Controller-WFP Native MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.857+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.858+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Realtek PCIe GbE Family Controller-Npcap Packet Driver (NPCAP)-0000
+2026-11-13T20:42:49.861+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.861+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Realtek PCIe GbE Family Controller-QoS Packet Scheduler-0000
+2026-11-13T20:42:49.862+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.862+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Realtek PCIe GbE Family Controller-WFP 802.3 MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.862+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.863+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IP)-WFP Native MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.863+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.864+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IP)-Npcap Packet Driver (NPCAP)-0000
+2026-11-13T20:42:49.866+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.867+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IP)-QoS Packet Scheduler-0000
+2026-11-13T20:42:49.868+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.868+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IPv6)-WFP Native MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.869+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.869+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IPv6)-Npcap Packet Driver (NPCAP)-0000
+2026-11-13T20:42:49.869+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.869+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IPv6)-QoS Packet Scheduler-0000
+2026-11-13T20:42:49.872+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.872+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (Network Monitor)-WFP Native MAC Layer LightWeight Filter-0000
+2026-11-13T20:42:49.873+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.873+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (Network Monitor)-Npcap Packet Driver (NPCAP)-0000
+2026-11-13T20:42:49.874+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.874+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (Network Monitor)-QoS Packet Scheduler-0000
+2026-11-13T20:42:49.874+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.875+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Microsoft Kernel Debug Network Adapter
+2026-11-13T20:42:49.875+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.875+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IP)
+2026-11-13T20:42:49.876+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.877+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IPv6)
+2026-11-13T20:42:49.878+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.878+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (Network Monitor)
+2026-11-13T20:42:49.879+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.879+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Realtek PCIe GbE Family Controller
+2026-11-13T20:42:49.879+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.880+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /192.168.123.110
+2026-11-13T20:42:49.880+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface LogMeIn Hamachi Virtual Ethernet Adapter
+2026-11-13T20:42:49.880+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.881+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Famatech Radmin VPN Ethernet Adapter
+2026-11-13T20:42:49.881+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.881+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /fe80:0:0:0:74b2:1fc0:2b18:8d09%ethernet_32774
+2026-11-13T20:42:49.881+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /fdfd:0:0:0:0:0:1acc:2422
+2026-11-13T20:42:49.882+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /26.204.36.34
+2026-11-13T20:42:49.884+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Bluetooth Device (Personal Area Network)
+2026-11-13T20:42:49.885+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.887+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (PPPOE)
+2026-11-13T20:42:49.887+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.888+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Software Loopback Interface 1
+2026-11-13T20:42:49.891+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? true
+2026-11-13T20:42:49.891+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding loopback address /0:0:0:0:0:0:0:1
+2026-11-13T20:42:49.891+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding loopback address /127.0.0.1
+2026-11-13T20:42:49.892+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Microsoft Teredo Tunneling Adapter
+2026-11-13T20:42:49.892+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.893+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /fe80:0:0:0:88a:1256:f1f8:2f5b%tunnel_32512
+2026-11-13T20:42:49.893+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding remote address /2001:0:14c9:d700:88a:1256:f1f8:2f5b
+2026-11-13T20:42:49.893+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Microsoft IP-HTTPS Platform Adapter
+2026-11-13T20:42:49.894+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.895+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface Microsoft 6to4 Adapter
+2026-11-13T20:42:49.897+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.897+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (SSTP)
+2026-11-13T20:42:49.898+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.898+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (IKEv2)
+2026-11-13T20:42:49.898+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.899+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (L2TP)
+2026-11-13T20:42:49.899+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.899+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Adding IP addresses for network interface WAN Miniport (PPTP)
+2026-11-13T20:42:49.899+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.InetAddresses] Is this a loopback interface? false
+2026-11-13T20:42:49.983+0900 [INFO] [org.gradle.launcher.daemon.server.Daemon] start() called on daemon - DefaultDaemonContext[uid=2d117603-09da-41a3-8ca2-467397c830fc,javaHome=C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot,javaVersion=25,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-gradle-home\daemon,pid=14116,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country=KR,-Duser.language=ko,-Duser.variant]
+2026-11-13T20:42:50.039+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.TcpIncomingConnector] Listening on [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]].
+2026-11-13T20:42:50.049+0900 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] Daemon starting at: Fri Nov 13 20:42:50 KST 2026, with address: [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]]
+2026-11-13T20:42:50.050+0900 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertising the daemon address to the clients: [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]]
+2026-11-13T20:42:50.050+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Advertised daemon context: DefaultDaemonContext[uid=2d117603-09da-41a3-8ca2-467397c830fc,javaHome=C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot,javaVersion=25,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-gradle-home\daemon,pid=14116,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country=KR,-Duser.language=ko,-Duser.variant]
+2026-11-13T20:42:50.051+0900 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Storing daemon address: [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]], context: DefaultDaemonContext[uid=2d117603-09da-41a3-8ca2-467397c830fc,javaHome=C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot,javaVersion=25,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-gradle-home\daemon,pid=14116,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country=KR,-Duser.language=ko,-Duser.variant]
+2026-11-13T20:42:50.069+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
+2026-11-13T20:42:50.075+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
+2026-11-13T20:42:50.083+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
+2026-11-13T20:42:50.084+0900 [LIFECYCLE] [org.gradle.launcher.daemon.server.Daemon] Daemon server started.
+2026-11-13T20:42:50.086+0900 [DEBUG] [org.gradle.launcher.daemon.bootstrap.DaemonStartupCommunication] Completed writing the daemon greeting. Closing streams...
+2026-11-13T20:42:50.106+0900 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] stopOnExpiration() called on daemon
+2026-11-13T20:42:50.110+0900 [DEBUG] [org.gradle.launcher.daemon.server.Daemon] awaitExpiration() called on daemon
+2026-11-13T20:42:50.111+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon is running. Sleeping until state changes.
+2026-11-13T20:42:50.123+0900 [DEBUG] [org.gradle.internal.remote.internal.inet.TcpIncomingConnector] Accepted connection from /127.0.0.1:59497 to /127.0.0.1:59496.
+2026-11-13T20:42:50.249+0900 [DEBUG] [org.gradle.launcher.daemon.server.SynchronizedDispatchConnection] thread 38: received class org.gradle.launcher.daemon.protocol.Build
+2026-11-13T20:42:50.250+0900 [DEBUG] [org.gradle.launcher.daemon.server.DefaultDaemonConnection] thread 38: Received non-IO message from client: Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225}
+2026-11-13T20:42:50.250+0900 [INFO] [org.gradle.launcher.daemon.server.DefaultIncomingConnectionHandler] Received command: Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225}.
+2026-11-13T20:42:50.251+0900 [DEBUG] [org.gradle.launcher.daemon.server.DefaultIncomingConnectionHandler] Starting executing command: Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225} with connection: socket connection from /127.0.0.1:59496 to /127.0.0.1:59497.
+2026-11-13T20:42:50.255+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Command execution: started DaemonCommandExecution[command = Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225}, connection = DefaultDaemonConnection: socket connection from /127.0.0.1:59496 to /127.0.0.1:59497] after 0.0037 minutes of idle
+2026-11-13T20:42:50.256+0900 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Marking the daemon as busy, address: [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]]
+2026-11-13T20:42:50.256+0900 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Marking busy by address: [f04f5ef3-6b46-4f6d-8996-9fc68887448f port:59496, addresses:[localhost/127.0.0.1]]
+2026-11-13T20:42:50.261+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
+2026-11-13T20:42:50.262+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
+2026-11-13T20:42:50.266+0900 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
+2026-11-13T20:42:50.267+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] resetting idle timer
+2026-11-13T20:42:50.267+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon is running. Sleeping until state changes.
+2026-11-13T20:42:50.268+0900 [INFO] [org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy] Daemon is about to start building Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225}. Dispatching build started information...
+2026-11-13T20:42:50.268+0900 [DEBUG] [org.gradle.launcher.daemon.server.SynchronizedDispatchConnection] thread 40: dispatching org.gradle.launcher.daemon.protocol.BuildStarted@1c31c8d8
+2026-11-13T20:42:50.274+0900 [DEBUG] [org.gradle.launcher.daemon.server.exec.LogToClient] About to start relaying all logs to the client via the connection.
+2026-11-13T20:42:50.275+0900 [INFO] [org.gradle.launcher.daemon.server.exec.LogToClient] The client will now receive all logging from the daemon (pid: 14116). The daemon log file: C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-gradle-home\daemon\9.7.1\daemon-14116.out.log
+2026-11-13T20:42:50.276+0900 [DEBUG] [org.gradle.launcher.daemon.server.exec.ApplyClientEnvironmentVariables] Configuring env variables: [USERDOMAIN_ROAMINGPROFILE, PROCESSOR_LEVEL, GIT_PAGER, SESSIONNAME, ALLUSERSPROFILE, PROCESSOR_ARCHITECTURE, PSModulePath, SystemDrive, GH_PAGER, COLORTERM, USERNAME, REA_ANALYSIS_PROVIDER, ProgramFiles(x86), PATHEXT, DriverData, OneDriveConsumer, PAGER, POSH_THEMES_PATH, GOPATH, ProgramData, ProgramW6432, FABRIC_AMPER_TESTKIT_RUNTIME_JIJ, HOMEPATH, LC_ALL, PROCESSOR_IDENTIFIER, POWERSHELL_DISTRIBUTION_CHANNEL, ProgramFiles, PUBLIC, TWINE_PASSWORD, windir, LC_CTYPE, FABRIC_AMPER_RUNTIME_GRADLE_BIN, LOCALAPPDATA, USERDOMAIN, LOGONSERVER, JAVA_HOME, PROMPT, TERM, WebStorm, LANG, BESIEGE_UNITY_ASSEMBLIES, OneDrive, =C:, APPDATA, GRADLE_USER_HOME, VBOX_HWVIRTEX_IGNORE_SVM_IN_USE, JAVA_TOOL_OPTIONS, VIPSHOME, GHIDRA_INSTALL_DIR, NO_COLOR, TWINE_USERNAME, BESIEGE_GAME_ASSEMBLIES, CODEX_CI, CommonProgramFiles, Path, PyCharm, FABRIC_AMPER_TESTKIT_FULL, OS, NODE_HOME, XDG_DATA_HOME, COMPUTERNAME, PROCESSOR_REVISION, CommonProgramW6432, XDG_CONFIG_HOME, ComSpec, FABRIC_AMPER_TESTKIT_RUNTIME, SystemRoot, TEMP, HOMEDRIVE, USERPROFILE, TMP, CommonProgramFiles(x86), NUMBER_OF_PROCESSORS, HOME]
+2026-11-13T20:42:50.283+0900 [DEBUG] [org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon] Requesting daemon stop after processing Build{id=f3800314-fbfe-4147-9f9c-19f4cf4b3ab7, currentDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225}
+2026-11-13T20:42:50.284+0900 [LIFECYCLE] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Daemon will be stopped at the end of the build 
+2026-11-13T20:42:50.284+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Stop as soon as idle requested. The daemon is busy
+2026-11-13T20:42:50.285+0900 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon stop has been requested. Sleeping until state changes.
+2026-11-13T20:42:50.291+0900 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] The daemon has started executing the build.
+2026-11-13T20:42:50.291+0900 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] Executing build with daemon context: DefaultDaemonContext[uid=2d117603-09da-41a3-8ca2-467397c830fc,javaHome=C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot,javaVersion=25,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-gradle-home\daemon,pid=14116,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country=KR,-Duser.language=ko,-Duser.variant]
+Fabric Loom: 1.17.21
+Picked up JAVA_TOOL_OPTIONS: -Duser.home="C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\sandbox-home"
+[20:43:46] [main/WARN] (FabricLoader/Knot) Class path entries reference missing files: C:\Users\user\Documents\vbc\Fabric Amper\analysis\isolated-acceptance-2026-11-13\build\fabric-amper-runtime-consumers\g10-host-negative-1481399783418860225\build\resources\client - the game may not load properly!
+[20:43:46] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.3 with Fabric Loader 0.20.1
+[20:43:46] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[20:43:47] [main/INFO] (FabricLoader) Loading 52 mods:
+	- amper_rt_g10_host 0.1.0+26.3
+	- fabric-advancement-api-v1 1.0.1+38c7a2d55d
+	- fabric-api 0.165.2+26.3
+	- fabric-api-base 2.0.6+fcdff87f5d
+	- fabric-api-lookup-api-v1 2.0.24+3434d6d95d
+	- fabric-biome-api-v1 20.1.1+85210bca5d
+	- fabric-block-api-v1 3.1.0+0ae6f9115d
+	- fabric-block-getter-api-v2 2.0.9+3434d6d95d
+	- fabric-client-gametest-api-v1 6.0.12+131f8d475d
+	- fabric-command-api-v2 3.1.2+fcdff87f5d
+	- fabric-content-registries-v0 15.0.7+74ed1ea55d
+	- fabric-convention-tags-v2 4.10.5+187b64905d
+	- fabric-crash-report-info-v1 1.0.7+fcdff87f5d
+	- fabric-creative-tab-api-v1 5.0.22+fcdff87f5d
+	- fabric-data-attachment-api-v1 2.2.34+99fb1a765d
+	- fabric-data-generation-api-v1 27.4.3+187b64905d
+	- fabric-debug-api-v1 1.0.5+5af7744b5d
+	- fabric-dimensions-v1 5.1.20+5af7744b5d
+	- fabric-entity-events-v1 6.0.4+3434d6d95d
+	- fabric-events-interaction-v0 5.3.10+b9b88df45d
+	- fabric-game-rule-api-v1 4.0.10+3434d6d95d
+	- fabric-gametest-api-v1 4.0.36+3434d6d95d
+	- fabric-item-api-v1 14.8.1+8f511c9f5d
+	- fabric-key-mapping-api-v1 2.0.8+3434d6d95d
+	- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
+	- fabric-loot-api-v3 4.0.9+4068fd645d
+	- fabric-menu-api-v1 2.0.31+ed66f0a35d
+	- fabric-message-api-v1 7.0.10+3434d6d95d
+	- fabric-model-loading-api-v1 8.0.37+fcdff87f5d
+	- fabric-networking-api-v1 6.4.1+c58129785d
+	- fabric-object-builder-api-v1 24.1.13+e2f63d3e5d
+	- fabric-particles-v1 5.0.28+3434d6d95d
+	- fabric-permission-api-v1 1.0.8+fcdff87f5d
+	- fabric-recipe-api-v1 10.0.12+b9b88df45d
+	- fabric-registry-sync-v0 8.0.5+1ca9f6365d
+	- fabric-renderer-api-v1 17.0.17+79385d0b5d
+	- fabric-renderer-indigo 9.1.25+b9d63e335d
+	- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
+	- fabric-rendering-v1 27.2.0+eb9fe70b5d
+	- fabric-resource-conditions-api-v1 6.2.1+fd3b1d565d
+	- fabric-resource-loader-v0 3.3.27+4fc5413f5d
+	- fabric-resource-loader-v1 3.1.0+5af7744b5d
+	- fabric-screen-api-v1 5.2.4+48607d035d
+	- fabric-serialization-api-v1 2.0.7+74ed1ea55d
+	- fabric-sound-api-v1 2.0.7+3434d6d95d
+	- fabric-tag-api-v1 2.1.11+fcdff87f5d
+	- fabric-transfer-api-v1 8.0.26+140095665d
+	- fabric-transitive-access-wideners-v1 8.1.17+e2f63d3e5d
+	- fabricloader 0.20.1
+	- java 25
+	- minecraft 26.3
+	- mixinextras 0.5.5
+[20:43:47] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/analysis/isolated-acceptance-2026-11-13/build/fabric-amper-runtime-consumers/g10-host-negative-1481399783418860225/sandbox-gradle-home/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.5+mixin.0.8.7/cef8519a91129d0c21fa03bb9378f0e8ca810e5/sponge-mixin-0.17.5+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[20:43:53] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[20:43:57] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 1717 milliseconds
+[20:44:15] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[20:44:15] [Render thread/INFO] (Minecraft) Setting user: Player367
+[20:44:16] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
+[20:44:17] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot
+[20:44:17] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft
+[20:44:17] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3
+[20:44:17] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft
+[20:44:17] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da
+[20:44:18] [Render thread/INFO] (Minecraft) Using graphics backend OpenGL, using drivers: 3.3.0 NVIDIA 596.36
+[20:44:18] [Render thread/INFO] (Minecraft) Using graphics device: NVIDIA GeForce RTX 3060/PCIe/SSE2 (NVIDIA Corporation)
+[20:44:18] [Render thread/INFO] (Minecraft) Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[20:44:18] [Render thread/INFO] (Minecraft) Created window using SDL video driver: windows
+[20:44:20] [Download-2/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[20:44:20] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla, vanilla, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-client-gametest-api-v1, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-gametest-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader
+[20:44:21] [Worker-Main-5/INFO] (Minecraft) Found unifont_pua-17.0.01.hex, loading
+[20:44:21] [Worker-Main-9/INFO] (Minecraft) Found unifont_all_no_pua-17.0.01.hex, loading
+[20:44:22] [Worker-Main-9/INFO] (Minecraft) Found unifont_jp_patch-17.0.01.hex, loading

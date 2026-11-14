@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "date": "2026-11-13",
+  "scope": "real Gradle 9.7.1 native remote task and validator, offline; negative only",
+  "cases": {
+    "missingCredentials": {
+      "status": "EXPECTED_FAILURE",
+      "exit": 1,
+      "fa": "FA003",
+      "logSha256": "B0041E5DBC8374A118E59F20455C8C322B42046A916186853015686BCBCCAFAC",
+      "task": "publishMavenJavaPublicationToFabricAmperRemoteRepository",
+      "offline": true,
+      "yamlPreservedSha256": "98E64E618EA706ED4FB464CD58ECCC72E3A9CD20AD9C07B80872BD87C26DD7F7"
+    },
+    "nonHttpsUrl": {
+      "status": "EXPECTED_FAILURE",
+      "exit": 1,
+      "fa": "FA003",
+      "logSha256": "3BC7D09AA2B7FF7958B9F99039B60037399741884647896E3FC1218EE037A983",
+      "task": "help",
+      "offline": true,
+      "yamlPreservedSha256": "EA9183628D116AD66BF8979DF98B84E189B4D2C3C274CAE143CC8EC3B678E0EA"
+    }
+  },
+  "consumer": "settings.gradle.kts + mod.yaml + Java entrypoint; fabric/api",
+  "externalHttpAttempts": false,
+  "authenticatedPutCount": 0,
+  "positiveRemoteMavenAuth": "NOT_VERIFIED"
+}

@@ -1,0 +1,45 @@
+{
+  "environment": "Gradle 9.7.1 + JDK25; clean build validatePlugins --offline --no-daemon -Pkotlin.incremental=false",
+  "result": "EXIT 0 BUILD SUCCESSFUL in 39s",
+  "suites": 45,
+  "junit": {
+    "tests": 246,
+    "skipped": 39,
+    "failures": 0,
+    "errors": 0
+  },
+  "passed": 207,
+  "artifacts": [
+    {
+      "path": "build/libs/fabric-amper-0.1.0.jar",
+      "bytes": 314704,
+      "sha256": "164CADA56DF0BEFBFB0AFABAE574F639A89795DFD86CA222AA8789F44C829F0A"
+    },
+    {
+      "path": "build/libs/fabric-amper-0.1.0-sources.jar",
+      "bytes": 67202,
+      "sha256": "2032A41383A3534B2FF0B087586B968189C752D74029A545E95ACAA747F2B119"
+    },
+    {
+      "path": "fabric-amper.schema.json",
+      "bytes": 26823,
+      "sha256": "D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233"
+    }
+  ],
+  "xml_archive": {
+    "path": "analysis/acceptance-evidence-2026-11-13/FOLLOWUP-final-default-clean-45-suites.zip",
+    "bytes": 43973,
+    "sha256": "F18FB1E9DDC4EBD88F4CC632258AA38036E0F8753665997785915F234DCB2BAC"
+  },
+  "local_plugin_publication": {
+    "repository": "build/g29-probe/maven-repo",
+    "markerPoms": 2,
+    "mainJarByteEqual": true,
+    "sourcesJarByteEqual": true
+  },
+  "selected_failures_must_remain_separate": [
+    "FOLLOWUP-G17-ISOLATED-RUNTIME-FAIL.xml",
+    "FOLLOWUP-REMOTE-CC-initial-OFFLINE-COLD-CACHE-FAIL.xml",
+    "FOLLOWUP-REMOTE-CC-offline-unwarmed-compileClasspath-FAIL.xml"
+  ]
+}

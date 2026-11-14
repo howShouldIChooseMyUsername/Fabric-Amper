@@ -1,0 +1,18 @@
+{
+  "excludedOverlongEntries": [
+    "files-2.1/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/1b77ba79f9b2b7dfd4e15ea7bb0d568d5eb9cb8d/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.pom",
+    "files-2.1/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/b421526c5f297295adef1c886e5246c39d4ac629/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
+    "files-2.1/dev.architectury.loom-no-remap/dev.architectury.loom-no-remap.gradle.plugin/1.17-SNAPSHOT/539a3451f0075ac4499dfafba15b37013850f97d/dev.architectury.loom-no-remap.gradle.plugin-1.17-SNAPSHOT.pom",
+    "files-2.1/net.fabricmc.fabric-api/fabric-resource-conditions-api-v1/6.1.0+10e9a28b9e/bfe91afa0e7712974b318ed7e274b493b038a596/fabric-resource-conditions-api-v1-6.1.0+10e9a28b9e.jar",
+    "files-2.1/net.fabricmc.fabric-api/fabric-resource-conditions-api-v1/6.2.0+0d124ae85d/78c37b2c8aa3880878951baf2af29b97b447a0d3/fabric-resource-conditions-api-v1-6.2.0+0d124ae85d.pom",
+    "files-2.1/net.fabricmc.fabric-api/fabric-resource-conditions-api-v1/6.2.0+0d124ae85d/bf3ef3a1aa93f1f80bdaee508fa03ec9461e9b1f/fabric-resource-conditions-api-v1-6.2.0+0d124ae85d.jar",
+    "files-2.1/net.fabricmc.fabric-api/fabric-resource-conditions-api-v1/6.2.1+fd3b1d565d/1e91b3a213d6b76236b2641dfc20b4d3a8bdb255/fabric-resource-conditions-api-v1-6.2.1+fd3b1d565d.pom",
+    "files-2.1/net.fabricmc.fabric-api/fabric-resource-conditions-api-v1/6.2.1+fd3b1d565d/28d95be49e5a89f782677a5632ea5e7fd448f972/fabric-resource-conditions-api-v1-6.2.1+fd3b1d565d.jar",
+    "files-2.1/net.fabricmc.fabric-api/fabric-transitive-access-wideners-v1/8.1.17+e2f63d3e5d/eb9aed7b62534cc1d3dd2fc55410656de6ad3673/fabric-transitive-access-wideners-v1-8.1.17+e2f63d3e5d.jar",
+    "files-2.1/net.fabricmc.fabric-api/fabric-transitive-access-wideners-v1/8.1.17+e2f63d3e5d/f53f04ac7ac1e6019f674bdffe5383d392f7e0d/fabric-transitive-access-wideners-v1-8.1.17+e2f63d3e5d.pom",
+    "files-2.1/net.fabricmc.fabric-api/fabric-transitive-access-wideners-v1/8.1.4+67c847259e/e1e769f8e123395ab939d5d8da900e6a6ad53ab2/fabric-transitive-access-wideners-v1-8.1.4+67c847259e.jar",
+    "files-2.1/net.fabricmc.fabric-loom/net.fabricmc.fabric-loom.gradle.plugin/1.18-SNAPSHOT/15f09d6791098d6f955e367fc0b724f883429a4a/net.fabricmc.fabric-loom.gradle.plugin-1.18-SNAPSHOT.pom",
+    "metadata-2.107/descriptors/org.gradle.toolchains.foojay-resolver-convention/org.gradle.toolchains.foojay-resolver-convention.gradle.plugin/0.8.0/2f8748e965ecb2135dad092e9ef808de/descriptor.bin",
+    "metadata-2.107/descriptors/org.gradle.toolchains.foojay-resolver-convention/org.gradle.toolchains.foojay-resolver-convention.gradle.plugin/1.0.0/2f8748e965ecb2135dad092e9ef808de/descriptor.bin"
+  ]
+}

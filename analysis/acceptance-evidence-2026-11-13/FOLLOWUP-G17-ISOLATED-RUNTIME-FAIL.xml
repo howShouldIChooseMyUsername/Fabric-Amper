@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.fabricamper.integration.FabricAmperG17RuntimeConsumerTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-11-13T10:49:56.335Z" hostname="DESKTOP-QBR2EQC" time="112.11">
+  <properties/>
+  <testcase name="G17 actual Loader applies Class Tweaker injection and invokes default method on game tick()" classname="dev.fabricamper.integration.FabricAmperG17RuntimeConsumerTest" time="112.093">
+    <failure message="java.lang.AssertionError: runClient finished before required proof (exit=1, markers=[C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.main, C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.client, C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.tick]):&#10;Picked up JAVA_TOOL_OPTIONS: -Duser.home=&quot;C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\sandbox-home&quot;&#10;To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.&#13;&#10;Daemon will be stopped at the end of the build &#13;&#10;&#13;&#10;&gt; Configure project :&#13;&#10;Fabric Loom: 1.17.21&#13;&#10;&#13;&#10;&gt; Task :compileJava UP-TO-DATE&#13;&#10;&gt; Task :generateFabricModJson UP-TO-DATE&#13;&#10;&gt; Task :processResources UP-TO-DATE&#13;&#10;&gt; Task :classes UP-TO-DATE&#13;&#10;&gt; Task :compileClientJava UP-TO-DATE&#13;&#10;&gt; Task :processClientResources NO-SOURCE&#13;&#10;&gt; Task :clientClasses UP-TO-DATE&#13;&#10;&gt; Task :generateLog4jConfig&#13;&#10;&gt; Task :generateDLIConfig&#13;&#10;&gt; Task :configureLaunch&#13;&#10;&gt; Task :downloadAssets&#13;&#10;&gt; Task :configureClientLaunch&#13;&#10;&#13;&#10;&gt; Task :runClient&#13;&#10;Picked up JAVA_TOOL_OPTIONS: -Duser.home=&quot;C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\sandbox-home&quot;&#10;[19:51:36] [main/WARN] (FabricLoader/Knot) Class path entries reference missing files: C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\build\resources\client - the game may not load properly!&#13;&#10;[19:51:36] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.3 with Fabric Loader 0.20.1&#13;&#10;[19:51:36] [main/INFO] (FabricLoader/Mappings) Mappings not present!&#13;&#10;[19:51:36] [main/INFO] (FabricLoader) Loading 52 mods:&#13;&#10;&#9;- amper_rt_g17 0.1.0+26.3&#10;&#9;- fabric-advancement-api-v1 1.0.1+38c7a2d55d&#10;&#9;- fabric-api 0.165.2+26.3&#10;&#9;- fabric-api-base 2.0.6+fcdff87f5d&#10;&#9;- fabric-api-lookup-api-v1 2.0.24+3434d6d95d&#10;&#9;- fabric-biome-api-v1 20.1.1+85210bca5d&#10;&#9;- fabric-block-api-v1 3.1.0+0ae6f9115d&#10;&#9;- fabric-block-getter-api-v2 2.0.9+3434d6d95d&#10;&#9;- fabric-client-gametest-api-v1 6.0.12+131f8d475d&#10;&#9;- fabric-command-api-v2 3.1.2+fcdff87f5d&#10;&#9;- fabric-content-registries-v0 15.0.7+74ed1ea55d&#10;&#9;- fabric-convention-tags-v2 4.10.5+187b64905d&#10;&#9;- fabric-crash-report-info-v1 1.0.7+fcdff87f5d&#10;&#9;- fabric-creative-tab-api-v1 5.0.22+fcdff87f5d&#10;&#9;- fabric-data-attachment-api-v1 2.2.34+99fb1a765d&#10;&#9;- fabric-data-generation-api-v1 27.4.3+187b64905d&#10;&#9;- fabric-debug-api-v1 1.0.5+5af7744b5d&#10;&#9;- fabric-dimensions-v1 5.1.20+5af7744b5d&#10;&#9;- fabric-entity-events-v1 6.0.4+3434d6d95d&#10;&#9;- fabric-events-interaction-v0 5.3.10+b9b88df45d&#10;&#9;- fabric-game-rule-api-v1 4.0.10+3434d6d95d&#10;&#9;- fabric-gametest-api-v1 4.0.36+3434d6d95d&#10;&#9;- fabric-item-api-v1 14.8.1+8f511c9f5d&#10;&#9;- fabric-key-mapping-api-v1 2.0.8+3434d6d95d&#10;&#9;- fabric-lifecycle-events-v1 4.1.9+ffef5f675d&#10;&#9;- fabric-loot-api-v3 4.0.9+4068fd645d&#10;&#9;- fabric-menu-api-v1 2.0.31+ed66f0a35d&#10;&#9;- fabric-message-api-v1 7.0.10+3434d6d95d&#10;&#9;- fabric-model-loading-api-v1 8.0.37+fcdff87f5d&#10;&#9;- fabric-networking-api-v1 6.4.1+c58129785d&#10;&#9;- fabric-object-builder-api-v1 24.1.13+e2f63d3e5d&#10;&#9;- fabric-particles-v1 5.0.28+3434d6d95d&#10;&#9;- fabric-permission-api-v1 1.0.8+fcdff87f5d&#10;&#9;- fabric-recipe-api-v1 10.0.12+b9b88df45d&#10;&#9;- fabric-registry-sync-v0 8.0.5+1ca9f6365d&#10;&#9;- fabric-renderer-api-v1 17.0.17+79385d0b5d&#10;&#9;- fabric-renderer-indigo 9.1.25+b9d63e335d&#10;&#9;- fabric-rendering-fluids-v1 6.0.6+3434d6d95d&#10;&#9;- fabric-rendering-v1 27.2.0+eb9fe70b5d&#10;&#9;- fabric-resource-conditions-api-v1 6.2.1+fd3b1d565d&#10;&#9;- fabric-resource-loader-v0 3.3.27+4fc5413f5d&#10;&#9;- fabric-resource-loader-v1 3.1.0+5af7744b5d&#10;&#9;- fabric-screen-api-v1 5.2.4+48607d035d&#10;&#9;- fabric-serialization-api-v1 2.0.7+74ed1ea55d&#10;&#9;- fabric-sound-api-v1 2.0.7+3434d6d95d&#10;&#9;- fabric-tag-api-v1 2.1.11+fcdff87f5d&#10;&#9;- fabric-transfer-api-v1 8.0.26+140095665d&#10;&#9;- fabric-transitive-access-wideners-v1 8.1.17+e2f63d3e5d&#10;&#9;- fabricloader 0.20.1&#10;&#9;- java 25&#10;&#9;- minecraft 26.3&#10;&#9;- mixinextras 0.5.5&#13;&#10;[19:51:36] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/build/fabric-amper-runtime-consumers/g17-loader-17974636064960881263/sandbox-gradle-home/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.5+mixin.0.8.7/cef8519a91129d0c21fa03bb9378f0e8ca810e5/sponge-mixin-0.17.5+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT&#13;&#10;[19:51:38] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).&#13;&#10;[19:51:39] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 439 milliseconds&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) Setting user: Player893&#13;&#10;[19:51:46] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft&#13;&#10;[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da&#13;&#10;&#13;&#10;&gt; Task :runClient FAILED&#13;&#10;&#13;&#10;FAILURE: Build failed with an exception.&#13;&#10;&#13;&#10;* What went wrong:&#13;&#10;Execution failed for task ':runClient' (registered by plugin 'fabric-loom').&#13;&#10;&gt; Process 'command 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe'' finished with non-zero exit value -1073740791 (NTSTATUS 0xC0000409)&#13;&#10;&#13;&#10;* Try:&#13;&#10;&gt; Run with --info or --debug option to get more log output.&#13;&#10;&gt; Run with --scan to get full insights from a Build Scan (powered by Develocity).&#13;&#10;&gt; Get more help at https://help.gradle.org.&#13;&#10;&#13;&#10;* Exception is:&#13;&#10;org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':runClient' (registered by plugin 'fabric-loom').&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)&#13;&#10;&#9;at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)&#13;&#10;&#9;at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)&#13;&#10;&#9;at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)&#13;&#10;&#9;at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)&#13;&#10;&#9;at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)&#13;&#10;&#9;at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)&#13;&#10;&#9;at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)&#13;&#10;&#9;at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)&#13;&#10;&#9;at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)&#13;&#10;&#9;at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)&#13;&#10;&#9;at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)&#13;&#10;&#9;at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:65)&#13;&#10;&#9;at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)&#13;&#10;Caused by: org.gradle.process.ProcessExecutionException: Process 'command 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe'' finished with non-zero exit value -1073740791 (NTSTATUS 0xC0000409)&#13;&#10;&#9;at org.gradle.process.internal.DefaultExecHandle$ExecResultImpl.assertNormalExitValue(DefaultExecHandle.java:460)&#13;&#10;&#9;at org.gradle.process.internal.DefaultJavaExecAction.execute(DefaultJavaExecAction.java:59)&#13;&#10;&#9;at org.gradle.api.tasks.JavaExec.exec(JavaExec.java:171)&#13;&#10;&#9;at net.fabricmc.loom.task.AbstractRunTask.execInternal(AbstractRunTask.java:236)&#13;&#10;&#9;at net.fabricmc.loom.task.AbstractRunTask.exec(AbstractRunTask.java:227)&#13;&#10;&#9;at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)&#13;&#10;&#9;at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)&#13;&#10;&#9;at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)&#13;&#10;&#9;at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)&#13;&#10;&#9;at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)&#13;&#10;&#9;at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)&#13;&#10;&#9;at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)&#13;&#10;&#9;at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)&#13;&#10;&#9;at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)&#13;&#10;&#9;at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)&#13;&#10;&#9;at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)&#13;&#10;&#9;at org.gradle.internal.Either$Right.fold(Either.java:176)&#13;&#10;&#9;at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)&#13;&#10;&#9;at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)&#13;&#10;&#9;at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)&#13;&#10;&#9;at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)&#13;&#10;&#9;at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)&#13;&#10;&#9;at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)&#13;&#10;&#9;at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)&#13;&#10;&#9;at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:105)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)&#13;&#10;&#9;at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:85)&#13;&#10;&#9;at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)&#13;&#10;&#9;at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)&#13;&#10;&#9;at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)&#13;&#10;&#9;at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)&#13;&#10;&#9;at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)&#13;&#10;&#9;at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)&#13;&#10;&#9;at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)&#13;&#10;&#9;at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)&#13;&#10;&#9;at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)&#13;&#10;&#9;at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)&#13;&#10;&#9;at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)&#13;&#10;&#9;at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)&#13;&#10;&#9;at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)&#13;&#10;&#9;at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)&#13;&#10;&#9;... 30 more&#13;&#10;&#13;&#10;&#13;&#10;BUILD FAILED in 35s&#13;&#10;8 actionable tasks: 4 executed, 4 up-to-date&#13;&#10;" type="java.lang.AssertionError">java.lang.AssertionError: runClient finished before required proof (exit=1, markers=[C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.main, C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.client, C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\runtime-proof\c4591f81-c501-4f35-acac-787197bcce7a.tick]):
+Picked up JAVA_TOOL_OPTIONS: -Duser.home=&quot;C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\sandbox-home&quot;
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+&gt; Configure project :
+Fabric Loom: 1.17.21
+
+&gt; Task :compileJava UP-TO-DATE
+&gt; Task :generateFabricModJson UP-TO-DATE
+&gt; Task :processResources UP-TO-DATE
+&gt; Task :classes UP-TO-DATE
+&gt; Task :compileClientJava UP-TO-DATE
+&gt; Task :processClientResources NO-SOURCE
+&gt; Task :clientClasses UP-TO-DATE
+&gt; Task :generateLog4jConfig
+&gt; Task :generateDLIConfig
+&gt; Task :configureLaunch
+&gt; Task :downloadAssets
+&gt; Task :configureClientLaunch
+
+&gt; Task :runClient
+Picked up JAVA_TOOL_OPTIONS: -Duser.home=&quot;C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\sandbox-home&quot;
+[19:51:36] [main/WARN] (FabricLoader/Knot) Class path entries reference missing files: C:\Users\user\Documents\vbc\Fabric Amper\build\fabric-amper-runtime-consumers\g17-loader-17974636064960881263\build\resources\client - the game may not load properly!
+[19:51:36] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 26.3 with Fabric Loader 0.20.1
+[19:51:36] [main/INFO] (FabricLoader/Mappings) Mappings not present!
+[19:51:36] [main/INFO] (FabricLoader) Loading 52 mods:
+	- amper_rt_g17 0.1.0+26.3
+	- fabric-advancement-api-v1 1.0.1+38c7a2d55d
+	- fabric-api 0.165.2+26.3
+	- fabric-api-base 2.0.6+fcdff87f5d
+	- fabric-api-lookup-api-v1 2.0.24+3434d6d95d
+	- fabric-biome-api-v1 20.1.1+85210bca5d
+	- fabric-block-api-v1 3.1.0+0ae6f9115d
+	- fabric-block-getter-api-v2 2.0.9+3434d6d95d
+	- fabric-client-gametest-api-v1 6.0.12+131f8d475d
+	- fabric-command-api-v2 3.1.2+fcdff87f5d
+	- fabric-content-registries-v0 15.0.7+74ed1ea55d
+	- fabric-convention-tags-v2 4.10.5+187b64905d
+	- fabric-crash-report-info-v1 1.0.7+fcdff87f5d
+	- fabric-creative-tab-api-v1 5.0.22+fcdff87f5d
+	- fabric-data-attachment-api-v1 2.2.34+99fb1a765d
+	- fabric-data-generation-api-v1 27.4.3+187b64905d
+	- fabric-debug-api-v1 1.0.5+5af7744b5d
+	- fabric-dimensions-v1 5.1.20+5af7744b5d
+	- fabric-entity-events-v1 6.0.4+3434d6d95d
+	- fabric-events-interaction-v0 5.3.10+b9b88df45d
+	- fabric-game-rule-api-v1 4.0.10+3434d6d95d
+	- fabric-gametest-api-v1 4.0.36+3434d6d95d
+	- fabric-item-api-v1 14.8.1+8f511c9f5d
+	- fabric-key-mapping-api-v1 2.0.8+3434d6d95d
+	- fabric-lifecycle-events-v1 4.1.9+ffef5f675d
+	- fabric-loot-api-v3 4.0.9+4068fd645d
+	- fabric-menu-api-v1 2.0.31+ed66f0a35d
+	- fabric-message-api-v1 7.0.10+3434d6d95d
+	- fabric-model-loading-api-v1 8.0.37+fcdff87f5d
+	- fabric-networking-api-v1 6.4.1+c58129785d
+	- fabric-object-builder-api-v1 24.1.13+e2f63d3e5d
+	- fabric-particles-v1 5.0.28+3434d6d95d
+	- fabric-permission-api-v1 1.0.8+fcdff87f5d
+	- fabric-recipe-api-v1 10.0.12+b9b88df45d
+	- fabric-registry-sync-v0 8.0.5+1ca9f6365d
+	- fabric-renderer-api-v1 17.0.17+79385d0b5d
+	- fabric-renderer-indigo 9.1.25+b9d63e335d
+	- fabric-rendering-fluids-v1 6.0.6+3434d6d95d
+	- fabric-rendering-v1 27.2.0+eb9fe70b5d
+	- fabric-resource-conditions-api-v1 6.2.1+fd3b1d565d
+	- fabric-resource-loader-v0 3.3.27+4fc5413f5d
+	- fabric-resource-loader-v1 3.1.0+5af7744b5d
+	- fabric-screen-api-v1 5.2.4+48607d035d
+	- fabric-serialization-api-v1 2.0.7+74ed1ea55d
+	- fabric-sound-api-v1 2.0.7+3434d6d95d
+	- fabric-tag-api-v1 2.1.11+fcdff87f5d
+	- fabric-transfer-api-v1 8.0.26+140095665d
+	- fabric-transitive-access-wideners-v1 8.1.17+e2f63d3e5d
+	- fabricloader 0.20.1
+	- java 25
+	- minecraft 26.3
+	- mixinextras 0.5.5
+[19:51:36] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/C:/Users/user/Documents/vbc/Fabric%20Amper/build/fabric-amper-runtime-consumers/g17-loader-17974636064960881263/sandbox-gradle-home/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.5+mixin.0.8.7/cef8519a91129d0c21fa03bb9378f0e8ca810e5/sponge-mixin-0.17.5+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[19:51:38] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[19:51:39] [Datafixer Bootstrap #0/INFO] (Minecraft) 307 Datafixer optimizations took 439 milliseconds
+[19:51:46] [Render thread/INFO] (Minecraft) Environment: Environment[discoveryUrl=https://discovery.minecraftservices.com/minecraft/client, name=PROD]
+[19:51:46] [Render thread/INFO] (Minecraft) Setting user: Player893
+[19:51:46] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
+[19:51:46] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.4.3-snapshot
+[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App name: Minecraft
+[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App version: 26.3
+[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: App ID: com.mojang.minecraft
+[19:51:46] [Render thread/INFO] (Minecraft) SDL [SYSTEM]: SDL revision: SDL-3.4.14-62f10da
+
+&gt; Task :runClient FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':runClient' (registered by plugin 'fabric-loom').
+&gt; Process 'command 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe'' finished with non-zero exit value -1073740791 (NTSTATUS 0xC0000409)
+
+* Try:
+&gt; Run with --info or --debug option to get more log output.
+&gt; Run with --scan to get full insights from a Build Scan (powered by Develocity).
+&gt; Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':runClient' (registered by plugin 'fabric-loom').
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:65)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.process.ProcessExecutionException: Process 'command 'C:\Program Files\Eclipse Adoptium\jdk-25.0.4.101-hotspot\bin\java.exe'' finished with non-zero exit value -1073740791 (NTSTATUS 0xC0000409)
+	at org.gradle.process.internal.DefaultExecHandle$ExecResultImpl.assertNormalExitValue(DefaultExecHandle.java:460)
+	at org.gradle.process.internal.DefaultJavaExecAction.execute(DefaultJavaExecAction.java:59)
+	at org.gradle.api.tasks.JavaExec.exec(JavaExec.java:171)
+	at net.fabricmc.loom.task.AbstractRunTask.execInternal(AbstractRunTask.java:236)
+	at net.fabricmc.loom.task.AbstractRunTask.exec(AbstractRunTask.java:227)
+	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:105)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:85)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
+
+
+BUILD FAILED in 35s
+8 actionable tasks: 4 executed, 4 up-to-date
+
+	at dev.fabricamper.integration.IsolatedFabricClientProcess.launch(IsolatedFabricClientProcess.kt:129)
+	at dev.fabricamper.integration.IsolatedFabricClientProcess.clientUntilMarkers(IsolatedFabricClientProcess.kt:70)
+	at dev.fabricamper.integration.FabricAmperG17RuntimeConsumerTest.G17 actual Loader applies Class Tweaker injection and invokes default method on game tick(FabricAmperG17RuntimeConsumerTest.kt:98)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

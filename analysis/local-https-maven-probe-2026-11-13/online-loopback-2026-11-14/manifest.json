@@ -1,0 +1,408 @@
+{
+  "status": "PASS_FOR_NATIVE_HTTPS_UPLOAD_ONLY",
+  "date": "2026-11-14",
+  "target": "127.0.0.1 TLS SAN IP + Basic authentication",
+  "egress": "JVM and HTTP(S) environment proxies reject all non-loopback requests",
+  "proxyRejectedRequests": 0,
+  "gradle": "9.7.1",
+  "java": "25",
+  "consumer": "settings.gradle.kts + mod.yaml + Java; fabric/api",
+  "gav": "dev.fabricamper.localhttps:probe-api:0.1.0+26.3",
+  "uploads": [
+    {
+      "pass": 1,
+      "authenticatedSuccessfulPutCount": 25,
+      "configurationCacheStored": false,
+      "configurationCacheReused": false,
+      "configurationCacheDisabled": true
+    },
+    {
+      "pass": 2,
+      "authenticatedSuccessfulPutCount": 25,
+      "configurationCacheStored": false,
+      "configurationCacheReused": false,
+      "configurationCacheDisabled": true
+    }
+  ],
+  "sha256": {
+    "jar": "35C2485C4D0D5F7EB426C79FC9D3F614206BAFD0C9515C489A3D30B215AFA8F9",
+    "pom": "BC570A6A4809556CD69A341BA1B9C87F14BEAE942C7A2614CA922990899C56EF",
+    "module": "65FAB6171205E344B9B54E54950082124A50EF5936AD22B6F5275C2F17457D74",
+    "sources": "F34FB68364DB455933765A14A1FEBBDC43FF59DADDAF35F2333D9B7F252A8FB2"
+  },
+  "allHttpEvents": [
+    {
+      "method": "GET",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom",
+      "status": 401,
+      "authenticated": false,
+      "bytes": 0
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 1601
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 1046
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 2906
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 877
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "GET",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml",
+      "status": 404,
+      "authenticated": true,
+      "bytes": 0
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 370
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 1601
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.jar.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 1046
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.pom.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 877
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3-sources.jar.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 2906
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/0.1.0+26.3/probe-api-0.1.0+26.3.module.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    },
+    {
+      "method": "GET",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml",
+      "status": 200,
+      "authenticated": true,
+      "bytes": 0
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 370
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha1",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 40
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.md5",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 32
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha256",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 64
+    },
+    {
+      "method": "PUT",
+      "path": "dev/fabricamper/localhttps/probe-api/maven-metadata.xml.sha512",
+      "status": 201,
+      "authenticated": true,
+      "bytes": 128
+    }
+  ],
+  "externalModrinthCurseForgeUploads": 0,
+  "ccCaveat": "Native explicit PasswordCredentials may disable Gradle configuration cache; inspect upload flags."
+}

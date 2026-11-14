@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "amper_local_https_probe",
+  "version": "0.1.0+26.3",
+  "name": "Local HTTPS Maven Probe",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.fabricamper.localhttps.ProbeEntry"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "java": ">=25",
+    "minecraft": "26.3"
+  }
+}
