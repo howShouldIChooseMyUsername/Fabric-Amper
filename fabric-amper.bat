@@ -5,7 +5,10 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.0"
+set "FA_VERSION=0.1.2"
+rem Verified SHA-256 of the v0.1.2 GitHub Release doctor helper.
+rem Update this checksum alongside the script when publishing a new version.
+set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -27,7 +30,6 @@ if /i "%~1"=="/?" goto :help
 if /i "%~1"=="version" goto :version
 if /i "%~1"=="doctor" goto :doctor
 if /i "%~1"=="docs" goto :docs
-if /i "%~1"=="setup" goto :setup
 if /i "%~1"=="init" goto :init
 if /i "%~1"=="tasks" goto :tasks
 if /i "%~1"=="diagnose" goto :diagnose
@@ -52,9 +54,9 @@ echo Fabric Amper %FA_VERSION% - Windows convenience wrapper
 echo.
 echo Usage:
 echo   fabric-amper.bat help
-echo   fabric-amper.bat doctor [--full^|--paths]
-echo   fabric-amper.bat setup
+echo   fabric-amper.bat doctor [--full^|--paths^|--fix [--dry-run]]
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -75,11 +77,17 @@ echo               Only remote targets ask for typed confirmation.
 echo.
 echo Other commands: docs, version.
 echo   doctor             Check local Java and Gradle availability.
-echo   doctor --full      Also inspect JDK hints, Windows paths and plugin marker.
-echo   doctor --paths     Inspect local path lengths and marker without Gradle.
+echo   doctor --full      Also inspect JDK hints and Windows paths.
+echo   doctor --paths     Inspect local path lengths without running Gradle.
+echo   doctor --fix       Opt-in JDK 25/Gradle repair and missing consumer setup.
+echo   doctor --fix --dry-run   Preview the repair without changes or downloads.
+echo                        First --fix downloads one SHA-256 checked PS1 from
+echo                        this version's GitHub Release beside this BAT.
 echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
+echo init --here keeps existing tools and notes, but rejects existing project files.
+echo Generated Settings projects resolve Fabric Amper v0.1.2 from JitPack.
 echo Use --project or -C to run consumer commands from any directory.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -100,6 +108,7 @@ echo Full skill: "%FA_ROOT%FabricAmperSKILL.md"
 exit /b 0
 
 :doctor
+if /i "%~2"=="--fix" goto :doctorFix
 set "FA_DOCTOR_MODE=basic"
 if /i "%~2"=="--full" set "FA_DOCTOR_MODE=full"
 if /i "%~2"=="--paths" set "FA_DOCTOR_MODE=paths"
@@ -115,7 +124,8 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-call :doctorMarker
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2
+echo [INFO] Remote JitPack availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
 if /i "%FA_DOCTOR_MODE%"=="paths" (
@@ -150,20 +160,54 @@ if /i "%FA_GRADLE_LEAF%"=="gradlew.bat" (
 if "%FA_DOCTOR_ERROR%"=="1" exit /b 1
 exit /b 0
 
-:doctorMarker
-set "FA_MARKER_REPO=%FA_ROOT%build\g29-probe\maven-repo"
-set "FA_SETTINGS_MARKER=%FA_MARKER_REPO%\dev\fabric-amper\settings\dev.fabric-amper.settings.gradle.plugin\%FA_VERSION%\dev.fabric-amper.settings.gradle.plugin-%FA_VERSION%.pom"
-if exist "%FA_MARKER_REPO%\" (
-    echo [OK] Producer local plugin Maven repository exists.
-) else (
-    echo [INFO] Local plugin Maven repository not found. Run setup if using local init.
+:doctorFix
+if not "%~4"=="" (
+    echo ERROR: doctor --fix accepts at most --dry-run.
+    exit /b 2
 )
-if exist "%FA_SETTINGS_MARKER%" (
-    echo [OK] Local settings-plugin marker POM exists for version %FA_VERSION%.
-) else (
-    echo [INFO] Settings-plugin marker POM for %FA_VERSION% is missing; run setup if using local init.
+if not "%~3"=="" if /i not "%~3"=="--dry-run" (
+    echo ERROR: doctor --fix accepts only the optional --dry-run flag.
+    exit /b 2
 )
-exit /b 0
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Windows PowerShell is required for opt-in repair.
+    exit /b 1
+)
+if /i "%~3"=="--dry-run" goto :doctorFixPreview
+if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
+    call :doctorFetchHelper
+    if errorlevel 1 exit /b 1
+)
+call :doctorVerifyHelper
+if errorlevel 1 exit /b 1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1"
+exit /b %errorlevel%
+
+:doctorFixPreview
+if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
+    echo [preview] Would fetch exactly fabric-amper-doctor-fix.ps1 from:
+    echo [preview] https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v%FA_VERSION%/fabric-amper-doctor-fix.ps1
+    echo [preview] Would SHA-256 check it and store it beside this BAT before any repair.
+    echo [preview] Helper is missing; toolchain checks require the helper. No downloads or writes performed.
+    exit /b 0
+)
+call :doctorVerifyHelper
+if errorlevel 1 exit /b 1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1" -Preview
+exit /b %errorlevel%
+
+:doctorVerifyHelper
+rem Never execute a pre-existing helper if it differs from the pinned release hash.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $p=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { throw 'Doctor helper file is unavailable.' }; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($p))).Replace('-',''); if ($actual -ine $env:FA_DOCTOR_SHA256) { throw 'Doctor helper SHA-256 mismatch. File was not executed or overwritten.' }; [Console]::Out.WriteLine('[OK] Verified doctor helper SHA-256.') } catch { [Console]::Error.WriteLine('[ERROR] '+$_.Exception.Message); exit 1 }"
+exit /b %errorlevel%
+
+:doctorFetchHelper
+rem The remote .ps1 is only downloaded for explicitly requested --fix.
+rem Download to a unique temporary file, pin the exact bytes, then move it in place.
+echo [doctor --fix] Fetching the v%FA_VERSION% helper from GitHub Release.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dest=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-doctor-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { if (Test-Path -LiteralPath $dest) { throw 'Doctor helper appeared during download; refusing to overwrite it.' }; $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/fabric-amper-doctor-fix.ps1'; Invoke-WebRequest -Uri ($url+'?sha256='+$env:FA_DOCTOR_SHA256) -Headers @{'Cache-Control'='no-cache';'Pragma'='no-cache'} -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($tmp))).Replace('-',''); if ($actual -ine $env:FA_DOCTOR_SHA256) { throw 'Downloaded doctor helper SHA-256 mismatch.' }; if (Test-Path -LiteralPath $dest) { throw 'Doctor helper already exists; refusing to overwrite it.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved verified doctor helper beside fabric-amper.bat.') } catch { [Console]::Error.WriteLine('[ERROR] Doctor helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
+exit /b %errorlevel%
 
 :doctorToolchains
 if defined JAVA_HOME (
@@ -222,35 +266,36 @@ powershell.exe -NoProfile -NonInteractive -Command "$found=$false; foreach($line
 if errorlevel 1 echo [INFO] Could not read Wrapper version; no Wrapper run attempted.
 exit /b 0
 
-:setup
-echo [setup] Publishing producer plugin/markers to build\g29-probe\maven-repo ONLY.
-pushd "%FA_ROOT%" || exit /b 1
-call :resolveGradle
-if errorlevel 1 (
-    popd
-    exit /b 1
-)
-call "%FA_GRADLE%" publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true
-set "FA_RESULT=%errorlevel%"
-popd
-if not "%FA_RESULT%"=="0" exit /b %FA_RESULT%
-if not exist "%FA_ROOT%build\g29-probe\maven-repo\" (
-    echo ERROR: Gradle exited successfully but the local repository is missing.
-    exit /b 1
-)
-echo [setup] Local repository ready: "%FA_ROOT%build\g29-probe\maven-repo"
-exit /b 0
-
 :init
 if "%~2"=="" (
     echo ERROR: init requires a lowercase Fabric mod ID.
     goto :usageError
 )
 set "FA_INIT_ID=%~2"
+if not "%~5"=="" (
+    echo ERROR: init received too many arguments.
+    exit /b 2
+)
 powershell -NoProfile -NonInteractive -Command "if($env:FA_INIT_ID -cmatch '^[a-z][a-z0-9_-]{1,63}$'){exit 0}else{exit 1}"
 if errorlevel 1 (
     echo ERROR: Mod ID must start with lowercase a-z and be 2-64 chars [a-z0-9_-].
     exit /b 2
+)
+set "FA_INIT_HERE=0"
+if /i "%~3"=="--here" (
+    set "FA_INIT_HERE=1"
+    set "FA_TARGET=%FA_CONSUMER%"
+) else (
+    if /i "%~4"=="--here" goto :initInvalidHere
+    if not "%~3"=="" (
+        set "FA_TARGET=%~f3"
+    ) else (
+        if /i "%CD%\"=="%FA_ROOT%" (
+            set "FA_TARGET=%FA_ROOT%..\%FA_INIT_ID%"
+        ) else (
+            set "FA_TARGET=%CD%\%FA_INIT_ID%"
+        )
+    )
 )
 set "FA_PROFILE=%~4"
 if not defined FA_PROFILE set "FA_PROFILE=mod"
@@ -260,19 +305,39 @@ if not defined FA_PRODUCT (
     echo ERROR: Profile must be mod or api.
     exit /b 2
 )
-if not "%~3"=="" (
-    set "FA_TARGET=%~f3"
-) else (
-    if /i "%CD%\"=="%FA_ROOT%" (
-        set "FA_TARGET=%FA_ROOT%..\%FA_INIT_ID%"
-    ) else (
-        set "FA_TARGET=%CD%\%FA_INIT_ID%"
-    )
-)
+if "%FA_INIT_HERE%"=="1" goto :initExistingDirectory
 if exist "%FA_TARGET%" (
     echo ERROR: Target already exists. Refusing to overwrite: "%FA_TARGET%"
     exit /b 3
 )
+goto :initPreflightDone
+
+:initExistingDirectory
+if not exist "%FA_TARGET%\" (
+    echo ERROR: --here requires an existing directory: "%FA_TARGET%"
+    exit /b 3
+)
+rem Project files are never merged or overwritten by init --here, even when
+rem tool/config files like fabric-amper.bat, markdown or .gitignore exist.
+if exist "%FA_TARGET%\mod.yaml" goto :initConflict
+if exist "%FA_TARGET%\mod.yml" goto :initConflict
+if exist "%FA_TARGET%\settings.gradle.kts" goto :initConflict
+if exist "%FA_TARGET%\build.gradle.kts" goto :initConflict
+if exist "%FA_TARGET%\build.gradle" goto :initConflict
+if exist "%FA_TARGET%\src" goto :initConflict
+if exist "%FA_TARGET%\schemas\mod.schema.json" goto :initConflict
+goto :initPreflightDone
+
+:initConflict
+echo ERROR: Existing project files detected. init --here refuses to overwrite or merge them.
+echo        Check mod.yaml, mod.yml, settings.gradle.kts, build.gradle^(.kts^), src and schemas.
+exit /b 3
+
+:initInvalidHere
+echo ERROR: --here must immediately follow the mod ID, not a folder path.
+exit /b 2
+
+:initPreflightDone
 rem Always use the producer's CURRENT schema for editor completion. The YAML
 rem document itself omits schema: N so the plugin selects its latest supported
 rem schema at parse time (currently v1), instead of pinning init's version.
@@ -296,20 +361,37 @@ if errorlevel 1 (
     echo ERROR: Cannot create target: "%FA_TARGET%"
     exit /b 1
 )
-set "FA_REPO_FILE=%FA_ROOT%build\g29-probe\maven-repo"
-set "FA_REPO_FILE=%FA_REPO_FILE:\=/%"
-
-rem Gradle plugin bootstrap. Absolute path avoids sibling-only assumptions.
+if not exist "%FA_TARGET%\.vscode\settings.json" (
+    if not exist "%FA_TARGET%\.vscode\" mkdir "%FA_TARGET%\.vscode"
+    if errorlevel 1 (
+        echo ERROR: Cannot create .vscode directory for YAML suggestions.
+        exit /b 1
+    )
+    > "%FA_TARGET%\.vscode\settings.json" echo({
+    >> "%FA_TARGET%\.vscode\settings.json" echo(    "yaml.schemas": {
+    >> "%FA_TARGET%\.vscode\settings.json" echo(        "./schemas/mod.schema.json": ["mod.yaml", "mod.yml"]
+    >> "%FA_TARGET%\.vscode\settings.json" echo(    }
+    >> "%FA_TARGET%\.vscode\settings.json" echo(}
+)
+rem GitHub JitPack module provides the Settings plugin without a local setup.
+rem Keep the GitHub owner spelling and tagged artifact version exact.
 > "%FA_TARGET%\settings.gradle.kts" echo(pluginManagement {
 >> "%FA_TARGET%\settings.gradle.kts" echo(    repositories {
->> "%FA_TARGET%\settings.gradle.kts" echo(        maven { url = uri(file("%FA_REPO_FILE%")) }
+>> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://jitpack.io")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.fabricmc.net/")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        gradlePluginPortal()
 >> "%FA_TARGET%\settings.gradle.kts" echo(        mavenCentral()
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
+>> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
+>> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
+>> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+>> "%FA_TARGET%\settings.gradle.kts" echo(            }
+>> "%FA_TARGET%\settings.gradle.kts" echo(        }
+>> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.0"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.2"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 rem New projects default to a Java-only Minecraft 26.3 fixture.
@@ -353,9 +435,10 @@ if not exist "%FA_TARGET%\schemas\mod.schema.json" exit /b 1
 if not exist "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" exit /b 1
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
+if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Next: run setup if necessary, then cd to the new folder and run build.
-if not exist "%FA_ROOT%build\g29-probe\maven-repo\" echo [init] NOTE: The local producer plugin repository is absent; setup is required.
+echo [init] Settings plugin: JitPack Fabric-Amper v0.1.2 ^(Internet required on first resolution^).
+echo [init] Next: cd to the new folder and run build.
 exit /b 0
 
 :tasks

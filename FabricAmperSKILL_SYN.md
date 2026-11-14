@@ -9,6 +9,8 @@ description: Compact decision guide for Fabric Amper YAML-based Fabric mod devel
 
 **Use only this document and STOP reading** when the user's intent, the exact YAML keys and value types, target file paths, prerequisites, and safe verification steps are **unambiguous and fully covered below**. Apply the minimal edit; run the applicable safe checks; report results. Do **not** read the longer `FabricAmperSKILL.md` merely for reassurance, and do not needlessly expand the task.
 
+**Command precedence (mandatory):** On Windows, **use an existing complete Fabric Amper checkout's `fabric-amper.bat` first for everything it actually supports**, including `doctor`, `init`, `tasks`, `validate`, `build`, `verify`, `test`, `clean`, `diagnose`, `explain`, `plan`, `port`, `run`, `server` and approved `publish` commands. Pass `-C "consumer"` before the subcommand if needed. For **unsupported** operations, retain the original Gradle/Java/Kotlin/native workflow; do not fabricate a BAT command. **Never assume `./gradlew` exists or is appropriate**: check the selected project's actual wrapper first. Read-only `doctor` is safe, but `doctor --fix` can install software or create missing files and **requires explicit user authorization**; it first downloads the single SHA-256 pinned `fabric-amper-doctor-fix.ps1` from the BAT version's GitHub Release into the BAT directory when missing. `doctor --fix --dry-run` never downloads; without a local helper it previews the planned fetch only. `init --here` must not overwrite an existing project.
+
 **Read [FabricAmperSKILL.md](FabricAmperSKILL.md) before editing or answering** when **any** required detail is missing, ambiguous, contradictory, out of scope, or insufficiently documented here. Examples: a new/unknown YAML key, complex publish platform relationships, disputed Loader predicate grammar, non-obvious split-side safety, unusual mapping/toolchain, Gradle/classpath collisions, HTTP failure, ZIP/resource corruption, unresolved diagnostics, or different versions. For exact implementation truth, inspect `src/main/kotlin/dev/fabricamper/config/` and [fabric-amper.schema.json](fabric-amper.schema.json). Never guess just to avoid an escalation.
 
 This file is a **custom root AI guide**; its filename is not the standardized auto-discovery `<skills-dir>/SKILL.md`. Frontmatter does not change that. The [full skill](FabricAmperSKILL.md) explains standard packaging.
@@ -21,7 +23,7 @@ This file is a **custom root AI guide**; its filename is not the standardized au
 - `mod.environment` is Loader's whole-mod side; `dependencies[].target` is a Gradle dependency source set. `dependencies` ≠ `mod.depends` ≠ `publish.modrinth.dependencies`.
 - Only real fixed published dependency versions, verified Loader IDs, known Maven repositories and real Modrinth/CurseForge project IDs. No secrets or source-path escapes. Do not change an unrelated user's dependency or generated file.
 - **Do not publish without explicit authorization.** `help`/`build`/`test` are not remote uploads; publish tasks are. Do not auto-accept EULA or use personal Minecraft worlds. Never claim a successful build proves GUI/runtime/remote publishing.
-- Project `0.1.0` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
+- Project `0.1.2` is **not shipping approved**, and public Plugin Portal availability is unconfirmed; see [QA_REPORT.md](QA_REPORT.md). Do not claim any unobserved task or G gate passed.
 
 ## Fast intent → YAML / file / check
 
@@ -117,21 +119,28 @@ publish:
 
 ## Two complete starter files (copy only for a new consumer)
 
-`settings.gradle.kts` (the producer is a sibling folder named `Fabric Amper`):
+`settings.gradle.kts` (JitPack-tagged bootstrap, no local producer Maven repository):
 
 ```kotlin
 pluginManagement {
     repositories {
-        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+            }
+        }
+    }
 }
-plugins { id("dev.fabric-amper.settings") version "0.1.0" }
+plugins { id("dev.fabric-amper.settings") version "0.1.2" }
 ```
 
-Before creating the consumer, publish the **producer plugin locally** with `gradle publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true`. It is not published on the public Plugin Portal.
+The Git tag in the JitPack module is `v0.1.2` and the Gradle plugin request is `0.1.2`. The removed `fabric-amper.bat setup` command is not needed. Check that JitPack **actually serves** the tagged module before claiming the generated project builds; it is not published on the public Plugin Portal.
 
 `mod.yaml` (complete **Java-only** sample; create `src/main/java/org/example/ExampleMod.java` with an actual `ModInitializer`):
 
@@ -167,10 +176,12 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat). This is a **W
 
 | Intent | Command / action | Boundary |
 | --- | --- | --- |
-| Show usage / installed tools | `fabric-amper.bat help` / `doctor` / `docs` / `version` | `doctor` checks Java/Gradle + producer-local repo |
-| Additional local environment diagnosis | `doctor --full` / `doctor --paths` | Windows path/JDK/marker hints; `--paths` does not execute Gradle |
-| Make plugin available locally | `fabric-amper.bat setup` | In **producer**: Gradle `publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=true`, local output only |
+| Show usage / installed tools | `fabric-amper.bat help` / `doctor` / `docs` / `version` | `doctor` checks Java/Gradle; it **does not** connect to JitPack |
+| Additional local environment diagnosis | `doctor --full` / `doctor --paths` | Windows path/JDK hints; `--paths` does not execute Gradle |
+| Preview fixes safely | `doctor --fix --dry-run` | No network, installation, user PATH change or file writes; **missing PS1 means preview the fetch only**, not toolchain inspection |
+| Explicitly authorized toolchain/consumer repair | `doctor --fix` | Fetch only the versioned GitHub PS1 beside BAT when missing; pin SHA-256 and reject mismatches/unwritable directory, then winget JDK25/Gradle or verified Gradle ZIP and missing Settings/editor files |
 | Start new Java mod | `fabric-amper.bat init example_mod` | New folder with Settings/YAML/Java source; never overwrite |
+| Start in existing tools-only folder | `fabric-amper.bat init night_vision --here` | Tools and notes preserved; any existing YAML/Settings/build script/src causes a hard error |
 | Start new API project | `fabric-amper.bat init example_api "C:\work\example_api" api` | `fabric/api` and example `org.example` group; must customize |
 | Select an existing consumer | `"C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build` | `-C` / `--project` **before** subcommand; default consumer = current directory |
 | Validate and build | `validate` / `build` / `verify` | `build` = `validateFabricAmper build verifyFabricAmperJar` |
@@ -182,7 +193,7 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat). This is a **W
 | Publish locally | `publish local` | API Maven publication in consumer `build/fabric-amper/maven-repository` |
 | Publish remotely | `publish maven` / `modrinth` / `curseforge` / `all` | **Real upload** after typed `PUBLISH` and local preflight; explicit user authorization required |
 
-The wrapper rejects missing/duplicate YAML, consumer `build.gradle(.kts)`, and authored source `fabric.mod.json`; it does **not** prove downstream runtime compatibility. `publish all` invokes `publishFabricAmper`, not Gradle's broader `publish`. Always use the user's exact destination and **never** initiate remote publishing merely because a YAML configuration exists. A Windows producer `gradlew.bat` is not included; the wrapper resolves existing compatible Gradle installations. More examples: [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md).
+The wrapper rejects missing/duplicate YAML, consumer `build.gradle(.kts)`, and authored source `fabric.mod.json`; it does **not** prove downstream runtime compatibility. `publish all` invokes `publishFabricAmper`, not Gradle's broader `publish`. Always use the user's exact destination and **never** initiate remote publishing merely because a YAML configuration exists. The presence of an unrelated `gradlew.bat` in any neighboring folder is irrelevant; choose only an existing verified consumer wrapper or a supported native tool for operations the BAT does not expose. More examples: [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md).
 
 **Stop-or-escalate for reports:** If the user only needs current config/dependency facts and `diagnose`/`explain` answers them, stop here. If they ask about exact external project compatibility, a runtime crash, a new Minecraft port, Mixin semantics, or uncertain side effects, read [FabricAmperSKILL.md](FabricAmperSKILL.md#route-read-only-diagnostics-dependency-explanation-and-release-preview) and check real runtime/source evidence. A release preview with no HTTP **cannot** confirm platform IDs, authentication, moderation or that a published version exists.
 

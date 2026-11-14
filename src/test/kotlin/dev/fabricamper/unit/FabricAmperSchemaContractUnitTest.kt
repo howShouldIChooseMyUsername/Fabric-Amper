@@ -55,14 +55,22 @@ class FabricAmperSchemaContractUnitTest {
         val declared = root.getAsJsonObject("properties").getAsJsonObject("product")
         assertEquals(setOf("fabric/mod", "fabric/api", "fabric/library"), declared.stringSet("enum"))
         assertEquals(3, declared.getAsJsonArray("enum").size())
-        val branch = root.getAsJsonArray("allOf")[0].asJsonObject
+        // Root conditions are unordered: newer Minecraft/profile guards can be
+        // inserted before this API/library rule without changing its meaning.
+        val branch = root.getAsJsonArray("allOf").map { it.asJsonObject }.singleOrNull { condition ->
+            condition.getAsJsonObject("if")?.getAsJsonObject("properties")
+                ?.getAsJsonObject("product")?.getAsJsonArray("enum")
+                ?.map { it.asString }?.toSet() == setOf("fabric/api", "fabric/library")
+        }
+        assertNotNull(branch, "Expected exactly one API/library product condition in allOf")
+        val apiBranch = requireNotNull(branch)
         assertEquals(setOf("fabric/api", "fabric/library"),
-            branch.getAsJsonObject("if").getAsJsonObject("properties")
+            apiBranch.getAsJsonObject("if").getAsJsonObject("properties")
                 .getAsJsonObject("product").stringSet("enum"))
-        val thenMod = branch.getAsJsonObject("then").getAsJsonObject("properties")
+        val thenMod = apiBranch.getAsJsonObject("then").getAsJsonObject("properties")
             .getAsJsonObject("mod")
         assertTrue("group" in thenMod.stringSet("required"), "API Maven group is mandatory")
-        assertTrue("publishing" in branch.getAsJsonObject("else").getAsJsonObject("not").stringSet("required"),
+        assertTrue("publishing" in apiBranch.getAsJsonObject("else").getAsJsonObject("not").stringSet("required"),
             "fabric/mod must reject publishing even when empty")
     }
 

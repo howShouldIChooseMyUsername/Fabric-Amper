@@ -77,8 +77,8 @@ class FabricAmperDocumentationContractUnitTest {
             "## Publishing and API/library projects",
             "## Windows command cheat sheet",
             "## Troubleshooting and next steps",
-            "fabric-amper.bat setup",
             "fabric-amper.bat init quick_mod",
+            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2",
             "fabric-amper.bat plan",
             "publish.common",
         ).forEach { expected ->
@@ -89,6 +89,7 @@ class FabricAmperDocumentationContractUnitTest {
             "Quick Guide must provide a complete starter YAML with the generated editor schema directive",
         )
         assertTrue(quickGuide.contains("```kotlin\npluginManagement"), "Quick Guide must provide Settings bootstrap")
+        assertTrue(!quickGuide.contains("fabric-amper.bat setup"), "Quick Guide must not recommend removed setup command")
         assertTrue(quickGuide.contains("```java\npackage org.example;"), "Quick Guide must provide the starter source")
         assertTrue(!Regex("[\\uAC00-\\uD7A3]").containsMatchIn(quickGuide), "Quick Guide must be English-only")
         assertTrue(quickStart.contains("[Quick Guide](HUMAN_QuickGuide.md)"), "Old Quick Start path must link to merged guide")

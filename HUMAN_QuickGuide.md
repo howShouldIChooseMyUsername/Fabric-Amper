@@ -2,7 +2,7 @@
 
 **A five-minute Quick Start and a feature-by-feature cheat sheet, in one place.** This guide is for Windows developers who want to start a Fabric mod immediately and then look up YAML keys or commands without reading the entire manual. For complete explanations, see [the Human Guide](HUMAN.md); for exact YAML types, see [the schema](fabric-amper.schema.json).
 
-> **Status:** Fabric Amper `0.1.0` is a locally tested **development** Gradle plugin, not a confirmed public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. Consult [QA_REPORT.md](QA_REPORT.md) for the verification boundaries. Commands that build or inspect locally are not proof of a working Minecraft runtime, IntelliJ GUI Sync, or a successful external release.
+> **Status:** Fabric Amper `0.1.2` is a **development preview** Gradle plugin, not a public Gradle Plugin Portal release or an approved G1–G30 shipping artifact. See [QA_REPORT.md](QA_REPORT.md) for earlier verification evidence and limitations. The release validation is recorded in [QA_REPORT.md](QA_REPORT.md); the skipped G gates are not silently treated as passes.
 
 ## Contents
 
@@ -17,17 +17,16 @@
 
 ## The two-minute command path
 
-**Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository has **no bundled `gradlew.bat`**. The Windows launcher can find an installed Gradle or a locally cached compatible distribution; it does not itself install Java or Gradle. From the checked-out **`Fabric Amper` producer folder**, run:
+**Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository does not require a bundled Gradle Wrapper. The launcher finds installed/cached Gradle; **`doctor --fix` explicitly opts into repairing a missing JDK 25 or Gradle**, while `doctor --fix --dry-run` only previews the actions. From the checked-out **`Fabric Amper` producer folder**, run:
 
 ```bat
 fabric-amper.bat doctor
-fabric-amper.bat setup
 fabric-amper.bat init quick_mod
 cd ..\quick_mod
 "..\Fabric Amper\fabric-amper.bat" build
 ```
 
-**What happened?** `doctor` checks local Java/Gradle and the plugin marker; `setup` publishes the plugin binary **and Gradle plugin markers only to this producer's** `build/g29-probe/maven-repo/` (it does not publish to the Internet); `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the producer's current schema, and a Java source file; `build` validates, builds and checks the JAR. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` so compatible YAML editors can provide schema-based suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` somewhere other than the producer folder, it creates the new project under your current directory instead.
+**What happened?** `doctor` checks local Java/Gradle without contacting JitPack. `init` generates a **new** consumer directory with `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` copy of the checkout's schema, and a Java source file; the Settings script resolves `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2` from **JitPack**, not a local producer Maven repository. `build` validates, builds and checks the JAR. Internet access is required on the first uncached plugin/dependency resolution. The first line of the generated YAML is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor suggestions. If `quick_mod` already exists, `init` refuses to overwrite it. If you run `init` outside the checkout folder, it creates the new project under your current directory instead.
 
 Useful follow-ups from inside `quick_mod`:
 
@@ -37,7 +36,9 @@ Useful follow-ups from inside `quick_mod`:
 "..\Fabric Amper\fabric-amper.bat" plan
 ```
 
-`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate.
+`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate. If a toolchain is missing, `doctor --fix --dry-run` previews a repair. **Only run `doctor --fix` when you want it to install missing software or create missing consumer bootstrap/editor files.** On first use, the BAT downloads only `fabric-amper-doctor-fix.ps1` from its own v0.1.2 GitHub Release into the BAT folder, checks a hard-coded SHA-256, then starts the repair. Existing unexpected scripts are not overwritten/executed, and failed downloads abort before repairs. `--dry-run` never downloads anything; if the helper is missing, it previews the planned download rather than guessing which tools are installed. Windows cannot let a child batch file change its parent terminal's live PATH; a new terminal may be needed afterward.
+
+**Single-BAT repair example:** Download the current `fabric-amper.bat` from the [v0.1.2 Release](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2) into a folder you can write to, then explicitly run `fabric-amper.bat doctor --fix` there. When the PS1 is absent, the BAT fetches **only** `fabric-amper-doctor-fix.ps1` from `.../releases/download/v0.1.2/fabric-amper-doctor-fix.ps1` and saves it **beside the BAT** after its pinned SHA-256 matches. Existing matching scripts are reused without network access; wrong-hash scripts are not executed or overwritten. The request uses a hash-keyed, cache-bypassing URL so replaced Release assets are not silently served from a stale cache. If GitHub is unavailable, the download fails, the folder cannot be written or the checksum differs, the repair stops **before** installing anything. `doctor --fix --dry-run` never downloads: with a missing PS1 it only previews this fetch, and with an existing verified PS1 it previews the toolchain/file changes. A standalone BAT can bootstrap **repair**, not `init`/building without the producer schema and ordinary Gradle dependencies. The published v0.1.2 tag is unchanged; this is an update to the same prerelease's assets.
 
 ### Before you edit anything
 
@@ -48,13 +49,10 @@ Useful follow-ups from inside `quick_mod`:
 
 ## Minimal project: copy and run
 
-Skip this section if you used `init`; it already created the three authored files **and** the local schema file for editor completion. For a **manual** consumer, create the following structure as a **sibling** of the producer:
+Skip this section if you used `init`; it already created the three authored files **and** the local schema file for editor completion. For a **manual** consumer, create the following structure (copy the editor schema from the Fabric Amper checkout):
 
 ```text
-parent/
-├── Fabric Amper/
-│   └── build/g29-probe/maven-repo/       (from setup)
-└── quick_mod/
+quick_mod/
     ├── settings.gradle.kts
     ├── mod.yaml
     ├── schemas/mod.schema.json              (copy from producer)
@@ -66,18 +64,25 @@ parent/
 ```kotlin
 pluginManagement {
     repositories {
-        maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.2")
+            }
+        }
+    }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.0"
+    id("dev.fabric-amper.settings") version "0.1.2"
 }
 ```
 
-The relative Maven repository path above is correct **only for this sibling layout**. Change it if the producer/consumer directories differ; `init` writes the producer's actual local path automatically. Do not apply `dev.fabric-amper.project` yourself.
+The `resolutionStrategy` redirects only the public Settings plugin ID to the tagged JitPack module. The `plugins` version is `0.1.2`, while the Git tag in the JitPack coordinate is `v0.1.2`. Do not apply `dev.fabric-amper.project` yourself. Unlike the previous local-bootstrap workflow, **no `setup` command is needed**.
 
 **`mod.yaml`** — a complete, Java-only Minecraft 26.3 example (the optional `schema: 1` is intentionally omitted). The first-line editor directive refers to a file that must exist:
 
@@ -291,15 +296,17 @@ publishing:
 
 ## Windows command cheat sheet
 
-Run `fabric-amper.bat` in the **producer** for `setup` / `init`. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
+Run `fabric-amper.bat init` from the checkout or another working directory. For consumer operations, run the script from the **consumer** directory or pass `-C "C:\path\to\consumer"` **before** the command. Use a full path to `fabric-amper.bat` if it is not on `PATH`.
 
 | Wrapper command | Actual action / impact |
 | --- | --- |
 | `help` / `docs` / `version` | Show usage, documentation locations or launcher version |
-| `doctor` | Check available Java/Gradle and local plugin marker; no cache cleanup |
+| `doctor` | Check available Java/Gradle and report the JitPack coordinate, without contacting the network or clearing caches |
 | `doctor --paths` / `--full` | Estimate Windows path risks; `--full` also prints JDK/toolchain hints |
-| `setup` | Publish producer plugin and markers to its **local** `build/g29-probe/maven-repo/` |
+| `doctor --fix --dry-run` | **Read-only, no network**. If PS1 is missing, show only its GitHub URL; if verified PS1 exists, preview JDK25/Gradle and missing consumer Settings/VS Code files |
+| `doctor --fix` | **Opt-in changes:** fetch the lone v0.1.2 PS1 beside the BAT if missing (pinned SHA-256), then install JDK25 via winget/Gradle via winget or verified official ZIP if needed; fill only missing consumer Settings/editor files |
 | `init <mod_id> [folder] [mod\|api]` | Create a **new** settings-only Java consumer; never overwrite an existing folder |
+| `init <mod_id> --here [mod\|api]` | Initialize in the current folder **even when tool files already exist**. Refuses any existing YAML/Settings/build script/`src`/schema conflict; never overwrites project files |
 | `tasks` | `gradle tasks --all` in the consumer |
 | `validate` | `gradle validateFabricAmper` |
 | `build` | `gradle validateFabricAmper build verifyFabricAmperJar` |
@@ -313,13 +320,13 @@ Run `fabric-amper.bat` in the **producer** for `setup` / `init`. For consumer op
 | `publish modrinth` / `curseforge` / `maven` | **Real remote upload** to the configured destination after typed confirmation and local verification |
 | `publish all` | **Real remote upload** to all explicitly configured **new `publish` targets**; may partially succeed |
 
-The wrapper performs its own preflight checks for a missing or duplicated YAML, forbidden consumer build scripts and authored Loader JSON. For direct Gradle commands use the concrete tasks named above. Do **not** use `publish` as a way to check syntax; use `validate` or `build` instead. Server EULA acceptance, authentication, world files and personal Minecraft accounts are **never** handled automatically.
+The wrapper performs its own preflight checks for a missing or duplicated YAML, forbidden consumer build scripts and authored Loader JSON. For direct Gradle commands use the concrete tasks named above. `init --here` permits files like `fabric-amper.bat`, skill documentation and `.gitignore` but rejects any existing project configuration/source rather than overwriting it. A new starter also creates `.vscode/settings.json` unless one already exists, in which case editor settings remain untouched. For **unsupported** wrapper commands, use the original Gradle/Java tooling rather than inventing another batch subcommand or assuming `./gradlew` exists. Do **not** use `publish` as a way to check syntax; use `validate` or `build` instead. Server EULA acceptance, authentication, world files and personal Minecraft accounts are **never** handled automatically.
 
 ## Troubleshooting and next steps
 
 | Symptom | Fast check |
 | --- | --- |
-| Settings plugin or marker not found | Run producer `setup`; check the local Maven `pluginManagement.repositories` URI and producer location |
+| Settings plugin not found | Check the JitPack tag and coordinate in `pluginManagement.resolutionStrategy`, Internet access, JitPack build status, Gradle/JDK compatibility and repository availability |
 | Missing/duplicate YAML (`FA001` / `FA002`) | Use exactly one `mod.yaml` or `mod.yml`; check UTF-8, aliases and duplicate keys |
 | Invalid field, fixed version or publish URL (`FA003`) | Check [Draft-07 schema](fabric-amper.schema.json) and the project's strict Kotlin validator |
 | Minecraft mapping / Java / Kotlin (`FA004`–`FA006`) | For 26.3 use Mojang mappings, Java **25**, pinned optional Kotlin versions |
