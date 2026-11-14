@@ -1,0 +1,12 @@
+jdk:
+  - openjdk25
+
+before_install:
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java 25-open || true
+  - sdk use java 25-open
+  - sdk install gradle 9.7.1 || true
+  - sdk use gradle 9.7.1
+
+install:
+  - gradle publishToMavenLocal -x test
