@@ -39,9 +39,9 @@ Useful follow-ups from inside `quick_mod`:
 "..\Fabric Amper\fabric-amper.bat" plan
 ```
 
-`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate. If a toolchain is missing, `doctor --fix --dry-run` previews a repair. **Only run `doctor --fix` when you want it to install missing software or create missing consumer bootstrap/editor files.** On first use, the BAT requests `fabric-amper-doctor-fix.ps1` from its own v0.1.3 GitHub Release URL into the BAT folder, checks a hard-coded SHA-256, then starts the repair if that asset is actually available. Existing unexpected scripts are not overwritten/executed, and failed downloads abort before repairs. `--dry-run` never downloads anything; if the helper is missing, it previews the planned download rather than guessing which tools are installed. Windows cannot let a child batch file change its parent terminal's live PATH; a new terminal may be needed afterward.
+`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate. If a toolchain is missing, `doctor --fix --dry-run` previews a repair. **Only run `doctor --fix` when you want it to install missing software or create missing consumer bootstrap/editor files.** On first use, the BAT requests `fabric-amper-doctor-fix.ps1` from its v0.1.3 GitHub Release into the local **`scripts/` directory**, checks its pinned SHA-256, then starts the repair. Existing unexpected scripts are not overwritten/executed, and failed downloads abort before repairs. `--dry-run` never downloads anything; if the helper is missing, it previews the proposed download. Windows cannot let a child batch file change its parent terminal's live PATH; a new terminal may be needed afterward.
 
-**Single-BAT repair example (0.1.3):** Use the matching `fabric-amper.bat` and, if published, its matching `fabric-amper-doctor-fix.ps1` from that version's GitHub Release. Explicitly run `fabric-amper.bat doctor --fix` in a writable folder. When the PS1 is absent, the BAT requests **only** `fabric-amper-doctor-fix.ps1` from `.../releases/download/v0.1.3/fabric-amper-doctor-fix.ps1` and saves it **beside the BAT** after its pinned SHA-256 matches. Existing matching scripts are reused without network access; wrong-hash scripts are not executed or overwritten. If the asset is not yet released, GitHub is unavailable, the folder cannot be written or the checksum differs, repair stops **before** installing anything. `doctor --fix --dry-run` never downloads: with a missing PS1 it only previews this fetch, and with a verified PS1 it previews the toolchain/file changes. A standalone BAT can bootstrap **repair**, but `init` and `migrate` require matching local supporting files; a BAT alone is not the whole toolchain.
+**Single-BAT bootstrap (0.1.3):** Running `doctor --fix` fetches its missing, version-matched PS1 from `.../releases/download/v0.1.3/fabric-amper-doctor-fix.ps1` into **`scripts/fabric-amper-doctor-fix.ps1`** below the BAT. Likewise, normal `migrate` fetches missing `scripts/fabric-amper-migrate.ps1` and (if absent) root `fabric-amper.schema.json`. Each file is checked against a pinned SHA-256 before use; existing mismatched files are never executed or overwritten. Missing/blocked GitHub, a bad checksum or a non-writable folder aborts. **Both `doctor --fix --dry-run` and `migrate --dry-run` remain read-only**: if a required helper/schema is missing, only its planned download is shown, not the full repair/migration preview. First run the normal command to install a verified helper, then run `migrate --dry-run` to preview conversions on another project. `init` still needs a local schema.
 
 ### Before you edit anything
 
@@ -54,7 +54,7 @@ Useful follow-ups from inside `quick_mod`:
 
 In **0.1.3**, use `migrate` when you already have a Fabric project with **one** `build.gradle.kts` (Kotlin DSL) **or** `build.gradle` (Groovy DSL), and a Fabric Loader `src/main/resources/fabric.mod.json`. The old build must use supported static Gradle statements and Loader metadata schema version 1. Conversion reads files and parses recognized settings; it **does not execute the old Gradle script**.
 
-Put matching `fabric-amper.bat`, `fabric-amper-migrate.ps1` and `fabric-amper.schema.json` in one tools folder. To preview and then convert from the **existing mod's directory**:
+You can start with **just `fabric-amper.bat`** in a writable tools folder. Normal `migrate` automatically downloads and SHA-256 verifies its matching **`scripts/fabric-amper-migrate.ps1`** and root schema from the versioned GitHub Release; no manual PS1 installation is needed. If this is a BAT-only installation, the **first `--dry-run` only previews the helper download without touching files**. To inspect the actual candidate YAML with `--dry-run`, use a complete checkout/Windows Tools ZIP or run a regular `migrate` once on a suitable test project to bootstrap the tools. To preview and then convert from the **existing mod's directory**:
 
 ```bat
 "C:\tools\Fabric-Amper\fabric-amper.bat" migrate --dry-run
@@ -72,8 +72,8 @@ To target another folder or explicitly remove original build files **after** a s
 
 | Mode | What happens to the old `build.gradle(.kts)`, original `fabric.mod.json` and any old `settings.gradle(.kts)` |
 | --- | --- |
-| `migrate --dry-run` | Read/validate and display proposed `mod.yaml`; **no changes** |
-| `migrate` | Create `mod.yaml` + `settings.gradle.kts`; move originals into a newly created **`gradle_backup/`** |
+| `migrate --dry-run` | When the helper and schema are verified locally, display proposed `mod.yaml`; if missing, preview only the download. **No changes/downloads** |
+| `migrate` | Download and verify any missing helper/schema, then create `mod.yaml` + `settings.gradle.kts` and back up originals in **`gradle_backup/`** |
 | `migrate -D` / `migrate --delete` | Create the same outputs and remove originals on success; **no `gradle_backup/` copies** |
 | `migrate --delete --dry-run` | Preview the delete policy without deleting anything |
 
@@ -340,8 +340,8 @@ Run `fabric-amper.bat init` from the checkout or another working directory. For 
 | `doctor --fix` | **Opt-in changes:** request the matching v0.1.3 PS1 from this BAT's Release URL if missing (must exist and match pinned SHA-256), then install missing JDK25/Gradle or fill missing consumer Settings/editor files |
 | `init <mod_id> [folder] [mod\|api]` | Create a **new** settings-only Java consumer; never overwrite an existing folder |
 | `init <mod_id> --here [mod\|api]` | Initialize in the current folder **even when tool files already exist**. Refuses any existing YAML/Settings/build script/`src`/schema conflict; never overwrites project files |
-| `migrate --dry-run` | Preview static conversion of Kotlin or Groovy Fabric Gradle scripts and old `fabric.mod.json`; no writes/deletes |
-| `migrate` / `migrate -C "folder"` | Create `mod.yaml` and `settings.gradle.kts`; save original build script, old Settings file and Loader JSON in `gradle_backup/` |
+| `migrate --dry-run` | Read-only preview: with verified `scripts/` helper/schema, show proposed YAML; if absent, only preview the required download |
+| `migrate` / `migrate -C "folder"` | Auto-download/hash-check missing helper/schema, create `mod.yaml` and `settings.gradle.kts`, save original build script, old Settings file and Loader JSON in `gradle_backup/` |
 | `migrate -D` / `migrate --delete` | Explicitly remove the original scripts/Loader JSON after successful conversion; combine with `--dry-run` to preview first |
 | `tasks` | `gradle tasks --all` in the consumer |
 | `validate` | `gradle validateFabricAmper` |

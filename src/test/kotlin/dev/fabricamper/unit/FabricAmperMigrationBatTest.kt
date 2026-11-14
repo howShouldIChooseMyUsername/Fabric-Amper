@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 /** Real Windows cmd.exe -> BAT -> PowerShell smoke, without Gradle or remote access. */
@@ -79,7 +80,7 @@ class FabricAmperMigrationBatTest {
     }
 
     @Test
-    fun `standalone BAT fails clearly without helper and propagates helper errors`() {
+    fun `standalone BAT previews missing helper and rejects corrupted helper`() {
         val folder = Files.createDirectories(temporary.resolve("standalone tools"))
         val batch = folder.resolve("fabric-amper.bat")
         Files.copy(producerBatch(), batch)
@@ -88,14 +89,59 @@ class FabricAmperMigrationBatTest {
         Files.writeString(source, "// KEEP\n")
 
         val missingHelper = run(batch, consumer, "migrate --dry-run")
-        assertEquals(1, missingHelper.code, missingHelper.output)
-        assertTrue(missingHelper.output.contains("Missing fabric-amper-migrate.ps1"))
+        assertEquals(0, missingHelper.code, missingHelper.output)
+        assertTrue(missingHelper.output.contains("Would fetch exactly fabric-amper-migrate.ps1"))
+        assertTrue(missingHelper.output.contains("v0.1.3/fabric-amper-migrate.ps1"))
+        assertFalse(Files.exists(folder.resolve("scripts")), "Read-only preview must not create scripts directory")
         assertEquals("// KEEP\n", Files.readString(source))
 
-        writeStub(folder.resolve("fabric-amper-migrate.ps1"))
-        val failedHelper = run(batch, consumer, "migrate --dry-run", mapOf("FA_TEST_EXIT_CODE" to "17"))
-        assertEquals(17, failedHelper.code, "Script failure must propagate: ${failedHelper.output}")
+        val scripts = Files.createDirectories(folder.resolve("scripts"))
+        val corruptFile = scripts.resolve("fabric-amper-migrate.ps1")
+        Files.writeString(corruptFile, "throw 'UNTRUSTED'\n")
+        val corruptResult = run(batch, consumer, "migrate --dry-run")
+        assertEquals(1, corruptResult.code, corruptResult.output)
+        assertTrue(corruptResult.output.contains("SHA-256 mismatch"), corruptResult.output)
+        assertEquals("throw 'UNTRUSTED'\n", Files.readString(corruptFile))
         assertEquals("// KEEP\n", Files.readString(source))
+    }
+
+    @Test
+    fun `matching local helper failure is propagated without changing consumer`() {
+        val wrapper = createWrapperWithStub()
+        val consumer = Files.createDirectory(temporary.resolve("failure propagation consumer"))
+        val source = consumer.resolve("build.gradle.kts")
+        Files.writeString(source, "// KEEP\n")
+        val result = run(wrapper, consumer, "migrate --dry-run", mapOf("FA_TEST_EXIT_CODE" to "17"))
+        assertEquals(17, result.code, result.output)
+        assertEquals("// KEEP\n", Files.readString(source))
+    }
+
+    @Test
+    fun `schema bootstrap remains read only in preview and refuses tampering`() {
+        val wrapper = createWrapperWithStub()
+        val consumer = Files.createDirectory(temporary.resolve("schema bootstrap consumer"))
+        val schema = wrapper.parent.resolve("fabric-amper.schema.json")
+        Files.delete(schema)
+        val preview = run(wrapper, consumer, "migrate --dry-run")
+        assertEquals(0, preview.code, preview.output)
+        assertTrue(preview.output.contains("Would fetch exactly fabric-amper.schema.json"), preview.output)
+        assertFalse(Files.exists(schema), "Preview must not download a missing schema")
+        Files.writeString(schema, "untrusted schema")
+        val corrupt = run(wrapper, consumer, "migrate --dry-run")
+        assertEquals(1, corrupt.code, corrupt.output)
+        assertTrue(corrupt.output.contains("SHA-256 mismatch"), corrupt.output)
+        assertEquals("untrusted schema", Files.readString(schema))
+    }
+
+    @Test
+    fun `migrate helper hash is pinned to exact shipped script`() {
+        val root = producerBatch().parent
+        val source = root.resolve("scripts/fabric-amper-migrate.ps1")
+        val sha = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(source))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val batchText = Files.readString(producerBatch(), StandardCharsets.UTF_8)
+        assertTrue(batchText.contains("FA_MIGRATE_SHA256=$sha"), "The BAT must pin the actual migration script")
+        assertTrue(batchText.contains("$" + "env:FA_HELPER_HASH"), "Download integrity must use the active helper's pinned hash")
     }
 
     private fun producerBatch(): Path = Path.of(System.getProperty("user.dir"))
@@ -104,8 +150,15 @@ class FabricAmperMigrationBatTest {
     private fun createWrapperWithStub(): Path {
         val folder = Files.createDirectories(temporary.resolve("BAT module with spaces"))
         val batch = folder.resolve("fabric-amper.bat")
-        Files.copy(producerBatch(), batch)
-        writeStub(folder.resolve("fabric-amper-migrate.ps1"))
+        val script = Files.createDirectories(folder.resolve("scripts")).resolve("fabric-amper-migrate.ps1")
+        writeStub(script)
+        Files.copy(producerBatch().parent.resolve("fabric-amper.schema.json"), folder.resolve("fabric-amper.schema.json"))
+        val hash = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(script))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val original = Files.readString(producerBatch(), StandardCharsets.UTF_8)
+        val patched = original.replace(Regex("(?m)^set \"FA_MIGRATE_SHA256=[0-9a-f]{64}\""), "set \"FA_MIGRATE_SHA256=$hash\"")
+        assertTrue(patched != original, "Test fixture must be able to pin stub hash")
+        Files.writeString(batch, patched, StandardCharsets.UTF_8)
         return batch
     }
 
