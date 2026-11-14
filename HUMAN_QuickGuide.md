@@ -17,7 +17,7 @@
 
 ## The two-minute command path
 
-**Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository has **no bundled `gradlew.bat`**. The Windows launcher can find an installed Gradle or a locally cached compatible distribution; it does not itself install Java or Gradle. From the checked-out **`Fabric Amper` producer folder**, run:
+**Prerequisites:** Windows, a compatible Gradle launcher (**9.7.1** is the project validation baseline), and **JDK 25** for the Minecraft **26.3** example. The Fabric Amper producer repository does not require a bundled Gradle Wrapper. The launcher finds installed/cached Gradle; **`doctor --fix` explicitly opts into repairing a missing JDK 25 or Gradle**, while `doctor --fix --dry-run` only previews the actions. From the checked-out **`Fabric Amper` producer folder**, run:
 
 ```bat
 fabric-amper.bat doctor
@@ -36,7 +36,7 @@ Useful follow-ups from inside `quick_mod`:
 "..\Fabric Amper\fabric-amper.bat" plan
 ```
 
-`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate.
+`diagnose` describes selected toolchains and compatibility **without claiming an IDE or runtime check**; `explain` shows the origins of dependencies; `plan` builds/verifies a **local** release JAR and previews resolved publishing metadata, including a checksum, **without uploading**. These commands may create normal Gradle build/cache files. Use `fabric-amper.bat doctor --full` for extra JDK/path diagnostics or `doctor --paths` for a local Windows path-length estimate. If a toolchain is missing, `doctor --fix --dry-run` previews a repair. **Only run `doctor --fix` when you want it to install missing software or create missing consumer bootstrap/editor files.** Windows cannot let a child batch file change its parent terminal's live PATH; a new terminal may be needed afterward.
 
 ### Before you edit anything
 
@@ -301,7 +301,10 @@ Run `fabric-amper.bat init` from the checkout or another working directory. For 
 | `help` / `docs` / `version` | Show usage, documentation locations or launcher version |
 | `doctor` | Check available Java/Gradle and report the JitPack coordinate, without contacting the network or clearing caches |
 | `doctor --paths` / `--full` | Estimate Windows path risks; `--full` also prints JDK/toolchain hints |
+| `doctor --fix --dry-run` | **Read-only preview** of missing JDK25/Gradle and missing consumer Settings/VS Code mapping; no downloads or changes |
+| `doctor --fix` | **Opt-in changes:** install JDK25 via winget; try winget Gradle then verify the official 9.7.1 ZIP checksum for a user-local fallback; repair missing `settings.gradle.kts` / editor schema files only where an existing single YAML makes this safe |
 | `init <mod_id> [folder] [mod\|api]` | Create a **new** settings-only Java consumer; never overwrite an existing folder |
+| `init <mod_id> --here [mod\|api]` | Initialize in the current folder **even when tool files already exist**. Refuses any existing YAML/Settings/build script/`src`/schema conflict; never overwrites project files |
 | `tasks` | `gradle tasks --all` in the consumer |
 | `validate` | `gradle validateFabricAmper` |
 | `build` | `gradle validateFabricAmper build verifyFabricAmperJar` |
@@ -315,7 +318,7 @@ Run `fabric-amper.bat init` from the checkout or another working directory. For 
 | `publish modrinth` / `curseforge` / `maven` | **Real remote upload** to the configured destination after typed confirmation and local verification |
 | `publish all` | **Real remote upload** to all explicitly configured **new `publish` targets**; may partially succeed |
 
-The wrapper performs its own preflight checks for a missing or duplicated YAML, forbidden consumer build scripts and authored Loader JSON. For direct Gradle commands use the concrete tasks named above. Do **not** use `publish` as a way to check syntax; use `validate` or `build` instead. Server EULA acceptance, authentication, world files and personal Minecraft accounts are **never** handled automatically.
+The wrapper performs its own preflight checks for a missing or duplicated YAML, forbidden consumer build scripts and authored Loader JSON. For direct Gradle commands use the concrete tasks named above. `init --here` permits files like `fabric-amper.bat`, skill documentation and `.gitignore` but rejects any existing project configuration/source rather than overwriting it. A new starter also creates `.vscode/settings.json` unless one already exists, in which case editor settings remain untouched. For **unsupported** wrapper commands, use the original Gradle/Java tooling rather than inventing another batch subcommand or assuming `./gradlew` exists. Do **not** use `publish` as a way to check syntax; use `validate` or `build` instead. Server EULA acceptance, authentication, world files and personal Minecraft accounts are **never** handled automatically.
 
 ## Troubleshooting and next steps
 

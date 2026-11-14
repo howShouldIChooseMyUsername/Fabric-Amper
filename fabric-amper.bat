@@ -51,8 +51,9 @@ echo Fabric Amper %FA_VERSION% - Windows convenience wrapper
 echo.
 echo Usage:
 echo   fabric-amper.bat help
-echo   fabric-amper.bat doctor [--full^|--paths]
+echo   fabric-amper.bat doctor [--full^|--paths^|--fix [--dry-run]]
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -75,9 +76,12 @@ echo Other commands: docs, version.
 echo   doctor             Check local Java and Gradle availability.
 echo   doctor --full      Also inspect JDK hints and Windows paths.
 echo   doctor --paths     Inspect local path lengths without running Gradle.
+echo   doctor --fix       Opt-in JDK 25/Gradle repair and missing consumer setup.
+echo   doctor --fix --dry-run   Preview the repair without changes or downloads.
 echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
+echo init --here keeps existing tools and notes, but rejects existing project files.
 echo Generated Settings projects resolve Fabric Amper v0.1.1 from JitPack.
 echo Use --project or -C to run consumer commands from any directory.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
@@ -99,6 +103,7 @@ echo Full skill: "%FA_ROOT%FabricAmperSKILL.md"
 exit /b 0
 
 :doctor
+if /i "%~2"=="--fix" goto :doctorFix
 set "FA_DOCTOR_MODE=basic"
 if /i "%~2"=="--full" set "FA_DOCTOR_MODE=full"
 if /i "%~2"=="--paths" set "FA_DOCTOR_MODE=paths"
@@ -149,6 +154,31 @@ if /i "%FA_GRADLE_LEAF%"=="gradlew.bat" (
 )
 if "%FA_DOCTOR_ERROR%"=="1" exit /b 1
 exit /b 0
+
+:doctorFix
+if not "%~4"=="" (
+    echo ERROR: doctor --fix accepts at most --dry-run.
+    exit /b 2
+)
+if not "%~3"=="" if /i not "%~3"=="--dry-run" (
+    echo ERROR: doctor --fix accepts only the optional --dry-run flag.
+    exit /b 2
+)
+if not exist "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1" (
+    echo ERROR: The doctor repair helper is missing from this Fabric Amper checkout.
+    exit /b 1
+)
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Windows PowerShell is required for opt-in repair.
+    exit /b 1
+)
+if /i "%~3"=="--dry-run" (
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1" -Preview
+) else (
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%scripts\fabric-amper-doctor-fix.ps1"
+)
+exit /b %errorlevel%
 
 :doctorToolchains
 if defined JAVA_HOME (
@@ -213,10 +243,30 @@ if "%~2"=="" (
     goto :usageError
 )
 set "FA_INIT_ID=%~2"
+if not "%~5"=="" (
+    echo ERROR: init received too many arguments.
+    exit /b 2
+)
 powershell -NoProfile -NonInteractive -Command "if($env:FA_INIT_ID -cmatch '^[a-z][a-z0-9_-]{1,63}$'){exit 0}else{exit 1}"
 if errorlevel 1 (
     echo ERROR: Mod ID must start with lowercase a-z and be 2-64 chars [a-z0-9_-].
     exit /b 2
+)
+set "FA_INIT_HERE=0"
+if /i "%~3"=="--here" (
+    set "FA_INIT_HERE=1"
+    set "FA_TARGET=%FA_CONSUMER%"
+) else (
+    if /i "%~4"=="--here" goto :initInvalidHere
+    if not "%~3"=="" (
+        set "FA_TARGET=%~f3"
+    ) else (
+        if /i "%CD%\"=="%FA_ROOT%" (
+            set "FA_TARGET=%FA_ROOT%..\%FA_INIT_ID%"
+        ) else (
+            set "FA_TARGET=%CD%\%FA_INIT_ID%"
+        )
+    )
 )
 set "FA_PROFILE=%~4"
 if not defined FA_PROFILE set "FA_PROFILE=mod"
@@ -226,19 +276,39 @@ if not defined FA_PRODUCT (
     echo ERROR: Profile must be mod or api.
     exit /b 2
 )
-if not "%~3"=="" (
-    set "FA_TARGET=%~f3"
-) else (
-    if /i "%CD%\"=="%FA_ROOT%" (
-        set "FA_TARGET=%FA_ROOT%..\%FA_INIT_ID%"
-    ) else (
-        set "FA_TARGET=%CD%\%FA_INIT_ID%"
-    )
-)
+if "%FA_INIT_HERE%"=="1" goto :initExistingDirectory
 if exist "%FA_TARGET%" (
     echo ERROR: Target already exists. Refusing to overwrite: "%FA_TARGET%"
     exit /b 3
 )
+goto :initPreflightDone
+
+:initExistingDirectory
+if not exist "%FA_TARGET%\" (
+    echo ERROR: --here requires an existing directory: "%FA_TARGET%"
+    exit /b 3
+)
+rem Project files are never merged or overwritten by init --here, even when
+rem tool/config files like fabric-amper.bat, markdown or .gitignore exist.
+if exist "%FA_TARGET%\mod.yaml" goto :initConflict
+if exist "%FA_TARGET%\mod.yml" goto :initConflict
+if exist "%FA_TARGET%\settings.gradle.kts" goto :initConflict
+if exist "%FA_TARGET%\build.gradle.kts" goto :initConflict
+if exist "%FA_TARGET%\build.gradle" goto :initConflict
+if exist "%FA_TARGET%\src" goto :initConflict
+if exist "%FA_TARGET%\schemas\mod.schema.json" goto :initConflict
+goto :initPreflightDone
+
+:initConflict
+echo ERROR: Existing project files detected. init --here refuses to overwrite or merge them.
+echo        Check mod.yaml, mod.yml, settings.gradle.kts, build.gradle^(.kts^), src and schemas.
+exit /b 3
+
+:initInvalidHere
+echo ERROR: --here must immediately follow the mod ID, not a folder path.
+exit /b 2
+
+:initPreflightDone
 rem Always use the producer's CURRENT schema for editor completion. The YAML
 rem document itself omits schema: N so the plugin selects its latest supported
 rem schema at parse time (currently v1), instead of pinning init's version.
@@ -261,6 +331,18 @@ mkdir "%FA_TARGET%\src\main\java\org\example"
 if errorlevel 1 (
     echo ERROR: Cannot create target: "%FA_TARGET%"
     exit /b 1
+)
+if not exist "%FA_TARGET%\.vscode\settings.json" (
+    if not exist "%FA_TARGET%\.vscode\" mkdir "%FA_TARGET%\.vscode"
+    if errorlevel 1 (
+        echo ERROR: Cannot create .vscode directory for YAML suggestions.
+        exit /b 1
+    )
+    > "%FA_TARGET%\.vscode\settings.json" echo({
+    >> "%FA_TARGET%\.vscode\settings.json" echo(    "yaml.schemas": {
+    >> "%FA_TARGET%\.vscode\settings.json" echo(        "./schemas/mod.schema.json": ["mod.yaml", "mod.yml"]
+    >> "%FA_TARGET%\.vscode\settings.json" echo(    }
+    >> "%FA_TARGET%\.vscode\settings.json" echo(}
 )
 rem GitHub JitPack module provides the Settings plugin without a local setup.
 rem Keep the GitHub owner spelling and tagged artifact version exact.
@@ -324,6 +406,7 @@ if not exist "%FA_TARGET%\schemas\mod.schema.json" exit /b 1
 if not exist "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" exit /b 1
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
+if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
 echo [init] Settings plugin: JitPack Fabric-Amper v0.1.1 ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.

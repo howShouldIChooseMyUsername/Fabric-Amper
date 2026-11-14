@@ -787,7 +787,7 @@ fabric-amper.bat init example_mod
 fabric-amper.bat init example_api "C:\work\example_api" api
 ```
 
-`init <id> [new_folder] [mod|api]` generates a **new** consumer folder containing `settings.gradle.kts`, `mod.yaml`, `schemas/mod.schema.json` and `src/main/java/org/example/ExampleMod.java`; existing destinations are rejected. The generated Settings script resolves the `v0.1.1` JitPack module using `resolutionStrategy` instead of a local Maven repository; `fabric-amper.bat setup` has been **removed**. `mod.yaml` begins with the exact editor directive `# yaml-language-server: $schema=./schemas/mod.schema.json` and **omits `schema: 1`** so the plugin parses with the latest version it supports. The schema file is copied **byte-for-byte from the current checkout's `fabric-amper.schema.json` each time `init` runs**; it is a local snapshot for autocomplete, not a file that automatically updates existing projects when the plugin is upgraded. Without an explicit folder, `init` creates a sibling when run from the checkout or a child of the current working directory elsewhere. API mode selects `product: fabric/api` and example `mod.group: org.example`.
+`init <id> [new_folder] [mod|api]` generates a **new** consumer folder containing `settings.gradle.kts`, `mod.yaml`, `schemas/mod.schema.json`, `.vscode/settings.json` (unless existing) and `src/main/java/org/example/ExampleMod.java`; existing destinations are rejected. **`init <id> --here [mod|api]` works inside an existing tools-only directory**, preserving any BAT/skill/`.md`/`.gitignore` and existing `.vscode/settings.json`, but it refuses to overwrite when any existing `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path is present. The generated Settings script resolves the `v0.1.1` JitPack module using `resolutionStrategy` instead of a local Maven repository; `fabric-amper.bat setup` has been **removed**. `mod.yaml` begins with the exact editor directive `# yaml-language-server: $schema=./schemas/mod.schema.json` and **omits `schema: 1`** so the plugin parses with the latest version it supports. The schema file is copied **byte-for-byte from the current checkout's `fabric-amper.schema.json` each time `init` runs**; it is a local snapshot for autocomplete, not a file that automatically updates existing projects when the plugin is upgraded. Without an explicit folder or `--here`, `init` creates a sibling when run from the checkout or a child of the current working directory elsewhere. API mode selects `product: fabric/api` and example `mod.group: org.example`.
 
 From the **consumer directory**, use the batch file's full path (unless its directory is on `PATH`):
 
@@ -807,7 +807,10 @@ Or select a consumer explicitly with `-C` or `--project` **before the subcommand
 | --- | --- |
 | `help`, `version`, `docs` | Display usage/version/document paths |
 | `doctor`, `doctor --full`, `doctor --paths` | Local Java/Gradle checks plus configured JitPack coordinate (network availability not checked); optional Windows path/JDK hints |
+| `doctor --fix --dry-run` | Preview JDK25/Gradle installation and missing consumer Settings/editor files without changing anything |
+| `doctor --fix` | Explicit opt-in: winget JDK25/Gradle attempts, checksum-verified official Gradle9.7.1 ZIP user-only fallback, missing consumer bootstrap repair; **not** a silent installation |
 | `init <id> [folder] [mod|api]` | Create a new Java consumer; never overwrite existing destination |
+| `init <id> --here [mod|api]` | Initialize the current tools-only folder, preserving unrelated files; reject any existing project file or `src` |
 | `tasks`, `validate` | Run `tasks --all`, `validateFabricAmper` |
 | `diagnose`, `explain` | Run read-only consumer `fabricAmperDoctor` / `fabricAmperExplain` |
 | `plan` | Build/verify the final JAR, then print `fabricAmperReleasePlan` metadata **without uploading** |

@@ -38,6 +38,12 @@ When documentation and implementation disagree, **inspect the current implementa
 
 ## Agent execution protocol
 
+### Command precedence: prefer Fabric Amper's wrapper when supported
+
+**When operating on Windows with an available complete Fabric Amper checkout, FIRST look for `fabric-amper.bat` and use it for any supported operation.** This is a binding execution-routing rule, not an optional shorthand: `help`, `version`, `docs`, `doctor` (including `--full`, `--paths`, opt-in `--fix`), `init` (including `--here`), `tasks`, `validate`, `build`, `verify`, `test`, `clean`, `run`, `server`, `diagnose`, `explain`, `plan`, `port` and explicitly requested `publish` variants. Use `-C "consumer_path"` **before** the subcommand when necessary. For an operation **not supported by the BAT wrapper** (such as a custom Gradle task, `validatePlugins`, a special TestKit filter, or direct producer-only publication), use its **original supported Gradle, Java, Kotlin, or other native command**. Do not claim the wrapper supports arbitrary Gradle tasks or invent a wrapper command.
+
+**Never reflexively type `./gradlew` / `gradlew.bat`.** Only use a Gradle Wrapper when its files actually exist in the chosen project and are trusted/appropriate. Otherwise allow the BAT launcher to select a known compatible installed/cached Gradle, or use the native Gradle launcher for unsupported work. The presence of an unrelated `gradlew` in a parent or neighbor directory does not authorize using it. `doctor --fix` performs tool installation and possible missing-file repair: **never invoke it without explicit permission for changes**; for inspection choose `doctor` or `doctor --fix --dry-run`. `init --here` may preserve existing tool files but must refuse if project files already exist. Do not bypass the protection by renaming/deleting user files.
+
 ### Before editing
 
 1. Locate the consumer root (the directory containing `settings.gradle.kts`) and identify whether you are acting on the **plugin producer** or on a **separate consumer**. Do not accidentally create sample consumer `mod.yaml` inside the producer.
@@ -50,7 +56,7 @@ When documentation and implementation disagree, **inspect the current implementa
 
 1. Preserve the existing single YAML filename, indentation, field order where practical, comments, and unrelated settings. Do not rewrite a user's whole project when a single mapping entry solves the task.
 2. Check the YAML for duplicate keys, unknown keys, string-versus-number mismatches, resource paths, and contradictions (especially `mod.environment` versus main/client code).
-3. Run the **non-upload** validation sequence from the consumer root: `gradle help` → `gradle tasks --all` → `gradle build`. Add `gradle test` for test changes. If the user has a verified Gradle Wrapper, use their `./gradlew` or `gradlew.bat` instead of an assumed installed Gradle.
+3. Run the **non-upload** validation sequence using `fabric-amper.bat tasks` → `fabric-amper.bat build` (and `fabric-amper.bat test` for test changes) when the Windows wrapper exists. `help` here is the wrapper's own help; if a separate Gradle `help` task or special flags are needed, that operation is **not exposed by the wrapper** and must use an actually available native Gradle launcher or a verified consumer wrapper. Never fall back automatically to an unverified `./gradlew`.
 4. Inspect the resulting production JAR and root Loader metadata; report both command results and any relevant negative tests. If Gradle fails, fix the *first causal diagnostic*, then repeat — do not simply retry external downloads indefinitely.
 5. Report exact changed paths, configuration effect, commands actually run, tests genuinely observed, and remaining risk. Never state a task, IDE import, game boot, upload, or G gate passed when not observed.
 
@@ -793,18 +799,25 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat), a **Windows C
 ```bat
 rem Run inside the Fabric Amper producer directory.
 fabric-amper.bat doctor
+rem The following is only for an explicitly requested toolchain/file repair:
+fabric-amper.bat doctor --fix --dry-run
 fabric-amper.bat init example_mod
+rem Create within the current tools-only folder without replacing existing project files:
+fabric-amper.bat init night_vision --here
 fabric-amper.bat init example_api "C:\work\example_api" api
 
 rem Call from any other directory; provide full script path and consumer root.
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build
 ```
 
-`init <id> [new_folder] [mod|api]` creates only a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, and a real Java `ExampleMod.java`; it refuses an existing destination. Default placement is a sibling of the checkout when launched from there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group that the developer must replace.
+`init <id> [new_folder] [mod|api]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real Java `ExampleMod.java`; it refuses an existing destination. `init <id> --here [mod|api]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script uses JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.1` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
 
 | User intent | Wrapper command | Actual effect |
 | --- | --- | --- |
-| Inspect usage/setup | `help`, `version`, `docs`, `doctor`, `doctor --full`, `doctor --paths` | Local toolchain and optional path/JDK checks; no global cache deletion |
+| Inspect usage and diagnostics | `help`, `version`, `docs`, `doctor`, `doctor --full`, `doctor --paths` | Local toolchain and optional path/JDK checks; no global cache deletion |
+| Repair missing Windows toolchain | `doctor --fix` **only after explicit authorization** | Try JDK25 via winget; Gradle via winget then verified official ZIP; optional missing consumer Settings/YAML editor files; only user-level PATH/JAVA_HOME changes |
+| Preview repair without changing anything | `doctor --fix --dry-run` | No download, installation or file/registry mutation |
+| Initialize in current tools-only folder | `init <id> --here [mod\|api]` | Preserve tools; hard fail on any existing consumer project file |
 | Generate a new mod or API | `init <id> [folder] [mod|api]` | New starter only; no overwrite; no `build.gradle` or authored `fabric.mod.json` |
 | List/test/validate | `tasks`, `test`, `validate`, `verify` | `tasks --all` / `test` / `validateFabricAmper` / `verifyFabricAmperJar` |
 | Diagnose the consumer | `diagnose` / `explain` | `fabricAmperDoctor` toolchain summary / `fabricAmperExplain` independent dependency categories, no network lookups |
@@ -817,7 +830,7 @@ rem Call from any other directory; provide full script path and consumer root.
 | Publish one remote target | `publish maven` / `modrinth` / `curseforge` | Exact matching `publishFabricAmper...` task only after typed `PUBLISH` confirmation |
 | Publish all configured new remote targets | `publish all` | `publishFabricAmper` aggregator, **not** Gradle's broader `publish` |
 
-For consumer operations, `-C "C:\path\to\consumer"` or `--project "C:\path\to\consumer"` must appear **before** the command. Otherwise the wrapper uses the **current working directory** as the consumer root. A consumer wrapper requires one YAML, a settings script, and no `build.gradle(.kts)`/source `fabric.mod.json`; these preflight checks do not replace Gradle semantic validation. The launcher uses `FABRIC_AMPER_GRADLE`, a consumer `gradlew.bat`, `GRADLE_HOME`, `PATH` or a known cached Gradle 9.7.1 path. Run `doctor` to identify missing JDK/launcher prerequisites; do not install arbitrary external binaries.
+For consumer operations, `-C "C:\path\to\consumer"` or `--project "C:\path\to\consumer"` must appear **before** the command. Otherwise the wrapper uses the **current working directory** as the consumer root. A consumer wrapper requires one YAML, a settings script, and no `build.gradle(.kts)`/source `fabric.mod.json`; these preflight checks do not replace Gradle semantic validation. The launcher uses `FABRIC_AMPER_GRADLE`, a consumer `gradlew.bat`, `GRADLE_HOME`, `PATH` or a known cached compatible Gradle version. Run read-only `doctor` to diagnose; optional `--fix` requires the user's authorization and must not be launched silently. A child BAT/PowerShell process cannot change its parent's live environment: the fixer saves user settings and updates its own process only, and advises opening a new terminal if necessary.
 
 **Remote publication protocol:** an explicit `publish maven|modrinth|curseforge|all` command shows the selected destination, asks the user to type exact `PUBLISH`, runs `validateFabricAmper build verifyFabricAmperJar`, then invokes the target task if validation succeeds. This confirmation is a second safeguard, **not** permission for an AI agent to initiate release tasks without the user's own explicit intent. Do not use `publish all` as a replacement for testing YAML or assume multi-platform uploads are transactional. `publish local` has no remote confirmation because it writes into the consumer's build directory; it still must be intentional. See [the human Windows quick guide](HUMAN_QuickGuide.md) and the detailed publishing section above.
 
