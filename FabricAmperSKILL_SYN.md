@@ -178,8 +178,8 @@ The producer root contains [`fabric-amper.bat`](fabric-amper.bat). This is a **W
 | --- | --- | --- |
 | Show usage / installed tools | `fabric-amper.bat help` / `doctor` / `docs` / `version` | `doctor` checks Java/Gradle; it **does not** connect to JitPack |
 | Additional local environment diagnosis | `doctor --full` / `doctor --paths` | Windows path/JDK hints; `--paths` does not execute Gradle |
-| Preview fixes safely | `doctor --fix --dry-run` | No installation, download, user PATH change or generated file write |
-| Explicitly authorized toolchain/consumer repair | `doctor --fix` | Try winget JDK25/Gradle then verified Gradle ZIP; add only missing Settings/YAML editor files; do not overwrite |
+| Preview fixes safely | `doctor --fix --dry-run` | No network, installation, user PATH change or file writes; **missing PS1 means preview the fetch only**, not toolchain inspection |
+| Explicitly authorized toolchain/consumer repair | `doctor --fix` | Fetch only the versioned GitHub PS1 beside BAT when missing; pin SHA-256 and reject mismatches/unwritable directory, then winget JDK25/Gradle or verified Gradle ZIP and missing Settings/editor files |
 | Start new Java mod | `fabric-amper.bat init example_mod` | New folder with Settings/YAML/Java source; never overwrite |
 | Start in existing tools-only folder | `fabric-amper.bat init night_vision --here` | Tools and notes preserved; any existing YAML/Settings/build script/src causes a hard error |
 | Start new API project | `fabric-amper.bat init example_api "C:\work\example_api" api` | `fabric/api` and example `org.example` group; must customize |

@@ -807,8 +807,8 @@ Or select a consumer explicitly with `-C` or `--project` **before the subcommand
 | --- | --- |
 | `help`, `version`, `docs` | Display usage/version/document paths |
 | `doctor`, `doctor --full`, `doctor --paths` | Local Java/Gradle checks plus configured JitPack coordinate (network availability not checked); optional Windows path/JDK hints |
-| `doctor --fix --dry-run` | Preview JDK25/Gradle and missing consumer Settings/editor files without changing anything; with no local PS1, preview the planned GitHub helper download only |
-| `doctor --fix` | Explicit opt-in: first download the single version-matched `fabric-amper-doctor-fix.ps1` GitHub Release asset beside the BAT if missing, verify its pinned SHA-256 (or refuse a tampered local file), then winget JDK25/Gradle attempts, official checksum-verified Gradle9.7.1 ZIP fallback and missing consumer bootstrap repair; **not** a silent installation |
+| `doctor --fix --dry-run` | **No network or file/registry changes.** With a verified local PS1, preview JDK25/Gradle and missing consumer Settings/editor files; without one, show only the proposed PS1 download URL and stop |
+| `doctor --fix` | **Explicit opt-in.** When missing, download only the matching release's `fabric-amper-doctor-fix.ps1` into the **BAT's folder**, verify the hard-coded SHA-256, then inspect/install missing JDK25/Gradle and repair missing consumer bootstrap/editor files |
 | `init <id> [folder] [mod|api]` | Create a new Java consumer; never overwrite existing destination |
 | `init <id> --here [mod|api]` | Initialize the current tools-only folder, preserving unrelated files; reject any existing project file or `src` |
 | `tasks`, `validate` | Run `tasks --all`, `validateFabricAmper` |
@@ -822,6 +822,20 @@ Or select a consumer explicitly with `-C` or `--project` **before the subcommand
 | `publish maven`, `modrinth`, `curseforge`, `all` | Confirm with typed `PUBLISH`, locally validate and build, then invoke the selected remote task |
 
 Consumer tasks check that exactly one YAML exists and reject a consumer `build.gradle(.kts)` or author-maintained `fabric.mod.json`. **Remote publication remains a real, side-effectful action**: `PUBLISH` is only an accidental-invocation guard, not verification of credentials, IDs or version uniqueness. `publish all` means the new `publishFabricAmper` aggregator, **not** Gradle's broader `publish`; multi-site partial success is possible. Consult [the publishing section](#explicit-maven-modrinth-and-curseforge-publishing) before authorizing any upload. For a shorter command cheat sheet, see [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md).
+
+### Windows `doctor --fix`: one-file GitHub Release bootstrap
+
+For the published BAT version **0.1.2**, the helper's exact Release asset is:
+
+```text
+https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v0.1.2/fabric-amper-doctor-fix.ps1
+```
+
+The BAT obtains the helper **only** when you explicitly run `doctor --fix` and the helper is absent; the `v0.1.2` portion comes from the BAT's own version. A first download writes a uniquely named temporary file **beside `fabric-amper.bat`**, checks the SHA-256 against the hash pinned inside that BAT, then saves it as `fabric-amper-doctor-fix.ps1` in the **same folder** and runs it. The request includes a checksum-keyed URL parameter and no-cache headers to avoid accepting a stale replacement Release asset; the expected hash, not the network response, is authoritative. No other script, ZIP or dependency is fetched as part of this *helper bootstrap*. The subsequent authorized repair may separately download missing JDK/Gradle components.
+
+If the PS1 is already present, the BAT **does not download or overwrite it**: it verifies the file before running it. A mismatched file, unavailable Release asset, failed checksum or unwritable BAT directory stops the repair without executing the helper. You can inspect the script in the [v0.1.2 Release assets](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2) before opting in. On a fresh BAT-only install, `doctor --fix --dry-run` cannot run toolchain checks without that script and merely shows the intended download; it does **not** download the PS1 or change your environment. A full producer checkout (or its schema and source files) remains necessary for `init` and other source-dependent commands; the single BAT is not a complete Fabric mod development environment.
+
+The existing **v0.1.2 Git tag** still identifies the originally released plugin/JitPack source. The BAT and PS1 were updated as **assets of that same prerelease**, with matching source changes on the later `main` branch. Treat the release-asset SHA-256 manifest as the authority for the updated downloads; do not infer that a checkout of the historical tag contains this later launcher hotfix.
 
 ### Read-only developer diagnostics and release preview
 
