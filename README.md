@@ -2,7 +2,9 @@
 
 Minecraft Fabric 모드를 **소비자 프로젝트의 `settings.gradle.kts`와 `mod.yaml` 또는 `mod.yml`만으로** 구성하는 Gradle 바이너리 플러그인입니다. 소비자에게 `build.gradle`, `build.gradle.kts`, 직접 작성한 `fabric.mod.json`은 필요하지 않습니다. **명세의 G1~G30 및 출하 게이트는 아직 모두 닫히지 않았으므로 정식 출시 완료 상태가 아닙니다.** 정확한 수행 이력과 남은 제한은 [`QA_REPORT.md`](QA_REPORT.md), 필수 계약은 [`specs.md`](specs.md)를 기준으로 합니다.
 
-> **현재 개발 브랜치 동기화 (2026-11-14):** 공개 프리릴리즈는 **[v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2)**이며, 이 브랜치의 Gradle 프로젝트/BAT/소비자 Settings 예제도 `0.1.2` 기준입니다. `doctor --fix`는 사용자가 명시적으로 실행할 때 해당 릴리스에서 **단독 PS1을 BAT 옆에 내려받고 SHA-256을 검증한 뒤** 환경 복구를 수행합니다. `--dry-run`은 다운로드하지 않습니다. 자세한 현재 사용법은 [HUMAN.md](HUMAN.md), [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md), [FabricAmperSKILL.md](FabricAmperSKILL.md), [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md)를 참고하세요. 아래 이전 `0.1.0` 체크섬·빌드 결과는 **과거 검증 기록**이며 현재 0.1.2 바이너리의 값이 아닙니다.
+> **현재 개발 브랜치 동기화 (2026-11-14):** 공개 프리릴리즈는 **[v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2)**이며, 이 브랜치의 Gradle 프로젝트/BAT/소비자 Settings 예제도 `0.1.2` 기준입니다. `doctor --fix`는 사용자가 직접 실행하거나 AI가 `doctor`로 필요한 JDK/Gradle의 부재를 확인한 후 자동 실행할 때 해당 릴리스에서 **단독 PS1을 BAT 옆에 내려받고 SHA-256을 검증한 뒤** 환경 복구를 수행합니다. `--dry-run`은 다운로드하지 않습니다. 자세한 현재 사용법은 [HUMAN.md](HUMAN.md), [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md), [FabricAmperSKILL.md](FabricAmperSKILL.md), [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md)를 참고하세요. 아래 이전 `0.1.0` 체크섬·빌드 결과는 **과거 검증 기록**이며 현재 0.1.2 바이너리의 값이 아닙니다.
+
+**Windows `doctor` 경로 옵션:** `fabric-amper.bat -C ".\httpmod" doctor`뿐 아니라 `fabric-amper.bat doctor -C ".\httpmod"` 및 `--project` 별칭도 지원합니다. `doctor -C ".\httpmod" doctor`처럼 명령어가 한 번 더 붙어도 호환을 위해 허용합니다. 상대경로는 BAT 파일 위치가 아닌 **현재 터미널 폴더** 기준입니다. 다른 소비자 명령에서는 기존처럼 `-C`를 명령 앞에 둡니다.
 
 ## 파일을 작성하지 않고 배포하는 통합 `publish` 계약 (2026-11-13 추가 요구)
 

@@ -797,7 +797,7 @@ From the **consumer directory**, use the batch file's full path (unless its dire
 "C:\path\to\Fabric Amper\fabric-amper.bat" run
 ```
 
-Or select a consumer explicitly with `-C` or `--project` **before the subcommand**:
+Or select a consumer explicitly with `-C` or `--project` **before the subcommand**. The `doctor` subcommand also accepts `doctor -C ".\httpmod"` / `doctor --project ".\httpmod"`; its path is relative to the current terminal directory. The duplicated form `doctor -C ".\httpmod" doctor` is tolerated:
 
 ```bat
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build

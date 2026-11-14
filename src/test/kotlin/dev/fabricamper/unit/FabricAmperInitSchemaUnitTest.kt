@@ -155,6 +155,44 @@ class FabricAmperInitSchemaUnitTest {
     }
 
     @Test
+    fun `doctor accepts project selection before or after command including repeated doctor`() {
+        val root = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batch = root.resolve("fabric-amper.bat")
+        val testRoot = Files.createTempDirectory(Files.createDirectories(root.resolve("build")), "doctor-options-")
+        val consumer = Files.createDirectory(testRoot.resolve("consumer with spaces"))
+        val relative = ".\\${root.relativize(consumer)}"
+
+        val invocations = listOf(
+            "-C \"$relative\" doctor --paths",
+            "doctor -C \"$relative\" --paths",
+            "doctor --paths --project \"$relative\"",
+            "doctor -C \"$relative\" doctor --paths",
+            "doctor -C \"$relative\" doctor",
+        )
+        for (args in invocations) {
+            val result = runBat(batch, args)
+            assertEquals(0, result.first, "doctor must accept '$args': ${result.second}")
+            assertTrue(result.second.contains("[doctor] Consumer: \"$consumer\""), result.second)
+        }
+        val preview = runBat(batch, "doctor --fix --dry-run -C \"$relative\"")
+        assertEquals(0, preview.first, preview.second)
+        assertTrue(preview.second.contains("READ-ONLY PREVIEW"), preview.second)
+        assertFalse(Files.exists(consumer.resolve("settings.gradle.kts")))
+
+        for (invalid in listOf(
+            "doctor -C",
+            "doctor --dry-run",
+            "doctor --full --paths",
+            "doctor --fix --full",
+            "doctor -C \"$relative\" doctor doctor --paths",
+            "doctor -C \"$relative\" --fix --dry-run --unknown",
+        )) {
+            val result = runBat(batch, invalid)
+            assertEquals(2, result.first, "doctor must reject '$invalid': ${result.second}")
+        }
+    }
+
+    @Test
     fun `doctor fix standalone BAT previews exact release download and rejects corrupted helper`() {
         val root = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val batSource = root.resolve("fabric-amper.bat")
@@ -193,7 +231,10 @@ class FabricAmperInitSchemaUnitTest {
     }
 
     private fun runBat(batch: Path, args: String): Pair<Int, String> {
-        val command = "\"$batch\" $args"
+        // cmd /s /c strips the outer quote pair. Keep another pair around the
+        // entire command so an executable path and arguments containing spaces
+        // are both preserved when Windows parses them.
+        val command = "\"\"$batch\" $args\""
         val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
             .directory(batch.parent.toFile())
             .redirectErrorStream(true)
