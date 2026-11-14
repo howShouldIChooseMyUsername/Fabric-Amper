@@ -8,6 +8,8 @@ Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. Instead of hand
 
 This is the **user-facing** guide. For source-of-truth field constraints, see [`fabric-amper.schema.json`](fabric-amper.schema.json); for the actual implementation, see `src/main/kotlin/dev/fabricamper/config/`; for implementation acceptance, see [`specs.md`](specs.md) and [`QA_REPORT.md`](QA_REPORT.md). Agents generating configurations should also read [`FabricAmperSKILL.md`](FabricAmperSKILL.md). For the **single English, Windows-first quick start and feature cheat sheet**, see [`HUMAN_QuickGuide.md`](HUMAN_QuickGuide.md); the former `HUMAN_QuickStart.md` is retained only as a link redirect.
 
+**Check the Windows launcher release version without running Gradle:** invoke `fabric-amper.bat` **with no arguments**, `fabric-amper.bat -V`, `fabric-amper.bat --version`, or `fabric-amper.bat version`. Each prints **only `v0.1.3`** (one line, exit code 0) for this release. An empty invocation no longer displays usage; use `fabric-amper.bat help` or `--help` for commands. This reports the **BAT's embedded release version**, not whether the remote release or JitPack is reachable.
+
 ## Contents
 
 1. [What changes, and what does not](#what-changes-and-what-does-not)
