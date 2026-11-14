@@ -139,7 +139,7 @@ class FabricAmperInitSchemaUnitTest {
 
         val powershell = ProcessBuilder(
             "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-            "-File", root.resolve("fabric-amper-doctor-fix.ps1").toString(),
+            "-File", root.resolve("scripts/fabric-amper-doctor-fix.ps1").toString(),
             "-Preview", "-AssumeMissing",
         ).directory(root.toFile()).redirectErrorStream(true)
         powershell.environment()["FA_ROOT"] = root.toString()
@@ -196,14 +196,14 @@ class FabricAmperInitSchemaUnitTest {
     fun `doctor fix standalone BAT previews exact release download and rejects corrupted helper`() {
         val root = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val batSource = root.resolve("fabric-amper.bat")
-        val scriptSource = root.resolve("fabric-amper-doctor-fix.ps1")
+        val scriptSource = root.resolve("scripts/fabric-amper-doctor-fix.ps1")
         val expectedHash = MessageDigest.getInstance("SHA-256")
             .digest(Files.readAllBytes(scriptSource))
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
         val batchSource = Files.readString(batSource, StandardCharsets.UTF_8)
         assertTrue(batchSource.contains("FA_DOCTOR_SHA256=$expectedHash"), "BAT must pin the exact release PS1")
         assertTrue(
-            batchSource.contains("releases/download/v'+\$env:FA_VERSION+'/fabric-amper-doctor-fix.ps1"),
+            batchSource.contains("releases/download/v'+\$env:FA_VERSION+'/'+\$name"),
             "Downloader must use this BAT version's GitHub Release asset",
         )
 
@@ -214,10 +214,10 @@ class FabricAmperInitSchemaUnitTest {
         assertEquals(0, missingPreview.first, "Missing helper must preview without fetching: ${missingPreview.second}")
         assertTrue(missingPreview.second.contains("Would fetch exactly fabric-amper-doctor-fix.ps1"))
         assertTrue(missingPreview.second.contains("/releases/download/v0.1.3/fabric-amper-doctor-fix.ps1"))
-        assertFalse(Files.exists(folder.resolve("fabric-amper-doctor-fix.ps1")))
+        assertFalse(Files.exists(folder.resolve("scripts/fabric-amper-doctor-fix.ps1")))
         assertEquals(2, runBat(batch, "doctor --fix --unknown").first)
 
-        val script = folder.resolve("fabric-amper-doctor-fix.ps1")
+        val script = Files.createDirectories(folder.resolve("scripts")).resolve("fabric-amper-doctor-fix.ps1")
         val corrupted = "throw 'UNTRUSTED SCRIPT'\n"
         Files.writeString(script, corrupted)
         val corruptPreview = runBat(batch, "doctor --fix --dry-run")

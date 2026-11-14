@@ -225,8 +225,9 @@ class FabricAmperMigrationEngineTest {
     private fun launcher(): Path {
         val source = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val target = Files.createDirectories(temp.resolve("launcher"))
-        for (name in listOf("fabric-amper.bat", "fabric-amper-migrate.ps1", "fabric-amper.schema.json")) {
+        for (name in listOf("fabric-amper.bat", "scripts/fabric-amper-migrate.ps1", "fabric-amper.schema.json")) {
             assertTrue(Files.isRegularFile(source.resolve(name)), "Missing migration tool: $name")
+            Files.createDirectories(target.resolve(name).parent)
             Files.copy(source.resolve(name), target.resolve(name))
         }
         return target.resolve("fabric-amper.bat")

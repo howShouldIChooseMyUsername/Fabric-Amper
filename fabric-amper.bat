@@ -7,9 +7,13 @@ set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
 set "FA_VERSION=0.1.3"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
+rem Release-pinned helper downloads always go into the scripts directory.
+set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
 rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
 rem helper bytes change; releases must publish the matching verified script.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
+set "FA_MIGRATE_SHA256=b4d1c0d28f48339b69c5d117348f66f85cb038f27cccb2270a27b26904dcd969"
+set "FA_SCHEMA_SHA256=7d12a0d5400b32914bb4be3a4cb2f5d0c6a17041db9b58f358053fdf7c30a36c"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -85,6 +89,8 @@ echo   port ^<target_version^>  Gradle fabricAmperPortingReport (e.g. 26.3)
 echo   migrate     Convert an existing Gradle Fabric mod to settings + mod.yaml
 echo               Use --dry-run to preview; -D/--delete removes originals only
 echo               after the migration helper validates all generated outputs.
+echo               The first normal migrate fetches SHA-256 verified helpers into scripts\.
+echo               Missing helpers in --dry-run mode only preview the download.
 echo   clean       Gradle clean
 echo   run         Gradle runClient in the consumer development directory
 echo   server      Gradle runServer; user must review the Minecraft EULA
@@ -98,7 +104,7 @@ echo   doctor --paths     Inspect local path lengths without running Gradle.
 echo   doctor --fix       Opt-in JDK 25/Gradle repair and missing consumer setup.
 echo   doctor --fix --dry-run   Preview the repair without changes or downloads.
 echo                        First --fix downloads one SHA-256 checked PS1 from
-echo                        this version's GitHub Release beside this BAT.
+echo                        this version's GitHub Release into scripts\.
 echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
@@ -180,20 +186,45 @@ if not exist "%FA_CONSUMER%\" (
     echo ERROR: Migration consumer directory does not exist: "%FA_CONSUMER%".
     exit /b 2
 )
-if not exist "%FA_ROOT%fabric-amper-migrate.ps1" (
-    echo ERROR: Missing fabric-amper-migrate.ps1 beside fabric-amper.bat.
-    echo        Copy the matching v%FA_VERSION% migration script next to this BAT.
-    exit /b 1
-)
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required for migration.
     exit /b 1
 )
+set "FA_HELPER_NAME=fabric-amper-migrate.ps1"
+set "FA_HELPER_DIR=%FA_SCRIPTS_DIR%"
+set "FA_HELPER_HASH=%FA_MIGRATE_SHA256%"
+if not exist "%FA_SCRIPTS_DIR%\fabric-amper-migrate.ps1" (
+    if "%FA_MIGRATE_DRY_RUN%"=="1" (
+        echo [preview] Would fetch exactly fabric-amper-migrate.ps1 from:
+        echo [preview] https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v%FA_VERSION%/fabric-amper-migrate.ps1
+        echo [preview] Would verify SHA-256 and save into scripts\ before running the migration preview.
+        echo [preview] No downloads or writes performed. Run migrate without --dry-run to install the verified helper.
+        exit /b 0
+    )
+    call :fetchPinnedHelper
+    if errorlevel 1 exit /b 1
+)
+call :verifyPinnedHelper
+if errorlevel 1 exit /b 1
+set "FA_HELPER_NAME=fabric-amper.schema.json"
+set "FA_HELPER_DIR=%FA_ROOT%"
+set "FA_HELPER_HASH=%FA_SCHEMA_SHA256%"
+if not exist "%FA_ROOT%fabric-amper.schema.json" (
+    if "%FA_MIGRATE_DRY_RUN%"=="1" (
+        echo [preview] Would fetch exactly fabric-amper.schema.json from the v%FA_VERSION% GitHub Release.
+        echo [preview] A matching local schema is needed to run migration preview. No downloads or writes performed.
+        exit /b 0
+    )
+    call :fetchPinnedHelper
+    if errorlevel 1 exit /b 1
+)
+call :verifyPinnedHelper
+if errorlevel 1 exit /b 1
 set "FA_MIGRATE_ARGS="
 if "%FA_MIGRATE_DELETE%"=="1" set "FA_MIGRATE_ARGS=-Delete"
 if "%FA_MIGRATE_DRY_RUN%"=="1" set "FA_MIGRATE_ARGS=%FA_MIGRATE_ARGS% -Preview"
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-migrate.ps1" %FA_MIGRATE_ARGS%
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_SCRIPTS_DIR%\fabric-amper-migrate.ps1" %FA_MIGRATE_ARGS%
 exit /b %errorlevel%
 
 :doctor
@@ -323,39 +354,42 @@ if errorlevel 1 (
     echo ERROR: Windows PowerShell is required for opt-in repair.
     exit /b 1
 )
+set "FA_HELPER_NAME=fabric-amper-doctor-fix.ps1"
+set "FA_HELPER_DIR=%FA_SCRIPTS_DIR%"
+set "FA_HELPER_HASH=%FA_DOCTOR_SHA256%"
 if "%FA_DOCTOR_DRY_RUN%"=="1" goto :doctorFixPreview
-if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
-    call :doctorFetchHelper
+if not exist "%FA_SCRIPTS_DIR%\fabric-amper-doctor-fix.ps1" (
+    call :fetchPinnedHelper
     if errorlevel 1 exit /b 1
 )
-call :doctorVerifyHelper
+call :verifyPinnedHelper
 if errorlevel 1 exit /b 1
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1"
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_SCRIPTS_DIR%\fabric-amper-doctor-fix.ps1"
 exit /b %errorlevel%
 
 :doctorFixPreview
-if not exist "%FA_ROOT%fabric-amper-doctor-fix.ps1" (
+if not exist "%FA_SCRIPTS_DIR%\fabric-amper-doctor-fix.ps1" (
     echo [preview] Would fetch exactly fabric-amper-doctor-fix.ps1 from:
     echo [preview] https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v%FA_VERSION%/fabric-amper-doctor-fix.ps1
-    echo [preview] Would SHA-256 check it and store it beside this BAT before any repair.
+    echo [preview] Would SHA-256 check it and store it in scripts\ beside this BAT before any repair.
     echo [preview] Helper is missing; toolchain checks require the helper. No downloads or writes performed.
     exit /b 0
 )
-call :doctorVerifyHelper
+call :verifyPinnedHelper
 if errorlevel 1 exit /b 1
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_ROOT%fabric-amper-doctor-fix.ps1" -Preview
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%FA_SCRIPTS_DIR%\fabric-amper-doctor-fix.ps1" -Preview
 exit /b %errorlevel%
 
-:doctorVerifyHelper
-rem Never execute a pre-existing helper if it differs from the pinned release hash.
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $p=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { throw 'Doctor helper file is unavailable.' }; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($p))).Replace('-',''); if ($actual -ine $env:FA_DOCTOR_SHA256) { throw 'Doctor helper SHA-256 mismatch. File was not executed or overwritten.' }; [Console]::Out.WriteLine('[OK] Verified doctor helper SHA-256.') } catch { [Console]::Error.WriteLine('[ERROR] '+$_.Exception.Message); exit 1 }"
+:verifyPinnedHelper
+rem Never execute an existing helper unless its exact release SHA-256 matches.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $dir=$env:FA_HELPER_DIR; $p=Join-Path $dir $env:FA_HELPER_NAME; if (-not (Test-Path -LiteralPath $dir -PathType Container)) { throw 'Helper directory is unavailable.' }; if (((Get-Item -LiteralPath $dir -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Helper directory is a symlink or junction.' }; if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { throw 'Helper file is unavailable.' }; if (((Get-Item -LiteralPath $p -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Helper is a symlink or junction.' }; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($p))).Replace('-',''); if ($actual -ine $env:FA_HELPER_HASH) { throw 'Helper SHA-256 mismatch. File was not executed or overwritten.' }; [Console]::Out.WriteLine('[OK] Verified '+$env:FA_HELPER_NAME+' SHA-256.') } catch { [Console]::Error.WriteLine('[ERROR] '+$_.Exception.Message); exit 1 }"
 exit /b %errorlevel%
 
-:doctorFetchHelper
-rem The remote .ps1 is only downloaded for explicitly requested --fix.
-rem Download to a unique temporary file, pin the exact bytes, then move it in place.
-echo [doctor --fix] Fetching the v%FA_VERSION% helper from GitHub Release.
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dest=Join-Path $env:FA_ROOT 'fabric-amper-doctor-fix.ps1'; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-doctor-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { if (Test-Path -LiteralPath $dest) { throw 'Doctor helper appeared during download; refusing to overwrite it.' }; $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/fabric-amper-doctor-fix.ps1'; Invoke-WebRequest -Uri ($url+'?sha256='+$env:FA_DOCTOR_SHA256) -Headers @{'Cache-Control'='no-cache';'Pragma'='no-cache'} -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($tmp))).Replace('-',''); if ($actual -ine $env:FA_DOCTOR_SHA256) { throw 'Downloaded doctor helper SHA-256 mismatch.' }; if (Test-Path -LiteralPath $dest) { throw 'Doctor helper already exists; refusing to overwrite it.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved verified doctor helper beside fabric-amper.bat.') } catch { [Console]::Error.WriteLine('[ERROR] Doctor helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
+:fetchPinnedHelper
+rem Download a single known release asset to a unique temporary path, verify its
+rem pinned SHA-256, then install it in scripts\ (or schema at BAT root). Fail closed.
+echo [fetch] Fetching %FA_HELPER_NAME% from v%FA_VERSION% GitHub Release.
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dir=$env:FA_HELPER_DIR; $name=$env:FA_HELPER_NAME; $dest=Join-Path $dir $name; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { if (Test-Path -LiteralPath $dest) { throw 'Helper appeared during download; refusing to overwrite.' }; $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/'+$name; Invoke-WebRequest -Uri ($url+'?sha256='+$env:FA_HELPER_HASH) -Headers @{'Cache-Control'='no-cache';'Pragma'='no-cache'} -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($tmp))).Replace('-',''); if ($actual -ine $env:FA_HELPER_HASH) { throw 'Downloaded helper SHA-256 mismatch.' }; if (-not (Test-Path -LiteralPath $dir)) { [void](New-Item -ItemType Directory -Path $dir -ErrorAction Stop) }; if (-not (Test-Path -LiteralPath $dir -PathType Container)) { throw 'Helper directory is not a directory.' }; if (((Get-Item -LiteralPath $dir -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Helper directory is a symlink or junction.' }; if (Test-Path -LiteralPath $dest) { throw 'Helper already exists; refusing to overwrite.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved SHA-256 verified '+$name+' in '+$dir) } catch { [Console]::Error.WriteLine('[ERROR] Pinned helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
 exit /b %errorlevel%
 
 :doctorToolchains
