@@ -2,9 +2,31 @@
 
 Minecraft Fabric 모드를 **소비자 프로젝트의 `settings.gradle.kts`와 `mod.yaml` 또는 `mod.yml`만으로** 구성하는 Gradle 바이너리 플러그인입니다. 소비자에게 `build.gradle`, `build.gradle.kts`, 직접 작성한 `fabric.mod.json`은 필요하지 않습니다. **명세의 G1~G30 및 출하 게이트는 아직 모두 닫히지 않았으므로 정식 출시 완료 상태가 아닙니다.** 정확한 수행 이력과 남은 제한은 [`QA_REPORT.md`](QA_REPORT.md), 필수 계약은 [`specs.md`](specs.md)를 기준으로 합니다.
 
-> **현재 개발 브랜치 동기화 (2026-11-14):** 공개 프리릴리즈는 **[v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2)**이며, 이 브랜치의 Gradle 프로젝트/BAT/소비자 Settings 예제도 `0.1.2` 기준입니다. `doctor --fix`는 사용자가 직접 실행하거나 AI가 `doctor`로 필요한 JDK/Gradle의 부재를 확인한 후 자동 실행할 때 해당 릴리스에서 **단독 PS1을 BAT 옆에 내려받고 SHA-256을 검증한 뒤** 환경 복구를 수행합니다. `--dry-run`은 다운로드하지 않습니다. 자세한 현재 사용법은 [HUMAN.md](HUMAN.md), [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md), [FabricAmperSKILL.md](FabricAmperSKILL.md), [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md)를 참고하세요. 아래 이전 `0.1.0` 체크섬·빌드 결과는 **과거 검증 기록**이며 현재 0.1.2 바이너리의 값이 아닙니다.
+> **v0.1.3 준비 상태 (2026-11-14):** 이 소스의 Gradle 프로젝트·Windows BAT·새 소비자 Settings 예제는 `0.1.3`을 대상으로 합니다. 앞서 공개된 프리릴리즈는 **[v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2)**이며, **v0.1.3 Git 태그·Release 자산·JitPack 모듈이 실제 공개되고 다운로드되는지는 별도로 확인해야 합니다.** `doctor --fix`는 BAT 자체 버전의 GitHub Release에서 SHA-256 고정 PS1을 받아 검증한 후 환경 복구를 수행합니다. `--dry-run`은 다운로드하지 않습니다. 자세한 현재 사용법은 [HUMAN.md](HUMAN.md), [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md), [FabricAmperSKILL.md](FabricAmperSKILL.md), [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md)를 참고하세요. 아래의 예전 `0.1.0` 산출물 해시·테스트 기록은 **과거 검증 증거**이며 v0.1.3 빌드 결과가 아닙니다.
 
 **Windows `doctor` 경로 옵션:** `fabric-amper.bat -C ".\httpmod" doctor`뿐 아니라 `fabric-amper.bat doctor -C ".\httpmod"` 및 `--project` 별칭도 지원합니다. `doctor -C ".\httpmod" doctor`처럼 명령어가 한 번 더 붙어도 호환을 위해 허용합니다. 상대경로는 BAT 파일 위치가 아닌 **현재 터미널 폴더** 기준입니다. 다른 소비자 명령에서는 기존처럼 `-C`를 명령 앞에 둡니다.
+
+## 기존 Fabric Gradle 모드를 YAML로 옮기기 — `migrate` (v0.1.3)
+
+Windows에서 기존 **Kotlin DSL `build.gradle.kts` 또는 Groovy DSL `build.gradle`** 프로젝트와 **`src/main/resources/fabric.mod.json` 또는 `src/client/resources/fabric.mod.json`** 메타데이터를 읽어 Fabric Amper 형식의 `mod.yaml` 및 `settings.gradle.kts`로 전환할 수 있는 보수적 변환 명령입니다. 런처 옆에 **동일한 버전의 `fabric-amper-migrate.ps1`**이 필요합니다. 변환기는 Gradle DSL을 실행하지 않고 확인 가능한 정적 표현식만 해석합니다.
+
+```bat
+rem 기존 Fabric Gradle 프로젝트 폴더에서, v0.1.3 런처를 지정:
+"C:\tools\Fabric Amper\fabric-amper.bat" migrate --dry-run
+"C:\tools\Fabric Amper\fabric-amper.bat" migrate
+
+rem 다른 폴더에 있는 프로젝트를 선택 (상대경로/절대경로 모두 지원):
+"C:\tools\Fabric Amper\fabric-amper.bat" migrate -C ".\my-mod" --dry-run
+"C:\tools\Fabric Amper\fabric-amper.bat" -C "D:\projects\my-mod" migrate
+
+rem 성공적으로 변환·검증된 뒤 원본을 영구 삭제하도록 명시 요청:
+"C:\tools\Fabric Amper\fabric-amper.bat" migrate -C ".\my-mod" --delete
+rem -D 는 --delete 의 동일한 별칭
+```
+
+기본 `migrate`는 원본 Gradle 스크립트·기존 Settings(있다면)·Loader JSON을 **`gradle_backup/`에 보관**하며, `--dry-run`은 정적 분석 결과와 생성 예정 YAML을 보여주고 파일을 생성·변경·삭제하지 않습니다. `--delete`(`-D`)는 정적 변환과 출력 파일 생성에 성공하면 기존 원본을 **삭제 모드로 처리**하는 선택 옵션이며, 이것이 **Gradle 빌드·실행 성공을 검증했다는 뜻은 아닙니다**. 복원이 필요하면 기본 보관 모드를 사용하세요. 기존 `mod.yaml`/`mod.yml`, `gradle_backup/` 등이 있다면 변환을 거부합니다. 결과로 생성되는 Settings는 **JitPack `v0.1.3`**을 지정하므로 해당 태그의 실제 배포 상태를 확인해야 합니다.
+
+복잡한 함수 호출, 동적 의존성, 임의 태스크/플러그인, 평가가 필요한 Gradle DSL, 지원하지 않는 Loader 메타데이터 구조는 자동으로 추측하지 않고 **오류와 수동 이전 필요 사항**으로 남깁니다. 이 명령은 Java/Kotlin·Mixin 구현을 다시 작성하거나 Minecraft 버전을 자동 포팅하는 도구가 아닙니다. 변환 뒤에는 소스·의존성·리소스를 직접 점검하고 `validate` → `build` → 게임/IDE 검증을 별도로 수행하세요. 자세한 조건은 [HUMAN.md](HUMAN.md)와 [Quick Guide](HUMAN_QuickGuide.md)를 참고하세요.
 
 ## 파일을 작성하지 않고 배포하는 통합 `publish` 계약 (2026-11-13 추가 요구)
 
@@ -201,7 +223,7 @@ VS Code의 YAML 확장에서는 예제 첫 줄의 `# yaml-language-server: $sche
 ## 환경과 플러그인
 
 - 플러그인 ID: `dev.fabric-amper.settings` (소비자 설정에서 이 플러그인 **하나만** 적용), 내부 프로젝트 플러그인 `dev.fabric-amper.project`.
-- Fabric Amper 버전: `0.1.0`.
+- Fabric Amper 현재 준비 버전: `0.1.3` (Git/JitPack 게시 여부 별도 확인).
 - 기본값: Minecraft **26.3**, Java **25**, Fabric Loader **0.20.1**, Fabric API **0.165.2+26.3**, Mojang 공식 클래스명, non-remapping Fabric Loom.
 - 개발 당시 검증된 기본 Gradle: **9.7.1**. 별도 소비자에서는 Gradle **9.7.0 + Loom 1.18.4** 및 **9.9.1 + Loom 1.19.4** 조합의 컴파일·배포 JAR 빌드도 검증했습니다. 이들은 빌드 시점에 선택한 각각의 플러그인 바이너리로 검증한 조합이며, 소비자 YAML에서 Loom 버전을 임의로 바꿀 수 있다는 뜻이 아닙니다.
 
@@ -216,19 +238,26 @@ my-fabric-mod/
 └── src/main/java/org/example/ExampleMod.java
 ```
 
-플러그인이 **실제로 게시되어 있는 저장소**를 사용할 경우의 `settings.gradle.kts` 예시입니다. 현재 Fabric Amper `0.1.0`이 공개 Gradle Plugin Portal에 게시됐다는 뜻은 아닙니다.
+JitPack의 `v0.1.3` Git 태그가 실제로 게시되고 빌드된 후 사용할 수 있는 `settings.gradle.kts` 예시입니다. Git 태그를 만든 것만으로 JitPack 해석이 성공한 것은 아니며, 공개 Gradle Plugin Portal에는 게시됐다고 가정하지 않습니다.
 
 ```kotlin
 pluginManagement {
     repositories {
-        // Fabric Amper의 plugin marker와 본체가 게시된 저장소를 먼저 추가합니다.
+        maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
         gradlePluginPortal()
         mavenCentral()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+            }
+        }
+    }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.0"
+    id("dev.fabric-amper.settings") version "0.1.3"
 }
 ```
 
