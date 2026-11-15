@@ -516,7 +516,31 @@
       "default": "all"
     },
     "dependency": {
+      "description": "A Maven/Modrinth dependency object or a fixed-coordinate shorthand. The direct properties enable IDE completion inside YAML array entries before the object form is complete.",
+      "type": ["object", "string"],
+      "properties": {
+        "maven": { "$ref": "#/definitions/coordinate" },
+        "modrinth": {
+          "type": "object",
+          "required": ["project", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "project": { "$ref": "#/definitions/nonblank" },
+            "version": { "$ref": "#/definitions/versionToken" }
+          }
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["mod", "library"],
+          "description": "Gradle dependency type. Modrinth defaults to mod, ordinary Maven to library."
+        },
+        "scope": { "$ref": "#/definitions/scope" },
+        "target": { "type": "string", "enum": ["main", "client"], "default": "main" },
+        "exported": { "type": "boolean", "default": false },
+        "include": { "type": "boolean", "default": false }
+      },
       "oneOf": [
+        { "$ref": "#/definitions/dependencyObject" },
         { "$ref": "#/definitions/coordinate" },
         {
           "type": "object",
@@ -525,8 +549,7 @@
           "propertyNames": { "$ref": "#/definitions/coordinate" },
           "additionalProperties": { "type": "string", "enum": ["all", "compile-only", "runtime-only", "exported", "include"] },
           "description": "Shorthand: - 'org.example:lib:1.0.0': exported"
-        },
-        { "$ref": "#/definitions/dependencyObject" }
+        }
       ]
     },
     "dependencyObject": {

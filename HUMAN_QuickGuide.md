@@ -125,6 +125,7 @@ The `resolutionStrategy` redirects only the public Settings plugin ID to the req
 
 ```yaml
 # yaml-language-server: $schema=./schemas/mod.schema.json
+# $schema: ./schemas/mod.schema.json
 product: fabric/mod
 mod:
   id: quick_mod
@@ -147,7 +148,7 @@ repositories:
   - mavenCentral
 ```
 
-When creating the project manually rather than using `init`, first create a `schemas` directory beside `mod.yaml` and copy the producer's current `fabric-amper.schema.json` to `schemas/mod.schema.json`. The directive is a YAML **comment** for editors, not a Fabric Amper configuration key. A newly created `init` project includes the correct schema copy automatically; the comment does not cause schema updates in existing projects after a plugin upgrade.
+When creating the project manually rather than using `init`, first create a `schemas` directory beside `mod.yaml` and copy the producer's current `fabric-amper.schema.json` to `schemas/mod.schema.json`. The first comment is for YAML Language Server editors; the second (`# $schema:`) is the IntelliJ IDEA local JSON Schema directive. Both are YAML **comments**, not Fabric Amper configuration keys. New `init` projects include both directives and the local schema copy automatically; existing projects must refresh the copy after a schema update.
 
 **`src/main/java/org/example/ExampleMod.java`** — actual mod code, not generated metadata:
 

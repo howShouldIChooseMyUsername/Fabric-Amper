@@ -85,8 +85,8 @@ class FabricAmperDocumentationContractUnitTest {
             assertTrue(quickGuide.contains(expected), "Merged English Quick Guide is missing '$expected'")
         }
         assertTrue(
-            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\nproduct: fabric/mod"),
-            "Quick Guide must provide a complete starter YAML with the generated editor schema directive",
+            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\n# \$schema: ./schemas/mod.schema.json\nproduct: fabric/mod"),
+            "Quick Guide must provide a complete starter YAML with both YAML Language Server and IntelliJ schema directives",
         )
         assertTrue(quickGuide.contains("```kotlin\npluginManagement"), "Quick Guide must provide Settings bootstrap")
         assertTrue(!quickGuide.contains("fabric-amper.bat setup"), "Quick Guide must not recommend removed setup command")

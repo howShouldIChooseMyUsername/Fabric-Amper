@@ -976,15 +976,16 @@ The project has **Gradle Tooling API/IDE-model evidence**, but full actual Intel
 
 ### Enable editor completion for YAML
 
-The repository root contains [`fabric-amper.schema.json`](fabric-amper.schema.json), a **Draft-07 JSON Schema**. It covers known top-level sections and the current publish fields. For editors with the YAML Language Server, put a schema directive at the **top** of your consumer YAML **only if the schema file has actually been copied into that consumer directory**:
+The repository root contains [`fabric-amper.schema.json`](fabric-amper.schema.json), a **Draft-07 JSON Schema**. It covers known top-level sections and the current publish fields. Copy it to `schemas/mod.schema.json` inside the consumer directory, then put both editor directives at the **top** of your YAML (or run `init`, which generates them):
 
 ```yaml
-# yaml-language-server: $schema=./fabric-amper.schema.json
+# yaml-language-server: $schema=./schemas/mod.schema.json
+# $schema: ./schemas/mod.schema.json
 schema: 1
 product: fabric/mod
 ```
 
-This is only a **header fragment**, not a complete valid `mod.yaml`: keep your real `mod:` and `minecraft:` mappings below it. Alternatively configure the YAML extension's `yaml.schemas` mapping or configure IntelliJ's **JSON Schema Mappings** for `mod.yaml`/`mod.yml` using the real schema location. Do not add a literal root YAML `$schema:` field: it is not part of the Fabric Amper schema. The schema is an **editor aid**, not the sole validation authority; path containment, cross-field constraints, and other runtime checks still happen in the plugin.
+This is only a **header fragment**, not a complete valid `mod.yaml`: keep your real `mod:` and `minecraft:` mappings below it. The first comment is for YAML Language Server; IntelliJ IDEA recognizes the second `# $schema:` comment. Alternatively configure the YAML extension's `yaml.schemas` mapping or configure IntelliJ's **JSON Schema Mappings** for `mod.yaml`/`mod.yml` using the real schema location. Do not add a literal root YAML `$schema:` field: it is not part of the Fabric Amper schema. The schema is an **editor aid**, not the sole validation authority; path containment, cross-field constraints, and other runtime checks still happen in the plugin.
 
 ## Creating an API/library and publishing locally
 
@@ -1501,7 +1502,7 @@ The separate updated `fabric-amper.schema.json` underwent Draft-07 and selected 
 
 **Can I use a Modrinth project ID for CurseForge?** No. The two release platforms and Maven repository resolution use independent identifiers. Fabric Amper never invents cross-platform relationships.
 
-**How do I get editor suggestions?** Newly created `fabric-amper.bat init` projects already include a `schemas/mod.schema.json` copy and the first-line comment `# yaml-language-server: $schema=./schemas/mod.schema.json`. For manually created projects, copy [`fabric-amper.schema.json`](fabric-amper.schema.json) into that location or configure IntelliJ JSON Schema Mapping. The comment is valid YAML; a literal `$schema:` YAML **data key** is not. The schema copy represents the producer version when the project was created; after upgrading Fabric Amper, deliberately refresh the local schema snapshot for updated editor completions.
+**How do I get editor suggestions?** Newly created `fabric-amper.bat init` projects include `schemas/mod.schema.json` and both `# yaml-language-server: $schema=./schemas/mod.schema.json` and IntelliJ's `# $schema: ./schemas/mod.schema.json` comments. For manually created projects, copy [`fabric-amper.schema.json`](fabric-amper.schema.json) into that location or configure IntelliJ JSON Schema Mapping. These are YAML comments; a literal `$schema:` YAML **data key** is invalid. The schema copy represents the producer version when the project was created; after upgrading Fabric Amper, deliberately refresh the local schema snapshot for updated editor completions.
 
 **Can I change Minecraft from 26.3 to 1.21.11 by changing only one string?** Account for the Java release, remapping profile, access-widener format, mappings, and dependency/game compatibility. The plugin selects the profile, but it cannot promise that third-party mods or game code remain compatible.
 
