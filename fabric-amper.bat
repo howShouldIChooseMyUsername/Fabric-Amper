@@ -73,10 +73,12 @@ echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
-echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin]
-echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin]
+echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin] [--splitEnvironmentSourceSets]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
 echo               --kotlin generates ExampleMod.kt and enables Fabric Language Kotlin.
+echo               --splitEnvironmentSourceSets separates common and client sources.
+echo               The two optional flags can be combined in either order at the end.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -463,37 +465,50 @@ if "%~2"=="" (
 )
 set "FA_INIT_ID=%~2"
 set "FA_INIT_KOTLIN=0"
-set "FA_INIT_ARG3=%~3"
-set "FA_INIT_ARG4=%~4"
-if not "%~6"=="" goto :initExtraArguments
-if /i "%~3"=="--kotlin" if not "%~4"=="" goto :initKotlinMustBeLast
-if /i "%~4"=="--kotlin" if not "%~5"=="" goto :initKotlinMustBeLast
-if /i "%~5"=="--kotlin" goto :initKotlinArg5
-if not "%~5"=="" goto :initExtraArguments
-if /i "%~4"=="--kotlin" goto :initKotlinArg4
-if /i "%~3"=="--kotlin" goto :initKotlinArg3
-goto :initArgumentsReady
-
-:initKotlinArg5
-set "FA_INIT_KOTLIN=1"
-goto :initArgumentsReady
-
-:initKotlinArg4
-set "FA_INIT_KOTLIN=1"
-set "FA_INIT_ARG4="
-goto :initArgumentsReady
-
-:initKotlinArg3
-set "FA_INIT_KOTLIN=1"
+set "FA_INIT_SPLIT=0"
 set "FA_INIT_ARG3="
+set "FA_INIT_ARG4="
+set "FA_INIT_FLAGS_STARTED=0"
+if not "%~7"=="" goto :initExtraArguments
+call :initParseArgument "%~3"
+if errorlevel 1 exit /b 2
+call :initParseArgument "%~4"
+if errorlevel 1 exit /b 2
+call :initParseArgument "%~5"
+if errorlevel 1 exit /b 2
+call :initParseArgument "%~6"
+if errorlevel 1 exit /b 2
 goto :initArgumentsReady
 
-:initKotlinMustBeLast
-echo ERROR: init --kotlin must be the last argument, and may appear only once.
-exit /b 2
+:initParseArgument
+if "%~1"=="" exit /b 0
+if /i "%~1"=="--kotlin" goto :initParseKotlinFlag
+if /i "%~1"=="--splitEnvironmentSourceSets" goto :initParseSplitFlag
+if "%FA_INIT_FLAGS_STARTED%"=="1" goto :initExtraArguments
+if not "%FA_INIT_ARG3%"=="" goto :initParseFourthArgument
+set "FA_INIT_ARG3=%~1"
+exit /b 0
+
+:initParseFourthArgument
+if not "%FA_INIT_ARG4%"=="" goto :initExtraArguments
+set "FA_INIT_ARG4=%~1"
+exit /b 0
+
+:initParseKotlinFlag
+if "%FA_INIT_KOTLIN%"=="1" goto :initExtraArguments
+set "FA_INIT_KOTLIN=1"
+set "FA_INIT_FLAGS_STARTED=1"
+exit /b 0
+
+:initParseSplitFlag
+if "%FA_INIT_SPLIT%"=="1" goto :initExtraArguments
+set "FA_INIT_SPLIT=1"
+set "FA_INIT_FLAGS_STARTED=1"
+exit /b 0
 
 :initExtraArguments
-echo ERROR: init received unexpected arguments. Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin].
+echo ERROR: init received unexpected, duplicated or misplaced arguments.
+echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets].
 exit /b 2
 
 :initArgumentsReady
@@ -663,6 +678,10 @@ goto :initKotlinSettingDone
 >> "%FA_TARGET%\mod.yaml" echo(    enabled: true
 
 :initKotlinSettingDone
+if "%FA_INIT_SPLIT%"=="1" (
+    >> "%FA_TARGET%\mod.yaml" echo(  loom:
+    >> "%FA_TARGET%\mod.yaml" echo(    splitEnvironmentSourceSets: true
+)
 >> "%FA_TARGET%\mod.yaml" echo(repositories:
 >> "%FA_TARGET%\mod.yaml" echo(  - fabric
 >> "%FA_TARGET%\mod.yaml" echo(  - mavenCentral
@@ -706,6 +725,7 @@ echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
 if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin automatically configured^).
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
+if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets^).
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
 echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).
