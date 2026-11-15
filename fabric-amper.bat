@@ -73,9 +73,10 @@ echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
-echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
-echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
+echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
+echo               --kotlin generates ExampleMod.kt and enables Fabric Language Kotlin.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -461,22 +462,53 @@ if "%~2"=="" (
     goto :usageError
 )
 set "FA_INIT_ID=%~2"
-if not "%~5"=="" (
-    echo ERROR: init received too many arguments.
-    exit /b 2
-)
+set "FA_INIT_KOTLIN=0"
+set "FA_INIT_ARG3=%~3"
+set "FA_INIT_ARG4=%~4"
+if not "%~6"=="" goto :initExtraArguments
+if /i "%~3"=="--kotlin" if not "%~4"=="" goto :initKotlinMustBeLast
+if /i "%~4"=="--kotlin" if not "%~5"=="" goto :initKotlinMustBeLast
+if /i "%~5"=="--kotlin" goto :initKotlinArg5
+if not "%~5"=="" goto :initExtraArguments
+if /i "%~4"=="--kotlin" goto :initKotlinArg4
+if /i "%~3"=="--kotlin" goto :initKotlinArg3
+goto :initArgumentsReady
+
+:initKotlinArg5
+set "FA_INIT_KOTLIN=1"
+goto :initArgumentsReady
+
+:initKotlinArg4
+set "FA_INIT_KOTLIN=1"
+set "FA_INIT_ARG4="
+goto :initArgumentsReady
+
+:initKotlinArg3
+set "FA_INIT_KOTLIN=1"
+set "FA_INIT_ARG3="
+goto :initArgumentsReady
+
+:initKotlinMustBeLast
+echo ERROR: init --kotlin must be the last argument, and may appear only once.
+exit /b 2
+
+:initExtraArguments
+echo ERROR: init received unexpected arguments. Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin].
+exit /b 2
+
+:initArgumentsReady
 powershell -NoProfile -NonInteractive -Command "if($env:FA_INIT_ID -cmatch '^[a-z][a-z0-9_-]{1,63}$'){exit 0}else{exit 1}"
 if errorlevel 1 (
     echo ERROR: Mod ID must start with lowercase a-z and be 2-64 chars [a-z0-9_-].
     exit /b 2
 )
 set "FA_INIT_HERE=0"
-if /i "%~3"=="--here" (
+if /i "%FA_INIT_ARG3%"=="--here" (
     set "FA_INIT_HERE=1"
     set "FA_TARGET=%FA_CONSUMER%"
 ) else (
-    if /i "%~4"=="--here" goto :initInvalidHere
-    if not "%~3"=="" (
+    if /i "%FA_INIT_ARG4%"=="--here" goto :initInvalidHere
+    if not "%FA_INIT_ARG3%"=="" (
         set "FA_TARGET=%~f3"
     ) else (
         if /i "%CD%\"=="%FA_ROOT%" (
@@ -486,7 +518,7 @@ if /i "%~3"=="--here" (
         )
     )
 )
-set "FA_PROFILE=%~4"
+set "FA_PROFILE=%FA_INIT_ARG4%"
 if not defined FA_PROFILE set "FA_PROFILE=mod"
 if /i "%FA_PROFILE%"=="mod" set "FA_PRODUCT=fabric/mod"
 if /i "%FA_PROFILE%"=="api" set "FA_PRODUCT=fabric/api"
@@ -556,7 +588,14 @@ if errorlevel 1 (
     echo ERROR: Cannot copy current Fabric Amper schema into new project.
     exit /b 1
 )
+if "%FA_INIT_KOTLIN%"=="1" goto :initKotlinSourceDirectory
 mkdir "%FA_TARGET%\src\main\java\org\example"
+goto :initSourceDirectoryDone
+
+:initKotlinSourceDirectory
+mkdir "%FA_TARGET%\src\main\kotlin\org\example"
+
+:initSourceDirectoryDone
 if errorlevel 1 (
     echo ERROR: Cannot create target: "%FA_TARGET%"
     exit /b 1
@@ -594,7 +633,7 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.3"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
-rem New projects default to a Java-only Minecraft 26.3 fixture.
+rem New projects default to Java, with explicit --kotlin selecting a Kotlin entrypoint.
 rem Omitted schema selects the newest syntax supported by this plugin (currently v1).
 > "%FA_TARGET%\mod.yaml" echo(# yaml-language-server: $schema=./schemas/mod.schema.json
 >> "%FA_TARGET%\mod.yaml" echo(product: %FA_PRODUCT%
@@ -616,10 +655,19 @@ rem Omitted schema selects the newest syntax supported by this plugin (currently
 >> "%FA_TARGET%\mod.yaml" echo(    release: 25
 >> "%FA_TARGET%\mod.yaml" echo(    sourcesJar: true
 >> "%FA_TARGET%\mod.yaml" echo(  kotlin:
+if "%FA_INIT_KOTLIN%"=="1" goto :initEnableKotlin
 >> "%FA_TARGET%\mod.yaml" echo(    enabled: false
+goto :initKotlinSettingDone
+
+:initEnableKotlin
+>> "%FA_TARGET%\mod.yaml" echo(    enabled: true
+
+:initKotlinSettingDone
 >> "%FA_TARGET%\mod.yaml" echo(repositories:
 >> "%FA_TARGET%\mod.yaml" echo(  - fabric
 >> "%FA_TARGET%\mod.yaml" echo(  - mavenCentral
+
+if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinSource
 
 > "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(package org.example;
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(import net.fabricmc.api.ModInitializer;
@@ -628,13 +676,36 @@ rem Omitted schema selects the newest syntax supported by this plugin (currently
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(        System.out.println("Fabric Amper starter initialized");
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(    }
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(}
+goto :initSourceWritten
+
+:initWriteKotlinSource
+> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(package org.example
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(import net.fabricmc.api.ModInitializer
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(class ExampleMod : ModInitializer {
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(    override fun onInitialize() {
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(        println("Fabric Amper starter initialized")
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(    }
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(}
+
+:initSourceWritten
 
 if not exist "%FA_TARGET%\settings.gradle.kts" exit /b 1
 if not exist "%FA_TARGET%\mod.yaml" exit /b 1
 if not exist "%FA_TARGET%\schemas\mod.schema.json" exit /b 1
+if "%FA_INIT_KOTLIN%"=="1" goto :initVerifyKotlinSource
 if not exist "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" exit /b 1
+goto :initSourceVerified
+
+:initVerifyKotlinSource
+if not exist "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" exit /b 1
+
+:initSourceVerified
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
+if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin automatically configured^).
+if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
 echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).
