@@ -15,7 +15,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
-/** Real Windows batch init without Gradle builds, downloads or remote publishing. */
+/** Real Windows batch init; cached-schema tests do not need Gradle or network. */
 @EnabledOnOs(OS.WINDOWS)
 class FabricAmperInitSchemaUnitTest {
     @Test
@@ -33,6 +33,13 @@ class FabricAmperInitSchemaUnitTest {
             val yamlFile = consumer.resolve("mod.yaml")
             val yaml = Files.readString(yamlFile, StandardCharsets.UTF_8)
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            val reference = yaml.lineSequence().first().substringAfter("\$schema=")
+            assertEquals(
+                consumer.resolve("schemas/mod.schema.json").toAbsolutePath().normalize(),
+                yamlFile.parent.resolve(reference).toAbsolutePath().normalize(),
+                "YAML language-server directive must resolve to the actual generated schema",
+            )
+            assertTrue(Files.isRegularFile(yamlFile.parent.resolve(reference)), "YAML comment must not point to a missing file")
             val effective = ModYamlLoader.load(yamlFile)
             assertEquals(FabricAmperSchemaVersion.LATEST, effective.schema)
             assertEquals("fabric/$profile", effective.product)
@@ -73,6 +80,38 @@ class FabricAmperInitSchemaUnitTest {
         val help = runBat(batch, "help")
         assertEquals(0, help.first)
         assertFalse(Regex("(?m)^\\s*fabric-amper\\.bat setup\\s*$").containsMatchIn(help.second))
+    }
+
+    @Test
+    fun `standalone init enforces the main branch schema hash and refuses existing corruption`() {
+        val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batchSource = Files.readString(producer.resolve("fabric-amper.bat"), StandardCharsets.UTF_8)
+        val schema = Files.readAllBytes(producer.resolve("fabric-amper.schema.json"))
+        val hash = MessageDigest.getInstance("SHA-256").digest(schema)
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        assertTrue(batchSource.contains("FA_SCHEMA_SHA256=$hash"), "Standalone BAT must pin main schema bytes")
+        assertTrue(
+            batchSource.contains("https://raw.githubusercontent.com/howShouldIChooseMyUsername/Fabric-Amper/main/fabric-amper.schema.json"),
+            "init must fetch from the exact GitHub main branch path",
+        )
+
+        val root = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-standalone-")
+        val batch = root.resolve("fabric-amper.bat")
+        Files.writeString(batch, batchSource, StandardCharsets.UTF_8)
+        Files.writeString(root.resolve("fabric-amper.schema.json"), "UNTRUSTED SCHEMA")
+        val candidate = root.resolve("Must Not Exist")
+        val failed = runBat(batch, "init schema_guard \"$candidate\" mod")
+        assertEquals(1, failed.first, failed.second)
+        assertTrue(failed.second.contains("SHA-256 mismatch"), failed.second)
+        assertFalse(Files.exists(candidate), "Bad schema must be refused before any starter files are created")
+        assertEquals("UNTRUSTED SCHEMA", Files.readString(root.resolve("fabric-amper.schema.json")))
+        Files.write(root.resolve("fabric-amper.schema.json"), schema)
+        val success = runBat(batch, "init schema_guard \"$candidate\" mod")
+        assertEquals(0, success.first, success.second)
+        val yaml = Files.readString(candidate.resolve("mod.yaml"))
+        val directive = yaml.lineSequence().first().substringAfter("\$schema=")
+        assertTrue(Files.isRegularFile(candidate.resolve(directive)), "Standalone YAML directive must resolve locally")
+        assertArrayEquals(schema, Files.readAllBytes(candidate.resolve(directive)))
     }
 
     @Test
