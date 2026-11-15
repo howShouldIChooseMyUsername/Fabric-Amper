@@ -33,6 +33,8 @@ class FabricAmperInitSchemaUnitTest {
             val yamlFile = consumer.resolve("mod.yaml")
             val yaml = Files.readString(yamlFile, StandardCharsets.UTF_8)
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            assertEquals("# \$schema: ./schemas/mod.schema.json", yaml.lineSequence().drop(1).first(),
+                "IntelliJ IDEA must discover the same local schema without manual mapping")
             val reference = yaml.lineSequence().first().substringAfter("\$schema=")
             assertEquals(
                 consumer.resolve("schemas/mod.schema.json").toAbsolutePath().normalize(),
@@ -116,6 +118,7 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals(profile, model.product)
             assertTrue(model.settings.kotlin.enabled, "Kotlin flag should enable Fabric Language Kotlin")
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            assertEquals("# \$schema: ./schemas/mod.schema.json", yaml.lineSequence().drop(1).first())
             assertTrue(Files.isRegularFile(consumer.resolve("schemas/mod.schema.json")))
             assertEquals("org.example.ExampleMod", model.mod.entrypoints.getValue("main").single().value)
             val source = consumer.resolve("src/main/kotlin/org/example/ExampleMod.kt")
@@ -170,6 +173,7 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals(isKotlin, model.settings.kotlin.enabled, args)
             assertTrue(Files.isRegularFile(folder.resolve("schemas/mod.schema.json")))
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            assertEquals("# \$schema: ./schemas/mod.schema.json", yaml.lineSequence().drop(1).first())
             assertTrue(Files.isRegularFile(folder.resolve(
                 if (isKotlin) "src/main/kotlin/org/example/ExampleMod.kt" else "src/main/java/org/example/ExampleMod.java"
             )), "Entrypoint source missing: $args")

@@ -111,6 +111,43 @@ class FabricAmperSchemaContractUnitTest {
     }
 
     @Test
+    fun `dependency entry advertises typed keys directly for IntelliJ YAML array completion`() {
+        val root = schema()
+        val definitions = root.getAsJsonObject("definitions")
+        val dependencies = root.getAsJsonObject("properties").getAsJsonObject("dependencies")
+        assertEquals("#/definitions/dependency", dependencies.getAsJsonObject("items").get("\$ref").asString)
+
+        val item = definitions.getAsJsonObject("dependency")
+        assertEquals(listOf("object", "string"), item.getAsJsonArray("type").map { it.asString })
+        val keys = item.getAsJsonObject("properties")
+        assertEquals(setOf("maven", "modrinth", "kind", "scope", "target", "exported", "include"),
+            keys.keySet(), "Autocomplete must expose the supported keys at the array item, not just under oneOf")
+        assertEquals(definitions.getAsJsonObject("dependencyObject").getAsJsonObject("properties"), keys,
+            "IDE completion properties must never drift from strict object validation")
+        assertEquals(setOf("mod", "library"), keys.getAsJsonObject("kind").stringSet("enum"))
+        assertEquals("boolean", keys.getAsJsonObject("include").get("type").asString)
+        assertEquals(3, item.getAsJsonArray("oneOf").size(),
+            "String and map shorthand must remain supported alongside the typed object form")
+
+        val yaml = YamlFixtures.valid + """
+            repositories:
+              - fabric
+              - mavenCentral
+              - maven: "https://maven.nucleoid.xyz/"
+            dependencies:
+              - maven: "xyz.nucleoid:fantasy:0.8.4+26.3"
+                kind: mod
+                scope: all
+                target: main
+                include: true
+        """.trimIndent() + "\n"
+        val parsed = ModYamlLoader.load(YamlFixtures.write(project, yaml))
+        assertEquals("xyz.nucleoid:fantasy:0.8.4+26.3", parsed.dependencies.single().coordinate)
+        assertEquals("mod", parsed.dependencies.single().kind)
+        assertTrue(parsed.dependencies.single().include)
+    }
+
+    @Test
     fun `API publishing definition has HTTPS without queries or embedded secrets and env names only`() {
         val publishing = schema().getAsJsonObject("definitions").getAsJsonObject("publishing")
         val repository = publishing.getAsJsonObject("properties").getAsJsonObject("repository")
