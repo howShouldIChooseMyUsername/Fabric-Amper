@@ -615,6 +615,21 @@ if errorlevel 1 (
     echo ERROR: Cannot create target: "%FA_TARGET%"
     exit /b 1
 )
+if "%FA_INIT_SPLIT%"=="0" goto :initDirectoriesReady
+mkdir "%FA_TARGET%\src\main\resources"
+if errorlevel 1 exit /b 1
+mkdir "%FA_TARGET%\src\client\resources"
+if errorlevel 1 exit /b 1
+if "%FA_INIT_KOTLIN%"=="1" goto :initKotlinClientDirectory
+mkdir "%FA_TARGET%\src\client\java\org\example"
+if errorlevel 1 exit /b 1
+goto :initDirectoriesReady
+
+:initKotlinClientDirectory
+mkdir "%FA_TARGET%\src\client\kotlin\org\example"
+if errorlevel 1 exit /b 1
+
+:initDirectoriesReady
 if not exist "%FA_TARGET%\.vscode\settings.json" (
     if not exist "%FA_TARGET%\.vscode\" mkdir "%FA_TARGET%\.vscode"
     if errorlevel 1 (
@@ -660,6 +675,10 @@ rem Omitted schema selects the newest syntax supported by this plugin (currently
 >> "%FA_TARGET%\mod.yaml" echo(  entrypoints:
 >> "%FA_TARGET%\mod.yaml" echo(    main:
 >> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleMod
+if "%FA_INIT_SPLIT%"=="1" (
+    >> "%FA_TARGET%\mod.yaml" echo(    client:
+    >> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleModClient
+)
 >> "%FA_TARGET%\mod.yaml" echo(minecraft:
 >> "%FA_TARGET%\mod.yaml" echo(  version: "26.3"
 >> "%FA_TARGET%\mod.yaml" echo(  mappings: mojang
@@ -709,6 +728,30 @@ goto :initSourceWritten
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(}
 
 :initSourceWritten
+if "%FA_INIT_SPLIT%"=="0" goto :initClientSourceWritten
+if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinClientSource
+
+> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(package org.example;
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(import net.fabricmc.api.ClientModInitializer;
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(public final class ExampleModClient implements ClientModInitializer {
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(    @Override public void onInitializeClient() {
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(        System.out.println("Fabric Amper client starter initialized");
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(    }
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(}
+goto :initClientSourceWritten
+
+:initWriteKotlinClientSource
+> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(package org.example
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(import net.fabricmc.api.ClientModInitializer
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(class ExampleModClient : ClientModInitializer {
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    override fun onInitializeClient() {
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(        println("Fabric Amper client starter initialized")
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    }
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(}
+
+:initClientSourceWritten
 
 if not exist "%FA_TARGET%\settings.gradle.kts" exit /b 1
 if not exist "%FA_TARGET%\mod.yaml" exit /b 1
@@ -721,11 +764,22 @@ goto :initSourceVerified
 if not exist "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" exit /b 1
 
 :initSourceVerified
+if "%FA_INIT_SPLIT%"=="0" goto :initClientSourceVerified
+if not exist "%FA_TARGET%\src\main\resources\" exit /b 1
+if not exist "%FA_TARGET%\src\client\resources\" exit /b 1
+if "%FA_INIT_KOTLIN%"=="1" goto :initVerifyKotlinClientSource
+if not exist "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" exit /b 1
+goto :initClientSourceVerified
+
+:initVerifyKotlinClientSource
+if not exist "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" exit /b 1
+
+:initClientSourceVerified
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
 if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin automatically configured^).
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
-if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets^).
+if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
 echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).

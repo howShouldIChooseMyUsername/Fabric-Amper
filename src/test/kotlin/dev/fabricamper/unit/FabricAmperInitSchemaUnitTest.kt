@@ -69,6 +69,8 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(effective.settings.kotlin.enabled, "Java init must not enable Kotlin")
             assertFalse(effective.settings.loom.splitEnvironmentSourceSets,
                 "Split source sets must remain opt-in for the Java starter")
+            assertFalse(Files.exists(consumer.resolve("src/client")), "Unflagged init must not create client sources")
+            assertFalse(effective.mod.entrypoints.containsKey("client"), "Unflagged init must not register a client starter")
             assertFalse(Regex("(?m)^  loom:").containsMatchIn(yaml),
                 "Unflagged init should not add a redundant settings.loom block")
             assertFalse(Files.exists(consumer.resolve("build.gradle")))
@@ -123,13 +125,15 @@ class FabricAmperInitSchemaUnitTest {
             assertTrue(kotlin.contains("override fun onInitialize()"), kotlin)
             assertFalse(Files.exists(consumer.resolve("src/main/java/org/example/ExampleMod.java")),
                 "Kotlin init must not generate the Java example as well")
+            assertFalse(Files.exists(consumer.resolve("src/client")), "Kotlin-only init must not enable split sources")
+            assertFalse(model.mod.entrypoints.containsKey("client"))
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
         }
     }
 
     @Test
-    fun `init splitEnvironmentSourceSets option sets loom true for Java Kotlin mod api and here`() {
+    fun `init splitEnvironmentSourceSets creates client source entrypoint and roots for Java Kotlin mod api and here`() {
         val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val batch = producer.resolve("fabric-amper.bat")
         val root = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-split-")
@@ -169,8 +173,34 @@ class FabricAmperInitSchemaUnitTest {
             assertTrue(Files.isRegularFile(folder.resolve(
                 if (isKotlin) "src/main/kotlin/org/example/ExampleMod.kt" else "src/main/java/org/example/ExampleMod.java"
             )), "Entrypoint source missing: $args")
+            assertEquals("org.example.ExampleMod", model.mod.entrypoints.getValue("main").single().value, args)
+            assertEquals("org.example.ExampleModClient", model.mod.entrypoints.getValue("client").single().value, args)
+            assertTrue(normalizedYaml.contains("    client:\n      - org.example.ExampleModClient"),
+                "Client entrypoint must be included in generated YAML: $args")
+            assertTrue(Files.isDirectory(folder.resolve("src/main/resources")), args)
+            assertTrue(Files.isDirectory(folder.resolve("src/client/resources")), args)
+            val clientSource = folder.resolve(if (isKotlin)
+                "src/client/kotlin/org/example/ExampleModClient.kt"
+            else
+                "src/client/java/org/example/ExampleModClient.java")
+            assertTrue(Files.isRegularFile(clientSource), "Client initializer source missing: $args")
+            val code = Files.readString(clientSource, StandardCharsets.UTF_8)
+            assertTrue(code.contains("import net.fabricmc.api.ClientModInitializer"), code)
+            assertTrue(code.contains(if (isKotlin)
+                "class ExampleModClient : ClientModInitializer"
+            else
+                "class ExampleModClient implements ClientModInitializer"), code)
+            assertTrue(code.contains(if (isKotlin)
+                "override fun onInitializeClient()"
+            else
+                "@Override public void onInitializeClient()"), code)
+            assertFalse(Files.exists(folder.resolve(if (isKotlin)
+                "src/client/java/org/example/ExampleModClient.java"
+            else
+                "src/client/kotlin/org/example/ExampleModClient.kt")), "Do not create both languages: $args")
             assertFalse(Files.exists(folder.resolve("build.gradle.kts")), args)
             assertFalse(Files.exists(folder.resolve("src/main/resources/fabric.mod.json")), args)
+            assertFalse(Files.exists(folder.resolve("src/client/resources/fabric.mod.json")), args)
         }
     }
 
