@@ -64,6 +64,9 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(settings.contains("build/g29-probe"), "init must not rely on local Maven setup")
             assertFalse(settings.contains("https://fabricmc.net\""), "Fabric Maven requires maven.fabricmc.net")
             assertTrue(Files.isRegularFile(consumer.resolve("src/main/java/org/example/ExampleMod.java")))
+            assertFalse(Files.exists(consumer.resolve("src/main/kotlin/org/example/ExampleMod.kt")),
+                "Java remains the default; Kotlin must be explicitly requested")
+            assertFalse(effective.settings.kotlin.enabled, "Java init must not enable Kotlin")
             assertFalse(Files.exists(consumer.resolve("build.gradle")))
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
@@ -80,6 +83,66 @@ class FabricAmperInitSchemaUnitTest {
         val help = runBat(batch, "help")
         assertEquals(0, help.first)
         assertFalse(Regex("(?m)^\\s*fabric-amper\\.bat setup\\s*$").containsMatchIn(help.second))
+    }
+
+    @Test
+    fun `init Kotlin flag generates Kotlin source and settings for mod api and here`() {
+        val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batch = producer.resolve("fabric-amper.bat")
+        val workspace = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-kotlin-")
+        val standalone = workspace.resolve("Test Mode")
+        val api = workspace.resolve("API Mode")
+        val compact = workspace.resolve("Compact Mode")
+        val here = Files.createDirectory(workspace.resolve("Here Mode"))
+        val runs = listOf(
+            "init test_mode \"$standalone\" mod --kotlin" to (standalone to "fabric/mod"),
+            "init api_mode \"$api\" api --kotlin" to (api to "fabric/api"),
+            "init compact_mode \"$compact\" --kotlin" to (compact to "fabric/mod"),
+            "-C \"$here\" init here_mode --here mod --kotlin" to (here to "fabric/mod"),
+        )
+        for ((args, expected) in runs) {
+            val result = runBat(batch, args)
+            assertEquals(0, result.first, "Kotlin init failed for '$args': ${result.second}")
+            val (consumer, profile) = expected
+            val file = consumer.resolve("mod.yaml")
+            val yaml = Files.readString(file, StandardCharsets.UTF_8)
+            val model = ModYamlLoader.load(file)
+            assertEquals(profile, model.product)
+            assertTrue(model.settings.kotlin.enabled, "Kotlin flag should enable Fabric Language Kotlin")
+            assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            assertTrue(Files.isRegularFile(consumer.resolve("schemas/mod.schema.json")))
+            assertEquals("org.example.ExampleMod", model.mod.entrypoints.getValue("main").single().value)
+            val source = consumer.resolve("src/main/kotlin/org/example/ExampleMod.kt")
+            assertTrue(Files.isRegularFile(source), "Missing Kotlin ModInitializer at $source")
+            val kotlin = Files.readString(source, StandardCharsets.UTF_8)
+            assertTrue(kotlin.contains("class ExampleMod : ModInitializer"), kotlin)
+            assertTrue(kotlin.contains("override fun onInitialize()"), kotlin)
+            assertFalse(Files.exists(consumer.resolve("src/main/java/org/example/ExampleMod.java")),
+                "Kotlin init must not generate the Java example as well")
+            assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
+            assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
+        }
+    }
+
+    @Test
+    fun `init Kotlin option rejects duplicate misplaced and unexpected arguments before creating a project`() {
+        val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batch = producer.resolve("fabric-amper.bat")
+        val workspace = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-kotlin-invalid-")
+        val invalid = listOf(
+            "init wrong_kotlin \"${workspace.resolve("one")}\" mod --kotlin --kotlin",
+            "init wrong_kotlin \"${workspace.resolve("two")}\" --kotlin mod",
+            "init wrong_kotlin \"${workspace.resolve("three")}\" --kotlin --kotlin",
+            "init wrong_kotlin \"${workspace.resolve("four")}\" mod --unknown",
+            "init wrong_kotlin \"${workspace.resolve("five")}\" unknown --kotlin",
+        )
+        for (args in invalid) {
+            val result = runBat(batch, args)
+            assertEquals(2, result.first, "Should reject '$args': ${result.second}")
+        }
+        for (name in listOf("one", "two", "three", "four", "five")) {
+            assertFalse(Files.exists(workspace.resolve(name)), "Invalid Kotlin flags must not create $name")
+        }
     }
 
     @Test
