@@ -67,6 +67,10 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(Files.exists(consumer.resolve("src/main/kotlin/org/example/ExampleMod.kt")),
                 "Java remains the default; Kotlin must be explicitly requested")
             assertFalse(effective.settings.kotlin.enabled, "Java init must not enable Kotlin")
+            assertFalse(effective.settings.loom.splitEnvironmentSourceSets,
+                "Split source sets must remain opt-in for the Java starter")
+            assertFalse(Regex("(?m)^  loom:").containsMatchIn(yaml),
+                "Unflagged init should not add a redundant settings.loom block")
             assertFalse(Files.exists(consumer.resolve("build.gradle")))
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
@@ -122,6 +126,73 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
         }
+    }
+
+    @Test
+    fun `init splitEnvironmentSourceSets option sets loom true for Java Kotlin mod api and here`() {
+        val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batch = producer.resolve("fabric-amper.bat")
+        val root = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-split-")
+        val mod = root.resolve("Java Mod")
+        val api = root.resolve("Java API")
+        val noProfile = root.resolve("Default Profile")
+        val kotlin = root.resolve("Kotlin Mod")
+        val reverse = root.resolve("Reverse Flags")
+        val here = Files.createDirectory(root.resolve("Here Mod"))
+        val hereKotlin = Files.createDirectory(root.resolve("Here Kotlin API"))
+        data class Case(val args: String, val folder: Path, val product: String, val kotlin: Boolean)
+        val cases = listOf(
+            Case("init split_mod \"$mod\" mod --splitEnvironmentSourceSets", mod, "fabric/mod", false),
+            Case("init split_api \"$api\" api --splitEnvironmentSourceSets", api, "fabric/api", false),
+            Case("init split_default \"$noProfile\" --splitEnvironmentSourceSets", noProfile, "fabric/mod", false),
+            Case("init split_kotlin \"$kotlin\" mod --kotlin --splitEnvironmentSourceSets", kotlin, "fabric/mod", true),
+            Case("init split_reverse \"$reverse\" mod --splitEnvironmentSourceSets --kotlin", reverse, "fabric/mod", true),
+            Case("-C \"$here\" init split_here --here mod --splitEnvironmentSourceSets", here, "fabric/mod", false),
+            Case("-C \"$hereKotlin\" init split_here_api --here api --splitEnvironmentSourceSets --kotlin", hereKotlin, "fabric/api", true),
+        )
+        for ((args, folder, product, isKotlin) in cases) {
+            val (status, output) = runBat(batch, args)
+            assertEquals(0, status, "Split init failed for '$args': $output")
+            val yamlFile = folder.resolve("mod.yaml")
+            val yaml = Files.readString(yamlFile, StandardCharsets.UTF_8)
+            val normalizedYaml = yaml.replace("\r\n", "\n")
+            val model = ModYamlLoader.load(yamlFile)
+            assertEquals(product, model.product, args)
+            assertTrue(model.settings.loom.splitEnvironmentSourceSets, "Loom split not enabled: $args")
+            assertEquals(1, Regex("(?m)^    splitEnvironmentSourceSets: true$").findAll(normalizedYaml).count(),
+                "Expected one indented Loom setting in YAML: $args")
+            assertTrue(normalizedYaml.contains("  loom:\n    splitEnvironmentSourceSets: true"),
+                "YAML nesting incorrect: $yaml")
+            assertEquals(isKotlin, model.settings.kotlin.enabled, args)
+            assertTrue(Files.isRegularFile(folder.resolve("schemas/mod.schema.json")))
+            assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
+            assertTrue(Files.isRegularFile(folder.resolve(
+                if (isKotlin) "src/main/kotlin/org/example/ExampleMod.kt" else "src/main/java/org/example/ExampleMod.java"
+            )), "Entrypoint source missing: $args")
+            assertFalse(Files.exists(folder.resolve("build.gradle.kts")), args)
+            assertFalse(Files.exists(folder.resolve("src/main/resources/fabric.mod.json")), args)
+        }
+    }
+
+    @Test
+    fun `init refuses duplicate and misplaced split or kotlin flags without creating outputs`() {
+        val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+        val batch = producer.resolve("fabric-amper.bat")
+        val root = Files.createTempDirectory(Files.createDirectories(producer.resolve("build")), "fabric-amper-init-split-reject-")
+        val cases = listOf(
+            "init invalid_split \"${root.resolve("duplicate-split")}\" mod --splitEnvironmentSourceSets --splitEnvironmentSourceSets",
+            "init invalid_split \"${root.resolve("split-before-profile")}\" --splitEnvironmentSourceSets mod",
+            "init invalid_split \"${root.resolve("split-before-folder")}\" --kotlin --splitEnvironmentSourceSets mod",
+            "init invalid_split \"${root.resolve("duplicate-kotlin")}\" mod --kotlin --kotlin",
+            "init invalid_split \"${root.resolve("unknown")}\" mod --unknown",
+            "init invalid_split \"${root.resolve("too-many")}\" mod --kotlin --splitEnvironmentSourceSets extra",
+        )
+        for (args in cases) {
+            val (status, output) = runBat(batch, args)
+            assertEquals(2, status, "Unexpected success for '$args': $output")
+        }
+        assertTrue(Files.list(root).use { stream -> stream.findAny().isEmpty },
+            "Bad flag syntax must not create any consumer directories")
     }
 
     @Test
