@@ -7,6 +7,7 @@ set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
 set "FA_VERSION=0.1.3"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
+set "FA_HELPER_SOURCE=release"
 rem Release-pinned helper downloads always go into the scripts directory.
 set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
 rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
@@ -74,6 +75,7 @@ echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
 echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api]
 echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api]
+echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -386,10 +388,14 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$Err
 exit /b %errorlevel%
 
 :fetchPinnedHelper
-rem Download a single known release asset to a unique temporary path, verify its
-rem pinned SHA-256, then install it in scripts\ (or schema at BAT root). Fail closed.
-echo [fetch] Fetching %FA_HELPER_NAME% from v%FA_VERSION% GitHub Release.
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dir=$env:FA_HELPER_DIR; $name=$env:FA_HELPER_NAME; $dest=Join-Path $dir $name; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { if (Test-Path -LiteralPath $dest) { throw 'Helper appeared during download; refusing to overwrite.' }; $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/'+$name; Invoke-WebRequest -Uri ($url+'?sha256='+$env:FA_HELPER_HASH) -Headers @{'Cache-Control'='no-cache';'Pragma'='no-cache'} -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($tmp))).Replace('-',''); if ($actual -ine $env:FA_HELPER_HASH) { throw 'Downloaded helper SHA-256 mismatch.' }; if (-not (Test-Path -LiteralPath $dir)) { [void](New-Item -ItemType Directory -Path $dir -ErrorAction Stop) }; if (-not (Test-Path -LiteralPath $dir -PathType Container)) { throw 'Helper directory is not a directory.' }; if (((Get-Item -LiteralPath $dir -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Helper directory is a symlink or junction.' }; if (Test-Path -LiteralPath $dest) { throw 'Helper already exists; refusing to overwrite.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved SHA-256 verified '+$name+' in '+$dir) } catch { [Console]::Error.WriteLine('[ERROR] Pinned helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
+rem Download one exact asset from the pinned release, or the main branch for init schema.
+rem Verify expected bytes before installing; do not overwrite existing files.
+if /i "%FA_HELPER_SOURCE%"=="main" (
+    echo [fetch] Fetching %FA_HELPER_NAME% from GitHub main branch.
+) else (
+    echo [fetch] Fetching %FA_HELPER_NAME% from v%FA_VERSION% GitHub Release.
+)
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $dir=$env:FA_HELPER_DIR; $name=$env:FA_HELPER_NAME; $dest=Join-Path $dir $name; $tmp=Join-Path $env:FA_ROOT ('.fabric-amper-'+[guid]::NewGuid().ToString('N')+'.tmp'); try { if (Test-Path -LiteralPath $dest) { throw 'Helper appeared during download; refusing to overwrite.' }; if ($env:FA_HELPER_SOURCE -eq 'main') { if ($name -cne 'fabric-amper.schema.json') { throw 'Only the schema may be fetched from main.' }; $url='https://raw.githubusercontent.com/howShouldIChooseMyUsername/Fabric-Amper/main/fabric-amper.schema.json' } else { $url='https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v'+$env:FA_VERSION+'/'+$name }; Invoke-WebRequest -Uri ($url+'?sha256='+$env:FA_HELPER_HASH) -Headers @{'Cache-Control'='no-cache';'Pragma'='no-cache'} -OutFile $tmp -MaximumRedirection 5 -TimeoutSec 90 -UseBasicParsing; $actual=[BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash([IO.File]::ReadAllBytes($tmp))).Replace('-',''); if ($actual -ine $env:FA_HELPER_HASH) { throw 'Downloaded helper SHA-256 mismatch.' }; if (-not (Test-Path -LiteralPath $dir)) { [void](New-Item -ItemType Directory -Path $dir -ErrorAction Stop) }; if (-not (Test-Path -LiteralPath $dir -PathType Container)) { throw 'Helper directory is not a directory.' }; if (((Get-Item -LiteralPath $dir -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Helper directory is a symlink or junction.' }; if (Test-Path -LiteralPath $dest) { throw 'Helper already exists; refusing to overwrite.' }; Move-Item -LiteralPath $tmp -Destination $dest -ErrorAction Stop; [Console]::Out.WriteLine('[OK] Saved SHA-256 verified '+$name+' in '+$dir) } catch { [Console]::Error.WriteLine('[ERROR] Pinned helper download failed: '+$_.Exception.Message); exit 1 } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }"
 exit /b %errorlevel%
 
 :doctorToolchains
@@ -524,11 +530,22 @@ exit /b 2
 rem Always use the producer's CURRENT schema for editor completion. The YAML
 rem document itself omits schema: N so the plugin selects its latest supported
 rem schema at parse time (currently v1), instead of pinning init's version.
-if not exist "%FA_ROOT%fabric-amper.schema.json" (
-    echo ERROR: Current Fabric Amper schema is missing: "%FA_ROOT%fabric-amper.schema.json".
-    echo        Cannot create a starter with a broken YAML autocomplete link.
+where powershell.exe >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Windows PowerShell is required to verify the init schema.
     exit /b 1
 )
+set "FA_HELPER_NAME=fabric-amper.schema.json"
+set "FA_HELPER_DIR=%FA_ROOT%"
+set "FA_HELPER_HASH=%FA_SCHEMA_SHA256%"
+if not exist "%FA_ROOT%fabric-amper.schema.json" (
+    set "FA_HELPER_SOURCE=main"
+    call :fetchPinnedHelper
+    if errorlevel 1 exit /b 1
+)
+call :verifyPinnedHelper
+if errorlevel 1 exit /b 1
+set "FA_HELPER_SOURCE=release"
 mkdir "%FA_TARGET%\schemas"
 if errorlevel 1 (
     echo ERROR: Cannot create target schema directory: "%FA_TARGET%\schemas".
