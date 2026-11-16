@@ -337,6 +337,8 @@ IntelliJ IDEA에서 소비자 폴더 자체를 **Gradle 프로젝트로 열고**
 - `dependencies`의 Maven 및 Modrinth 좌표, `compile-only`, `runtime-only`, `exported`, `include`, `target: client`를 지원합니다. `include`는 실제 배포 JAR 안에 nested JAR과 Loader `jars` 메타데이터를 만듭니다.
 - `settings.loom.splitEnvironmentSourceSets: true`면 client 코드 및 client 전용 Gradle 의존성을 분리합니다. `target: client`인 라이브러리가 자동으로 Loader의 전역 `depends`가 되지는 않습니다.
 - `settings.kotlin.enabled: true`는 검증된 고정 KGP/FLK 버전을 사용합니다. `enabled: false`여도 현재 배포 플러그인의 정적 전이 클래스패스 때문에 KGP JAR 다운로드 비용이 남아 있습니다.
+- **develop 선행 기능:** `fabric-amper.bat init arch_mod "Architectury Mod" mod --architectury`는 Fabric Architectury API `22.0.5`를 활성화하는 YAML과 실제 `Platform.getMinecraftVersion()`을 호출하는 Java 시작 코드를 생성합니다. `--kotlin`을 함께 쓰면 Kotlin 예제로 바뀝니다.
+- `--architectury --splitEnvironmentSourceSets`를 함께 쓰면 `src/main`의 공통 예제와 `src/client`의 클라이언트 전용 Architectury 예제를 각각 생성합니다. 세 옵션의 순서는 자유롭습니다. **공개 v0.1.3 플러그인은 아직 `architectury` 키를 지원하지 않으므로**, 현재는 develop TestKit에서 로컬 플러그인으로 빌드 검증한 기능이며 새 릴리즈에 포함되기 전에는 일반 JitPack v0.1.3 소비자 빌드를 지원하지 않습니다.
 - 미러 경로 `.gradle/fabric-amper/loom/`의 구성 시점 `fabric.mod.json`과 최종 생성 메타데이터는 동일한 JSON 바이트를 사용하도록 구성합니다.
 
 ### 읽기 전용 진단·배포 미리보기

@@ -790,10 +790,15 @@ fabric-amper.bat init example_mod
 fabric-amper.bat init test_mode "Test Mode" mod --kotlin
 fabric-amper.bat init strict_mod "Strict Mod" mod --splitEnvironmentSourceSets
 fabric-amper.bat init strict_kotlin "Strict Kotlin" mod --kotlin --splitEnvironmentSourceSets
+fabric-amper.bat init architectury_single "Architectury Single" mod --architectury
+fabric-amper.bat init architectury_split "Architectury Split" mod --architectury --splitEnvironmentSourceSets
+fabric-amper.bat init architectury_kotlin "Architectury Kotlin" mod --kotlin --architectury
 fabric-amper.bat init example_api "C:\work\example_api" api
 ```
 
 **Optional source-set isolation during `init`:** append `--splitEnvironmentSourceSets` to generate `settings.loom.splitEnvironmentSourceSets: true` under `settings:` in `mod.yaml`. Without it, source-set splitting remains disabled by default. The option supports `mod`, `api`, `--here`, Java and Kotlin. Combine it with `--kotlin` in **either order after the optional folder/profile arguments**; duplicated/misplaced switches are rejected. In addition to the common `src/main/java/org/example/ExampleMod.java` (or Kotlin `.kt`), split initialization now creates `src/client/java/org/example/ExampleModClient.java` (or `src/client/kotlin/org/example/ExampleModClient.kt`) implementing `ClientModInitializer`, creates `src/main/resources` and `src/client/resources`, and registers `mod.entrypoints.client: [org.example.ExampleModClient]` alongside `main`. Both the Java and Kotlin client examples compile in the split source set. `src/main` remains **common code**, not dedicated-server-only, and the flag does **not** set the entire mod's `mod.environment` to `client`. Unflagged initialization creates neither a client source tree nor a client entrypoint.
+
+**Develop-only `--architectury` init examples:** append this flag after the positional arguments, in any order with `--kotlin` and `--splitEnvironmentSourceSets`. The generated `mod.yaml` contains top-level `architectury: {enable: true}` (expanded across YAML lines) and relies on the plugin's pinned Minecraft 26.3 default, `22.0.5`. Without splitting, only `src/main/.../ExampleMod.java` or `.kt` is generated and it invokes Architectury `Platform.getMinecraftVersion()` as a single-source-set example. With splitting, `src/main/.../ExampleMod` demonstrates the common Architectury API call and `src/client/.../ExampleModClient` separately demonstrates Architectury from the client initializer. No consumer `build.gradle(.kts)` or authored `fabric.mod.json` is generated; `mod`/`api`, Java/Kotlin and `--here` are supported. **The publicly released v0.1.3 plugin cannot yet parse `architectury`; generated Settings still targets that public release.** Before the next release, only test the scaffold against the current develop plugin (TestKit replaces only its Settings plugin reference for local verification); do not claim public standalone builds work until a new tagged plugin is shipped.
 
 ```yaml
 settings:

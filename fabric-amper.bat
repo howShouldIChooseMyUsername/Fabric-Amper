@@ -73,12 +73,14 @@ echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
-echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets]
-echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin] [--splitEnvironmentSourceSets]
+echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
 echo               --kotlin generates ExampleMod.kt and enables Fabric Language Kotlin.
 echo               --splitEnvironmentSourceSets separates common and client sources.
-echo               The two optional flags can be combined in either order at the end.
+echo               --architectury enables Fabric Architectury API 22.0.5 and generates API examples.
+echo               With split sources, creates distinct common and client API examples.
+echo               The three optional flags can be combined in any order at the end.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
@@ -466,10 +468,11 @@ if "%~2"=="" (
 set "FA_INIT_ID=%~2"
 set "FA_INIT_KOTLIN=0"
 set "FA_INIT_SPLIT=0"
+set "FA_INIT_ARCHITECTURY=0"
 set "FA_INIT_ARG3="
 set "FA_INIT_ARG4="
 set "FA_INIT_FLAGS_STARTED=0"
-if not "%~7"=="" goto :initExtraArguments
+if not "%~8"=="" goto :initExtraArguments
 call :initParseArgument "%~3"
 if errorlevel 1 exit /b 2
 call :initParseArgument "%~4"
@@ -478,12 +481,15 @@ call :initParseArgument "%~5"
 if errorlevel 1 exit /b 2
 call :initParseArgument "%~6"
 if errorlevel 1 exit /b 2
+call :initParseArgument "%~7"
+if errorlevel 1 exit /b 2
 goto :initArgumentsReady
 
 :initParseArgument
 if "%~1"=="" exit /b 0
 if /i "%~1"=="--kotlin" goto :initParseKotlinFlag
 if /i "%~1"=="--splitEnvironmentSourceSets" goto :initParseSplitFlag
+if /i "%~1"=="--architectury" goto :initParseArchitecturyFlag
 if "%FA_INIT_FLAGS_STARTED%"=="1" goto :initExtraArguments
 if not "%FA_INIT_ARG3%"=="" goto :initParseFourthArgument
 set "FA_INIT_ARG3=%~1"
@@ -506,9 +512,15 @@ set "FA_INIT_SPLIT=1"
 set "FA_INIT_FLAGS_STARTED=1"
 exit /b 0
 
+:initParseArchitecturyFlag
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initExtraArguments
+set "FA_INIT_ARCHITECTURY=1"
+set "FA_INIT_FLAGS_STARTED=1"
+exit /b 0
+
 :initExtraArguments
 echo ERROR: init received unexpected, duplicated or misplaced arguments.
-echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets].
+echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury].
 exit /b 2
 
 :initArgumentsReady
@@ -702,11 +714,16 @@ if "%FA_INIT_SPLIT%"=="1" (
     >> "%FA_TARGET%\mod.yaml" echo(  loom:
     >> "%FA_TARGET%\mod.yaml" echo(    splitEnvironmentSourceSets: true
 )
+if "%FA_INIT_ARCHITECTURY%"=="1" (
+    >> "%FA_TARGET%\mod.yaml" echo(architectury:
+    >> "%FA_TARGET%\mod.yaml" echo(  enable: true
+)
 >> "%FA_TARGET%\mod.yaml" echo(repositories:
 >> "%FA_TARGET%\mod.yaml" echo(  - fabric
 >> "%FA_TARGET%\mod.yaml" echo(  - mavenCentral
 
 if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinSource
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initWriteJavaArchitecturySource
 
 > "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(package org.example;
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(import net.fabricmc.api.ModInitializer;
@@ -717,7 +734,27 @@ if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinSource
 >> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(}
 goto :initSourceWritten
 
+:initWriteJavaArchitecturySource
+> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(package org.example;
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(import net.fabricmc.api.ModInitializer;
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(import dev.architectury.platform.Platform;
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(// Common initializer: safe on both the client and dedicated server.
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(public final class ExampleMod implements ModInitializer {
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(    @Override public void onInitialize() {
+if "%FA_INIT_SPLIT%"=="1" goto :initWriteJavaArchitecturyCommon
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(        System.out.println("Architectury single source set on Minecraft " + Platform.getMinecraftVersion());
+goto :initWriteJavaArchitecturyDone
+
+:initWriteJavaArchitecturyCommon
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(        System.out.println("Architectury common source set on Minecraft " + Platform.getMinecraftVersion());
+
+:initWriteJavaArchitecturyDone
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(    }
+>> "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(}
+goto :initSourceWritten
+
 :initWriteKotlinSource
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initWriteKotlinArchitecturySource
 > "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(package org.example
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(import net.fabricmc.api.ModInitializer
@@ -727,10 +764,32 @@ goto :initSourceWritten
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(        println("Fabric Amper starter initialized")
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(    }
 >> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(}
+goto :initSourceWritten
+
+:initWriteKotlinArchitecturySource
+> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(package org.example
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(import net.fabricmc.api.ModInitializer
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(import dev.architectury.platform.Platform
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(// Common initializer: safe on both the client and dedicated server.
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(class ExampleMod : ModInitializer {
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(    override fun onInitialize() {
+if "%FA_INIT_SPLIT%"=="1" goto :initWriteKotlinArchitecturyCommon
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(        println("Architectury single source set on Minecraft " + Platform.getMinecraftVersion())
+goto :initWriteKotlinArchitecturyDone
+
+:initWriteKotlinArchitecturyCommon
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(        println("Architectury common source set on Minecraft " + Platform.getMinecraftVersion())
+
+:initWriteKotlinArchitecturyDone
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(    }
+>> "%FA_TARGET%\src\main\kotlin\org\example\ExampleMod.kt" echo(}
 
 :initSourceWritten
 if "%FA_INIT_SPLIT%"=="0" goto :initClientSourceWritten
 if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinClientSource
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initWriteJavaArchitecturyClientSource
 
 > "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(package org.example;
 >> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(import net.fabricmc.api.ClientModInitializer;
@@ -741,7 +800,20 @@ if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinClientSource
 >> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(}
 goto :initClientSourceWritten
 
+:initWriteJavaArchitecturyClientSource
+> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(package org.example;
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(import net.fabricmc.api.ClientModInitializer;
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(import dev.architectury.platform.Platform;
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(// This initializer runs only on the client and belongs in src/client.
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(public final class ExampleModClient implements ClientModInitializer {
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(    @Override public void onInitializeClient() {
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(        System.out.println("Architectury client source set on Minecraft " + Platform.getMinecraftVersion());
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(    }
+>> "%FA_TARGET%\src\client\java\org\example\ExampleModClient.java" echo(}
+goto :initClientSourceWritten
+
 :initWriteKotlinClientSource
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initWriteKotlinArchitecturyClientSource
 > "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(package org.example
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(import net.fabricmc.api.ClientModInitializer
@@ -749,6 +821,20 @@ goto :initClientSourceWritten
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(class ExampleModClient : ClientModInitializer {
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    override fun onInitializeClient() {
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(        println("Fabric Amper client starter initialized")
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    }
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(}
+goto :initClientSourceWritten
+
+:initWriteKotlinArchitecturyClientSource
+> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(package org.example
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(import net.fabricmc.api.ClientModInitializer
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(import dev.architectury.platform.Platform
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(// This initializer runs only on the client and belongs in src/client.
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(class ExampleModClient : ClientModInitializer {
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    override fun onInitializeClient() {
+>> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(        println("Architectury client source set on Minecraft " + Platform.getMinecraftVersion())
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(    }
 >> "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" echo(}
 
@@ -781,6 +867,8 @@ echo [init] Profile: %FA_PRODUCT%
 if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin automatically configured^).
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default, generated usage examples^).
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] DEV ONLY: JitPack v0.1.3 does not yet support architectury; test with the develop plugin until the next release.
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
 echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).

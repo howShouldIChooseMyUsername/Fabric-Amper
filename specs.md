@@ -281,6 +281,10 @@ architectury:
 
 **증빙 출처:** [Architectury 공식 26.3 Setup](https://docs.architectury.dev/api/getting-started/setup/)은 `22.0.5`, `dev.architectury:architectury-fabric:${architectury_api_version}`, 공식 Maven URL을 명시한다. [Architectury Maven 22.0.5 디렉터리](https://maven.architectury.dev/dev/architectury/architectury-fabric/22.0.5/)에서 실제 Fabric 배포물이 게시된 사실을 확인했다. IntelliJ 편집 보조 스키마는 루트 `fabric-amper.schema.json`의 `architectury` 객체와 boolean 자동완성, 정확한 버전 검증을 제공한다. 수락 시험은 enable=false/생략, 기본/명시 버전, 잘못된 키/타입/동적 버전, 비26.3, 수동 중복/Loader 충돌, 실제 Maven 의존성 해석·JAR metadata와 설정 캐시 재실행을 포함한다.
 
+**Windows `init --architectury` 시작 템플릿 (develop 전용):** `fabric-amper.bat init <id> [new_folder] [mod|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury]` 또는 `init <id> --here [mod|api] ...`를 지원한다. 세 플래그는 위치 인자 **뒤에서 순서 무관**하게 최대 한 번씩 허용하고, 중복·이전 위치·알 수 없는 인자·초과 인자는 파일을 생성하기 전에 exit code 2로 거부한다. `--architectury`를 생략하면 기존 Java/Kotlin·split 템플릿 결과가 그대로 유지된다. 지정하면 생성 `mod.yaml` 최상위에 `architectury:\n  enable: true`를 넣고, 버전은 의도적으로 명시하지 않아 현재 개발 플러그인의 고정 기본값을 사용한다. 비분리 프로젝트는 `src/main/java|kotlin/org/example/ExampleMod`에서 `dev.architectury.platform.Platform.getMinecraftVersion()`을 호출하는 **단일 소스셋 전용 예제**를 생성한다. 분리 프로젝트는 `src/main` 공통 ModInitializer에 **common 전용 예제**, `src/client` ClientModInitializer에 **client 전용 예제**를 각각 생성한다. 모두 Architectury API를 직접 import하고 실제 API를 호출하되 서버 공통 코드에는 클라이언트 전용 Minecraft 클래스를 참조하지 않는다. 기존 `--kotlin`, `--here`, `api` 프로파일과 결합해도 언어·entrypoint·소스셋이 일치하고 `build.gradle(.kts)` 및 작성된 `fabric.mod.json`은 생성하지 않는다. TestKit은 생성한 **실제 예제 소스**를 현재 develop 바이너리 플러그인으로 Java/Kotlin·분리/비분리 빌드까지 확인해야 한다.
+
+**develop 단계 배포 주의:** BAT가 생성하는 `settings.gradle.kts`는 기존의 공개 v0.1.3 JitPack 플러그인을 계속 가리키므로, 해당 공개 바이너리에는 `architectury` 파서가 아직 없다. 따라서 `--architectury` 출력물을 그대로 외부 공개 v0.1.3으로 빌드할 수 있다고 주장하지 않는다. develop의 TestKit에서 생성 Settings의 플러그인 선언만 현재 로컬 테스트 바이너리로 교체해 소비자 빌드를 검증한다. 이후 기능 출하 시 BAT의 생성 플러그인 버전을 새 릴리즈 태그로 업데이트해야 한다. main·v0.1.3 릴리즈 파일을 선행 변경하지 않는다.
+
 ```yaml
 dependencies:
   - "com.example:normal:1.0.0"               # all
