@@ -78,7 +78,7 @@ class FabricAmperDocumentationContractUnitTest {
             "## Windows command cheat sheet",
             "## Troubleshooting and next steps",
             "fabric-amper.bat init quick_mod",
-            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3",
+            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0",
             "fabric-amper.bat plan",
             "publish.common",
         ).forEach { expected ->

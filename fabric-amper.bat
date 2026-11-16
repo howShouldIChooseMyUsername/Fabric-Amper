@@ -5,7 +5,7 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.3"
+set "FA_VERSION=0.2.0"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
 set "FA_HELPER_SOURCE=release"
 rem Release-pinned helper downloads always go into the scripts directory.
@@ -13,7 +13,7 @@ set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
 rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
 rem helper bytes change; releases must publish the matching verified script.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
-set "FA_MIGRATE_SHA256=b4d1c0d28f48339b69c5d117348f66f85cb038f27cccb2270a27b26904dcd969"
+set "FA_MIGRATE_SHA256=36d794b15f89967c439eaa5646428adc22422f6e4b189d602550963de041eb19"
 set "FA_SCHEMA_SHA256=5a227b2a6fe3b40ae043949e89f3d6db9428d6b3913754733a94a578d31b70ee"
 
 if /i "%~1"=="-C" goto :projectOption
@@ -116,7 +116,7 @@ echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
-echo Generated Settings projects resolve Fabric Amper v0.1.3 from JitPack.
+echo Generated Settings projects resolve Fabric Amper v0.2.0 from JitPack.
 echo Use --project or -C before consumer commands; doctor also accepts them after its name.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -319,7 +319,7 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0
 echo [INFO] Remote JitPack availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
@@ -666,13 +666,13 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
 >> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
->> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0")
 >> "%FA_TARGET%\settings.gradle.kts" echo(            }
 >> "%FA_TARGET%\settings.gradle.kts" echo(        }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.3"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.2.0"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 rem New projects default to Java, with explicit --kotlin selecting a Kotlin entrypoint.
@@ -868,10 +868,10 @@ if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).
 if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default, generated usage examples^).
-if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] DEV ONLY: JitPack v0.1.3 does not yet support architectury; test with the develop plugin until the next release.
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API is supplied by the Fabric Amper v0.2.0 plugin.
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).
+echo [init] Settings plugin: JitPack Fabric-Amper v0.2.0 ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.
 exit /b 0
 

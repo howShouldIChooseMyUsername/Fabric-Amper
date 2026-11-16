@@ -24,7 +24,7 @@ class FabricAmperVersionBatTest {
         for (arguments in listOf("", "-V", "-v", "--version", "version", "-C \"$temporary\" -V")) {
             val result = run(arguments)
             assertEquals(0, result.exit, "Unexpected exit for '$arguments': ${result.output}")
-            assertEquals("v0.1.3", result.output.trim(), "Unexpected output for '$arguments'")
+            assertEquals("v0.2.0", result.output.trim(), "Unexpected output for '$arguments'")
         }
         assertFalse(Files.exists(temporary.resolve("mod.yaml")))
         assertFalse(Files.exists(temporary.resolve("settings.gradle.kts")))

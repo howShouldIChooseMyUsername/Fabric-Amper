@@ -6,7 +6,7 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. It takes care of Fabric Loom, Minecraft/Loader configuration, Java and optional Kotlin, dependency scopes, generated Loader metadata, JAR verification, and opt-in publishing. You still write your mod's Java/Kotlin code, Mixins, resources, and tests.
 
-> **Release status:** `v0.1.3` is a **development preview**, not a fully approved G1–G30 production release. It adds conservative migration of existing Kotlin/Groovy Fabric Gradle projects, on top of v0.1.2's Windows environment repair and safe initialization. Producer tests and Settings-only consumer builds are checked separately from IDE and Minecraft runtime gates. IDE GUI synchronization, some runtime variants, and authenticated external publishing remain subject to the limitations in [QA_REPORT.md](QA_REPORT.md). **This plugin is not published to the Gradle Plugin Portal.**
+> **Release status:** `v0.2.0` is a **Developer Preview**, not a fully approved G1–G30 production release. New in v0.2.0: Minecraft 26.3 declarative Architectury API (`architectury.enable: true`), `init --architectury` Java/Kotlin starters (including split client/common sources), and IntelliJ YAML dependency/Architectury completion. It retains conservative Kotlin/Groovy migration, Windows environment repair and Settings-only builds. Producer tests and consumer builds are distinct from IDE GUI/Minecraft runtime gates; see [QA_REPORT.md](QA_REPORT.md) for unverified gates. **This plugin is not published to the Gradle Plugin Portal.**
 
 ## Why Fabric Amper?
 
@@ -81,7 +81,7 @@ repositories:
   - mavenCentral
 ```
 
-The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.1.3"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
+The generated consumer `settings.gradle.kts` requests `id("dev.fabric-amper.settings") version "0.2.0"` and uses `pluginManagement.resolutionStrategy` to resolve the tagged module `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0` from **JitPack**, alongside Fabric Maven and other plugin repositories. It does **not** depend on a local producer Maven repository, and no `setup` step is required.
 
 Run `gradle validateFabricAmper`, `gradle build` and `gradle verifyFabricAmperJar` directly if you prefer Gradle commands. A valid production JAR contains **one root-level generated `fabric.mod.json`**; it is not a Minecraft mod unless it also includes actual mod code.
 
@@ -93,13 +93,13 @@ On the [Releases page](https://github.com/howShouldIChooseMyUsername/Fabric-Ampe
 
 | Asset | Purpose |
 | --- | --- |
-| `fabric-amper-0.1.3-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
-| `fabric-amper-0.1.3.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
-| `fabric-amper-0.1.3-sources.jar` | Source archive for IDE inspection |
+| `fabric-amper-0.2.0-maven-repository.zip` | **Optional local binary install:** plugin JAR, POM/Gradle module metadata, and both Settings/Project plugin marker POMs in Maven layout |
+| `fabric-amper-0.2.0.jar` | Plugin binary for inspection or custom build integration; **not a Minecraft `mods/` JAR** |
+| `fabric-amper-0.2.0-sources.jar` | Source archive for IDE inspection |
 | `fabric-amper.bat` | Windows convenience script; `doctor --fix` downloads the matching helper on first use. `migrate` requires the separate matching PowerShell script beside this BAT |
 | `fabric-amper-migrate.ps1` | Standalone conservative migration engine for Kotlin/Groovy Gradle scripts and Loader JSON; no Gradle script execution |
 | `fabric-amper-doctor-fix.ps1` | Single opt-in Windows repair helper; BAT downloads **only this file** from its matching version's GitHub Release into the BAT directory when absent and checks the pinned SHA-256 before execution |
-| `fabric-amper-0.1.3-windows-tools.zip` | Optional BAT, both matching PowerShell helpers, schema and AI skills/guides, pre-bundled for extraction |
+| `fabric-amper-0.2.0-windows-tools.zip` | Optional BAT, both matching PowerShell helpers, schema and AI skills/guides, pre-bundled for extraction |
 | `fabric-amper.schema.json` | Latest schema snapshot for YAML editor completion |
 | `SHA256SUMS.txt` | SHA-256 checksums of the uploaded release assets |
 
@@ -116,13 +116,13 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0")
             }
         }
     }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.3"
+    id("dev.fabric-amper.settings") version "0.2.0"
 }
 ```
 
@@ -190,4 +190,4 @@ The producer Gradle build uses Java 25. Several integration/runtime tests are op
 
 ## Release notes and limitations
 
-`v0.1.3` is a **preview release** for developers evaluating the settings-only workflow, JitPack bootstrap and conservative Gradle-to-YAML migration. The earlier [v0.1.2 prerelease](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2) remains available. No GitHub Release substitutes for Gradle Plugin Portal publication, official Fabric Loader runtime verification for every profile, or testing an authenticated third-party upload. Producer and consumer verification is recorded in [QA_REPORT.md](QA_REPORT.md); skipped/opt-in acceptance gates remain open. Please review the [QA report](QA_REPORT.md) before relying on Fabric Amper for public production releases.
+`v0.2.0` is a **Developer Preview** for Settings-only YAML projects, JitPack bootstrap, Minecraft 26.3 Architectury API opt-in, `init --architectury`, and conservative Gradle-to-YAML migration. Earlier [v0.1.3](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.3) and [v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2) remain available. A GitHub Release does not substitute for Gradle Plugin Portal publication, complete Fabric Loader runtime verification, or testing authenticated third-party uploads. Review [QA_REPORT.md](QA_REPORT.md) for open gates.

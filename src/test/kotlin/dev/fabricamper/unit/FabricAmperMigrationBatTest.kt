@@ -47,7 +47,7 @@ class FabricAmperMigrationBatTest {
             assertTrue(result.output.contains("STUB Consumer=${expected.first}"), "FA_CONSUMER forwarded for '$args': ${result.output}")
             assertTrue(result.output.contains("STUB Delete=${if (expected.second) "True" else "False"}"), "Delete flag for '$args': ${result.output}")
             assertTrue(result.output.contains("STUB DryRun=${if (expected.third) "True" else "False"}"), "DryRun flag for '$args': ${result.output}")
-            assertTrue(result.output.contains("STUB Version=0.1.3"), "FA_VERSION for '$args': ${result.output}")
+            assertTrue(result.output.contains("STUB Version=0.2.0"), "FA_VERSION for '$args': ${result.output}")
             assertTrue(result.output.contains("STUB Root=${wrapper.parent}\\"), "FA_ROOT for '$args': ${result.output}")
             assertEquals("// user Gradle configuration - must survive wrapper routing\n", Files.readString(original))
             assertFalse(Files.exists(project.resolve("mod.yaml")), "Only the migration script may create output")
@@ -91,7 +91,7 @@ class FabricAmperMigrationBatTest {
         val missingHelper = run(batch, consumer, "migrate --dry-run")
         assertEquals(0, missingHelper.code, missingHelper.output)
         assertTrue(missingHelper.output.contains("Would fetch exactly fabric-amper-migrate.ps1"))
-        assertTrue(missingHelper.output.contains("v0.1.3/fabric-amper-migrate.ps1"))
+        assertTrue(missingHelper.output.contains("v0.2.0/fabric-amper-migrate.ps1"))
         assertFalse(Files.exists(folder.resolve("scripts")), "Read-only preview must not create scripts directory")
         assertEquals("// KEEP\n", Files.readString(source))
 

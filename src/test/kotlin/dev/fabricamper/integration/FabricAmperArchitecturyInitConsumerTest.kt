@@ -14,9 +14,9 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.readText
 
-/** Compile the real Windows init starter sources against the in-development settings plugin.
- * The public JitPack v0.1.3 has not yet shipped Architectury support; only the
- * generated settings plugin reference is replaced with TestKit's local classpath.
+/** Compile the real Windows init starter sources using this checkout's Settings plugin.
+ * The generated release coordinate is separately asserted; TestKit substitutes a
+ * local plugin classpath so the test is deterministic even before JitPack warms.
  */
 @EnabledOnOs(OS.WINDOWS)
 @EnabledIfEnvironmentVariable(named = "FABRIC_AMPER_TESTKIT_FULL", matches = "true")
@@ -48,9 +48,8 @@ class FabricAmperArchitecturyInitConsumerTest {
             val output = process.inputStream.bufferedReader().readText()
             assertEquals(0, process.exitValue(), "init failed: $output")
             val generated = consumer.resolve("settings.gradle.kts").readText()
-            assertTrue(generated.contains("v0.1.3"), "Document current public release pin until publishing")
-            // Local TestKit classpath is the developer opt-in path until the new
-            // Architectury feature is publicly released. No build.gradle file.
+            assertTrue(generated.contains("v0.2.0"), "Generated bootstrap must target the v0.2.0 release")
+            // Local TestKit classpath tests the same plugin without relying on JitPack caches.
             f.write(consumer, "settings.gradle.kts", "plugins { id(\"dev.fabric-amper.settings\") }\n")
             f.assertNoConsumerBuildScript(consumer)
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
