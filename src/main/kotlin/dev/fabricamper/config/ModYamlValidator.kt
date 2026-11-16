@@ -176,7 +176,20 @@ object ModYamlValidator {
             }
         }
 
-        val mc = raw.minecraft
+        val architectury = raw.architectury
+        if (!architectury.enabled && architectury.version != null) {
+            fail("FA003", "architectury.version", "enable Architectury before selecting its version", file)
+        }
+        if (architectury.enabled && raw.minecraft.version != ArchitecturyDefaults.MINECRAFT_VERSION) {
+            fail("FA003", "architectury", "Architectury API convenience is verified only for Minecraft 26.3", file)
+        }
+        val architecturyVersion = if (architectury.enabled) architectury.version ?: ArchitecturyDefaults.VERSION else null
+        if (architecturyVersion != null && !VersionSyntax.isFixedGradleVersion(architecturyVersion)) {
+            fail("FA003", "architectury.version", "expected a fixed Architectury API version, not a Gradle dynamic selector", file)
+        }
+        val mc = if (architectury.enabled && raw.minecraft.fabricApi == null) {
+            raw.minecraft.copy(fabricApi = ArchitecturyDefaults.FABRIC_API_VERSION)
+        } else raw.minecraft
         if (!mc.version.matches(Regex("^\\d+\\.\\d+(?:\\.\\d+)?$"))) {
             fail("FA003", "minecraft.version", "expected exact Minecraft version (quote it in YAML)", file)
         }
@@ -236,6 +249,13 @@ object ModYamlValidator {
         }
         validateDependencies(raw.dependencies, raw, "dependencies")
         validateDependencies(raw.testDependencies, raw, "test-dependencies")
+        if (architecturyVersion != null) {
+            raw.dependencies.forEachIndexed { index, dependency ->
+                if (dependency.coordinate.substringBeforeLast(':') == ArchitecturyDefaults.GROUP_ARTIFACT) {
+                    fail("FA012", "dependencies[$index]", "architectury.enable already manages architectury-fabric; remove the manual duplicate or disable the switch", file)
+                }
+            }
+        }
 
         // Validate every authored term before evaluating any OR alternative.
         // Otherwise a matching sibling can mask a malformed predicate, and
@@ -275,6 +295,7 @@ object ModYamlValidator {
         if (kotlin.enabled) {
             defaults["fabric-language-kotlin"] = ">=" + kotlin.fabricLanguageKotlin.substringBefore('+')
         }
+        if (architecturyVersion != null) defaults["architectury"] = ">=$architecturyVersion"
         defaults.forEach { (key, requirement) ->
             depends.putIfAbsent(key, requirement)
         }
@@ -285,6 +306,7 @@ object ModYamlValidator {
         )
         mc.fabricApi?.let { versions["fabric-api"] = it }
         if (kotlin.enabled) versions["fabric-language-kotlin"] = kotlin.fabricLanguageKotlin
+        if (architecturyVersion != null) versions["architectury"] = architecturyVersion
         for ((key, version) in versions) {
             val predicate = depends.getValue(key)
             val expressions = when (predicate) {
@@ -316,7 +338,21 @@ object ModYamlValidator {
                 }
             }
         }
-        return raw.copy(product = product, mod = mod.copy(depends = depends))
+        val repositories = if (architecturyVersion != null && raw.repositories.none {
+                it.kind == "maven" && it.url?.trimEnd('/') == ArchitecturyDefaults.MAVEN_URL.trimEnd('/')
+            }) raw.repositories + RepositorySpec("maven", ArchitecturyDefaults.MAVEN_URL)
+            else raw.repositories
+        val dependencies = if (architecturyVersion != null) raw.dependencies + DependencySpec(
+            kind = "mod", coordinate = "${ArchitecturyDefaults.GROUP_ARTIFACT}:$architecturyVersion",
+        ) else raw.dependencies
+        return raw.copy(
+            product = product,
+            minecraft = mc,
+            mod = mod.copy(depends = depends),
+            repositories = repositories,
+            dependencies = dependencies,
+            architectury = architectury.copy(version = architecturyVersion),
+        )
     }
 
     private fun validatePublish(model: ModYamlModel, file: Path) {

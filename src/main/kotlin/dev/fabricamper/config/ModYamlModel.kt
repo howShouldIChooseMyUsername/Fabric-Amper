@@ -22,6 +22,8 @@ data class ModYamlModel(
     val publishing: PublishingSpec? = null,
     /** Explicit upload destinations, independent of API/library Maven publishing. */
     val publish: PublishSpec? = null,
+    /** Optional Fabric Architectury API convenience switch. */
+    val architectury: ArchitecturySpec = ArchitecturySpec(),
 ) {
     val modId: String get() = mod.id
 }
@@ -30,6 +32,21 @@ data class ModYamlModel(
 object FabricAmperSchemaVersion {
     const val LATEST: Int = 1
 }
+
+/** Audited fixed defaults for MC 26.3; never use Gradle dynamic versions. */
+object ArchitecturyDefaults {
+    const val MINECRAFT_VERSION = "26.3"
+    const val VERSION = "22.0.5"
+    const val FABRIC_API_VERSION = "0.165.2+26.3"
+    const val MAVEN_URL = "https://maven.architectury.dev/"
+    const val GROUP_ARTIFACT = "dev.architectury:architectury-fabric"
+}
+
+data class ArchitecturySpec(
+    val enabled: Boolean = false,
+    /** Explicit user version, or the validated 26.3 default after normalization. */
+    val version: String? = null,
+)
 
 /** An API product always has its built-in local Maven repository. */
 data class PublishingSpec(val repository: PublishingRepositorySpec? = null)

@@ -1333,6 +1333,8 @@ The mapping version is deliberately a placeholder. Verify a genuinely published 
 | Key | Type | Meaning |
 | --- | --- | --- |
 | `repositories[]` | `fabric`, `mavenCentral`, `modrinth`, or `{maven: https-url}` | Dependency resolution sources |
+| `architectury.enable` / `architectury.enabled` | Boolean (false by default) | Enable Fabric Architectury API for MC 26.3; choose only one alias |
+| `architectury.version` | Optional fixed string | Default `22.0.5` (verified 2026-11-16); explicit version wins; requires enable=true |
 | `dependencies[]` | Coordinate string, one-key shorthand, or full object | Main/client dependency |
 | `dependencies[].maven` | `"group:artifact:fixed-version"` | Cannot coexist with `modrinth` in one dependency object |
 | `dependencies[].modrinth.project` | String | Modrinth **dependency repository** project ID/slug |
@@ -1343,6 +1345,16 @@ The mapping version is deliberately a placeholder. Verify a genuinely published 
 | `dependencies[].exported` | Boolean | Default `false`; requires `scope: all` |
 | `dependencies[].include` | Boolean | Default `false`; requires `scope: all` |
 | `test-dependencies[]` | Similar coordinate/scope shapes | Never `exported`, `include`, or `target: client` |
+
+**Architectury API convenience:** add this **top-level** YAML section (omit `version` for the current verified default):
+
+```yaml
+architectury:
+  enable: true
+  # version: "22.0.5"
+```
+
+The parser and plugin automatically register `https://maven.architectury.dev/`, `dev.architectury:architectury-fabric:<resolved-version>` as a non-embedded `implementation` Fabric mod dependency on Minecraft 26.3, and a matching `fabric.mod.json` Loader dependency `architectury: ">=<resolved-version>"`. The plugin also supplies Fabric API `0.165.2+26.3` when it was omitted; a user-selected `minecraft.fabricApi` is retained. The version omission does not fetch a dynamic/latest Maven selector: this develop feature pins audited default `22.0.5`. Explicit version uses the exact published artifact instead, and incorrect versions fail during dependency resolution. Duplicate manual Architectury Maven dependency declarations are rejected. Disabling the switch adds nothing. The feature does not apply Architectury Loom, create multi-loader projects, or include Architectury inside the output JAR. Unsupported Minecraft versions fail early rather than assuming the 26.3 artifact is compatible. See [official 26.3 setup](https://docs.architectury.dev/api/getting-started/setup/).
 
 ### New publishing fields
 
