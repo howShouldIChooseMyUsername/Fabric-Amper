@@ -39,6 +39,7 @@ cd ..\example_mod
 
 - `doctor` checks your Java/Gradle launcher and reports the JitPack coordinate without contacting JitPack.
 - `init` creates a **new** consumer directory. `init night_vision --here` also supports a current tools-only folder; any existing project YAML, Settings/build script, source tree or conflicting schema blocks it. Existing unrelated tools and notes are preserved. Starters include `.vscode/settings.json` YAML mapping when missing.
+- `init arch_mod "Architectury Mod" mod --architectury` adds the Architectury Fabric API YAML switch and a real `Platform.getMinecraftVersion()` example. Combine `--architectury --splitEnvironmentSourceSets` for separate common and client examples; `--kotlin` creates equivalent Kotlin sources. All three optional flags may be ordered freely after positional arguments.
 - `build` resolves the plugin from JitPack on first use, validates YAML, compiles your mod, and verifies the resulting JAR. It does **not** upload anything.
 
 The first line of generated `mod.yaml` is `# yaml-language-server: $schema=./schemas/mod.schema.json` for editor autocomplete. The local JSON Schema is copied from this producer at project creation. `init` deliberately **omits `schema: 1`** so the plugin's latest implemented YAML grammar is selected (currently v1); existing editor schema copies need manual refresh after future upgrades.
