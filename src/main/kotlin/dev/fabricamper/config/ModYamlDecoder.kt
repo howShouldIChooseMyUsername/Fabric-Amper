@@ -10,7 +10,7 @@ object ModYamlDecoder {
     @JvmStatic
     fun decode(tree: Map<String, Any?>, source: Path): ModYamlModel {
         keys(tree, setOf("schema", "product", "mod", "minecraft", "settings", "repositories",
-            "dependencies", "test-dependencies", "publishing", "publish"), "", source)
+            "dependencies", "test-dependencies", "publishing", "publish", "architectury"), "", source)
         val schema = integer(tree, "schema", "", source) ?: FabricAmperSchemaVersion.LATEST
         val product = when (val name = string(tree, "product", "", source, required = true)!!) {
             "fabric/library" -> "fabric/api"
@@ -19,13 +19,29 @@ object ModYamlDecoder {
         val mod = parseMod(requiredMap(tree, "mod", "", source), source)
         val minecraft = parseMinecraft(requiredMap(tree, "minecraft", "", source), source)
         val settings = parseSettings(optionalMap(tree, "settings", "", source), source)
+        if (tree.containsKey("architectury") && tree["architectury"] == null) {
+            error("FA003", "architectury", "expected an object with enable and optional version", source)
+        }
+        val architectury = parseArchitectury(optionalMap(tree, "architectury", "", source), source)
         val repositories = parseRepositories(optionalNode(tree, "repositories", "", source), source)
         val dependencies = parseDependencies(optionalNode(tree, "dependencies", "", source), "dependencies", source, false)
         val testDependencies = parseDependencies(optionalNode(tree, "test-dependencies", "", source), "test-dependencies", source, true)
         val publishing = parsePublishing(optionalNode(tree, "publishing", "", source), source)
         val publish = parsePublish(optionalNode(tree, "publish", "", source), source)
         return ModYamlModel(source, schema, product, mod, minecraft, settings, repositories,
-            dependencies, testDependencies, publishing = publishing, publish = publish)
+            dependencies, testDependencies, publishing = publishing, publish = publish,
+            architectury = architectury)
+    }
+
+    private fun parseArchitectury(m: Map<String, Any?>, file: Path): ArchitecturySpec {
+        val p = "architectury"
+        keys(m, setOf("enable", "enabled", "version"), p, file)
+        if (m.containsKey("enable") && m.containsKey("enabled")) {
+            error("FA003", p, "use only one of enable or enabled", file)
+        }
+        val enabled = if (m.containsKey("enable")) boolean(m, "enable", p, file)
+            else boolean(m, "enabled", p, file)
+        return ArchitecturySpec(enabled ?: false, string(m, "version", p, file))
     }
 
     private fun parsePublish(node: Any?, file: Path): PublishSpec? {

@@ -42,7 +42,7 @@ class FabricAmperSchemaContractUnitTest {
         assertEquals(setOf("product", "mod", "minecraft"), root.stringSet("required"))
         assertEquals(setOf(
             "schema", "product", "mod", "minecraft", "settings", "repositories",
-            "dependencies", "test-dependencies", "publishing", "publish",
+            "dependencies", "test-dependencies", "publishing", "publish", "architectury",
         ), root.getAsJsonObject("properties").keySet(), "Schema root must mirror strict decoder keys")
         val version = root.getAsJsonObject("properties").getAsJsonObject("schema")
         assertEquals(1, version.get("const").asInt)
@@ -79,7 +79,7 @@ class FabricAmperSchemaContractUnitTest {
         val root = schema()
         val definitions = root.getAsJsonObject("definitions")
         for (name in listOf(
-            "mod", "minecraft", "settings", "entrypoint", "versionMap", "dependency",
+            "mod", "minecraft", "settings", "architectury", "entrypoint", "versionMap", "dependency",
             "dependencyObject", "testDependency", "repository", "publishing", "scope",
             "publish", "publishCommon", "publishCommonDependency", "publishMaven", "publishModrinth", "publishCurseForge",
             "publishModrinthDependency", "publishCurseForgeRelation", "envName", "releaseType",

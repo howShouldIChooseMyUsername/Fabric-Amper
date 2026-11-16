@@ -169,6 +169,11 @@ settings:
   resources:
     failOnExistingFabricModJson: true
 
+# Optional Fabric Architectury API switch. 26.3 default verified on 2026-11-16.
+architectury:
+  enable: true
+  # version: "22.0.5"  # set explicitly only to override the pinned default
+
 repositories:
   - mavenCentral
   - fabric
@@ -223,6 +228,8 @@ test-dependencies:
 | `settings.java.release` | 정수, 기본 프로파일에서 25 | 26.3이면 25 강제 |
 | `settings.java.sourcesJar` | boolean, 기본 true | Gradle Java Extension 반영 |
 | `settings.kotlin.enabled` | boolean, 기본 false | 활성화 시 KGP/FLK/adapter 정합성 |
+| `architectury.enable` (`enabled` 별칭) | boolean, 기본 false | Fabric Architectury API 활성화; 두 철자를 동시에 쓰면 FA003 |
+| `architectury.version` | 정확한 고정 버전 문자열, 선택 | Minecraft 26.3에서 생략 시 `22.0.5`, 명시 시 해당 버전을 사용; 활성화 없이 version만 쓰면 FA003 |
 | `settings.kotlin.pluginVersion` | 문자열, 내장 호환 버전 | 임의 외부 plugin 버전 교체 금지 |
 | `settings.kotlin.fabricLanguageKotlin` | 고정 좌표 버전 | Kotlin adapter 사용 시 필수 |
 | `settings.loom.splitEnvironmentSourceSets` | boolean, 기본 false | client 소스셋 및 mods 결합 |
@@ -253,6 +260,26 @@ Loader 버전 조건에는 `*`, `>=`, `<`, 정확 버전과 복수 조건의 문
 **Minecraft 1.21.11 이하**: `net.fabricmc.fabric-loom-remap`. `mappings: mojang`이면 `loom.officialMojangMappings()`를 `mappings`에 추가. `mappings: {type: yarn, version: "1.21.1+build.3"}`이면 `net.fabricmc:yarn:1.21.1+build.3:v2`를 추가. 실제 Yarn 버전 존재 여부는 Maven 해석 단계에서 확인. `remapJar`가 배포 대상. `fabric-loom` 레거시 ID는 신규 빌드에서 사용하지 않는다. 버전별 분기는 문자열 사전순 비교를 하지 않고 검증된 버전 분류로 수행한다.
 
 ### 의존성 구문 / 의미
+
+#### Fabric Architectury API 간편 활성화 (develop 선행 기능)
+
+`architectury`는 **최상위** 선택 설정이며 Gradle `build.gradle(.kts)`나 `gradle.properties`를 요구하지 않는다. `architectury: {enable: true}`가 정식 예이고 `enabled`는 Kotlin 설정과 철자를 맞춘 동일 의미의 별칭이다. 둘을 동시에 쓰거나 알 수 없는 키·잘못된 boolean을 사용하면 FA003으로 실패한다. `enable` 기본값은 false이며 버전만 지정하고 비활성화하면 오류다. 활성화 시 고정 `version`을 주지 않으면 **2026-11-16에 검증된 Minecraft 26.3 Fabric용 최신 `22.0.5`를 빌드에 고정**한다. 이는 빌드 중 동적으로 Maven `latest.release`를 찾는 기능이 아니며, 새로운 배포가 나와도 기존 프로젝트가 자동 변경되지 않도록 플러그인 업데이트로 기본 버전을 갱신한다. 사용자 `version`은 이 기본값을 덮어쓰며 `+`/`latest.release` 같은 Gradle 동적 선택자를 받지 않는다.
+
+```yaml
+minecraft:
+  version: "26.3"
+  loader: "0.20.1"
+  fabricApi: "0.165.2+26.3"
+architectury:
+  enable: true
+  # version: "22.0.5"
+```
+
+활성화할 때는 검증된 공식 `https://maven.architectury.dev/` 저장소를 추가하고 `dev.architectury:architectury-fabric:<resolved-version>`을 `kind=mod`, `scope=all`, `target=main`, `include=false`, `exported=false`로 정규화하여 다른 Fabric Amper 의존성과 동일하게 Gradle에 추가한다. 26.3 비리매핑 프로젝트에서는 `implementation`으로 해석하며 직접 `dependencies`/`repositories`에 복사할 필요가 없다. 단일 설정으로 실행 가능한 의존성을 충족하기 위해 `minecraft.fabricApi`를 사용자가 작성하지 않았을 때는 검증된 26.3 기본 `0.165.2+26.3`을 선택하여 Fabric API Gradle/Loader 의존성도 제공한다. 이미 작성했다면 **사용자가 선택한 Fabric API 버전을 유지**한다. `fabric.mod.json`에는 `architectury: ">=<resolved-version>"`을 누락 시 자동 추가하고 사용자가 적은 `mod.depends.architectury`는 변경하지 않으며 실제 선택 버전과 충돌할 경우 FA009를 표시한다.
+
+현재 사전검증된 기본값은 **26.3 전용**이다. Architectury 활성화 후 `minecraft.version`이 `26.3`이 아닌 경우 기본 버전 재사용을 금지하며 FA003로 거부한다(명시적인 버전도 현재 개발 범위에서는 지원하지 않는다). `dependencies`에 동일 Maven 그룹·아티팩트를 직접 중복 지정하면 자동 추가와 충돌할 수 있으므로 FA012를 반환하며 둘 중 하나만 쓰도록 안내한다. Fabric API/Architectury API 런타임 모드는 외부 설치 대상이다. `include=true`로 Jar-in-Jar 패키징하지 않고, 멀티플랫폼 공통 소스셋이나 Architectury Loom 플러그인을 자동 생성하지 않는다. 일반 YAML 구성 변경과 마찬가지로 Gradle 설정 캐시의 입력으로 추적하여 IntelliJ Gradle Reload/consumer 빌드 때 일관되게 재해석한다.
+
+**증빙 출처:** [Architectury 공식 26.3 Setup](https://docs.architectury.dev/api/getting-started/setup/)은 `22.0.5`, `dev.architectury:architectury-fabric:${architectury_api_version}`, 공식 Maven URL을 명시한다. [Architectury Maven 22.0.5 디렉터리](https://maven.architectury.dev/dev/architectury/architectury-fabric/22.0.5/)에서 실제 Fabric 배포물이 게시된 사실을 확인했다. IntelliJ 편집 보조 스키마는 루트 `fabric-amper.schema.json`의 `architectury` 객체와 boolean 자동완성, 정확한 버전 검증을 제공한다. 수락 시험은 enable=false/생략, 기본/명시 버전, 잘못된 키/타입/동적 버전, 비26.3, 수동 중복/Loader 충돌, 실제 Maven 의존성 해석·JAR metadata와 설정 캐시 재실행을 포함한다.
 
 ```yaml
 dependencies:

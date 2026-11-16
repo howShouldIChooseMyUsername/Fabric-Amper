@@ -187,6 +187,7 @@ The expected output is `build/libs/quick_mod-1.0.0+26.3.jar`. It must contain **
 | Add a Fabric entrypoint | `mod.entrypoints.main` or `.client` | Implement the Java/Kotlin initializer class |
 | Set a client-only mod | `mod.environment: client` | Use client-safe entrypoints/Mixins; do not load client-only code on a dedicated server |
 | Enable Kotlin | `settings.kotlin.enabled: true` | Use `src/main/kotlin`; fixed KGP `2.4.21` / Fabric Language Kotlin `1.14.2+kotlin.2.4.21` |
+| Enable Architectury API (Fabric 26.3) | `architectury.enable: true` | Automatically adds the official Maven repo, API and Loader dependency; default `22.0.5` |
 | Split client source sets | `settings.loom.splitEnvironmentSourceSets: true` | Use `src/client/java` and optionally `src/client/resources` |
 | Add a client dependency | `dependencies[].target: client` | Requires split source sets; not allowed with `exported` or `include` |
 | Register a Mixin | `mod.mixins: [example.mixins.json]` | Add the actual config and mixin classes; side-qualify client-only configs |
@@ -213,6 +214,18 @@ settings:
 ```
 
 If the complete starter already contains `settings.kotlin`, edit that section **rather than duplicating it**. For client-only classes, set `settings.loom.splitEnvironmentSourceSets: true`, put code under `src/client/java` or `src/client/kotlin`, and define the `client` entrypoint. A Mixin config or icon must exist inside the allowed resources source set; a global/server Mixin cannot safely reference only a client resource. A `.classtweaker` on Minecraft 26.1+ and a legacy `.accesswidener` both belong under `src/main/resources` and require profile-correct headers.
+
+### Architectury API in one switch (Minecraft 26.3)
+
+Add this **top-level** section beside `settings`, not under `dependencies`:
+
+```yaml
+architectury:
+  enable: true
+  # version: "22.0.5"  # optional override
+```
+
+The develop branch supplies the verified Architectury Fabric API `22.0.5` by default (checked 2026-11-16); `version` overrides it with an explicit fixed version. `enabled: true` is also accepted as an alias, but do not write both `enable` and `enabled`. Fabric Amper automatically registers `https://maven.architectury.dev/`, `dev.architectury:architectury-fabric:<version>`, and `mod.depends.architectury`. If `minecraft.fabricApi` is absent it selects `0.165.2+26.3`; an explicit Fabric API version is preserved. No `gradle.properties` or consumer `build.gradle(.kts)` is needed. This is **Fabric API integration**, not the Architectury Loom multiproject generator. The API is a separately installed runtime mod, not silently embedded with `include`. Other Minecraft profiles are rejected until explicitly supported. Reload IntelliJ's Gradle project after editing `mod.yaml` or `mod.yml`.
 
 ## Dependencies, side safety, and test recipes
 

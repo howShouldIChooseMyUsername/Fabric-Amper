@@ -21,6 +21,7 @@
     "mod": { "$ref": "#/definitions/mod" },
     "minecraft": { "$ref": "#/definitions/minecraft" },
     "settings": { "$ref": "#/definitions/settings" },
+    "architectury": { "$ref": "#/definitions/architectury" },
     "repositories": {
       "type": "array",
       "description": "Dependency-resolution repositories (not Maven publishing destinations).",
@@ -43,6 +44,23 @@
     "publish": { "$ref": "#/definitions/publish" }
   },
   "allOf": [
+    {
+      "description": "Architectury convenience was verified for Fabric Minecraft 26.3 only.",
+      "if": {
+        "required": ["architectury"],
+        "properties": {
+          "architectury": {
+            "anyOf": [
+              { "required": ["enable"], "properties": { "enable": { "const": true } } },
+              { "required": ["enabled"], "properties": { "enabled": { "const": true } } }
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": { "minecraft": { "properties": { "version": { "const": "26.3" } } } }
+      }
+    },
     {
       "description": "The non-remapping Minecraft 26.1+ profile requires Mojang official mappings and Java release 25, including when settings or mappings are omitted and defaulted by the plugin.",
       "if": {
@@ -479,6 +497,41 @@
           }
         }
       }
+    },
+    "architectury": {
+      "type": "object",
+      "description": "Opt-in Architectury API for Fabric Minecraft 26.3. No separate Gradle script, version property, repository or dependency declaration is needed. Does not enable Architectury Loom or create a multiplatform build.",
+      "additionalProperties": false,
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable automatic Architectury Fabric API dependency, repository, and Loader requirement."
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Alias for enable (use only one)."
+        },
+        "version": {
+          "$ref": "#/definitions/fixedGradleVersion",
+          "default": "22.0.5",
+          "examples": ["22.0.5", "22.0.4"],
+          "description": "Optional exact Architectury API version for Minecraft 26.3. When absent and enabled, the fixed audited default is 22.0.5 (verified 2026-11-16), not a dynamic Maven latest lookup."
+        }
+      },
+      "allOf": [
+        { "not": { "required": ["enable", "enabled"] } },
+        {
+          "if": { "required": ["version"] },
+          "then": {
+            "anyOf": [
+              { "required": ["enable"], "properties": { "enable": { "const": true } } },
+              { "required": ["enabled"], "properties": { "enabled": { "const": true } } }
+            ]
+          }
+        }
+      ]
     },
     "repository": {
       "oneOf": [

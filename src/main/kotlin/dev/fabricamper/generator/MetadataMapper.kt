@@ -87,6 +87,10 @@ object MetadataMapper {
         if (model.settings.kotlin.enabled) {
             put("fabric-language-kotlin", ">=${model.settings.kotlin.fabricLanguageKotlin.substringBefore('+')}")
         }
+        if (model.architectury.enabled) {
+            val version = requireNotNull(model.architectury.version) { "Enabled Architectury must have a resolved version" }
+            put("architectury", ">=$version")
+        }
     }
 
     private fun mapEntrypoint(entrypoint: EntrypointSpec): Any {

@@ -14,7 +14,7 @@ rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
 rem helper bytes change; releases must publish the matching verified script.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
 set "FA_MIGRATE_SHA256=b4d1c0d28f48339b69c5d117348f66f85cb038f27cccb2270a27b26904dcd969"
-set "FA_SCHEMA_SHA256=5b909a9d3342c1e62f7e12aabebb376e0ca7d2ddee8befb06f5cec0461c60e46"
+set "FA_SCHEMA_SHA256=5a227b2a6fe3b40ae043949e89f3d6db9428d6b3913754733a94a578d31b70ee"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
