@@ -1,6 +1,6 @@
 # Fabric Amper — 구현 청사진 (`specs.md`)
 
-**원본 설계 기준일:** 2026-11-11. **현재 개발 계약 기준일:** 2026-11-17. **이력 구분:** 기존 §1–§11의 `schema: 1`, `0.1.0`, 최초 구현 전제 및 “아직 검증 없음” 등의 서술은 **당시 설계 기록**이다. 현행 develop 작업트리의 실제 입력·기능 계약은 §12, 특히 §12.1·§12.8·§12.12를 우선한다. **현행 스키마 생략 기본값은 1.1**이며, 과거 v1을 선택하려면 `schema: 1`을 명시해야 한다. 공개 v0.2.0의 사용 계약을 소급 변경하지 않으며, **v0.3.0은 Prime의 검증·출시 승인 전까지 프리릴리즈 예정(미출시)**이다. §12.12.5의 소비자 TestKit PASS를 Minecraft 게임 실행·IntelliJ GUI Sync·출시 완료로 해석하지 않는다.
+**원본 설계 기준일:** 2026-11-11. **현재 개발 계약 기준일:** 2026-11-17. **이력 구분:** 기존 §1–§11의 `schema: 1`, `0.1.0`, 최초 구현 전제 및 “아직 검증 없음” 등의 서술은 **당시 설계 기록**이다. 현행 `main`의 실제 입력·기능 계약은 §12, 특히 §12.1·§12.8·§12.12를 우선한다. **현행 스키마 생략 기본값은 1.1**이며, 과거 v1을 선택하려면 `schema: 1`을 명시해야 한다. 공개 v0.2.0의 사용 계약을 소급 변경하지 않으며, **v0.3.0 GitHub 프리릴리즈는 2026-11-17에 게시되었고, 9개 자산 해시와 JitPack 공개 소비자 빌드가 검증되었다.** §12.12.5의 소비자 TestKit 및 공개 JitPack 빌드 PASS를 Minecraft 게임 실행·IntelliJ GUI Sync·전체 출하 승인으로 해석하지 않는다.
 
 ## 1. 사용자 계약·기술적 사실
 
@@ -613,15 +613,15 @@ fabric-amper-plugin/
 
 ## 12. NeoForge 확장 — YAML 스키마 **1.1** (2026-11-17, 작업트리 구현·일부 소비자 검증)
 
-> **상태(2026-11-17): 현행 develop의 스키마 생략 기본값은 1.1로 변경, v0.3.0 프리릴리즈는 검증·발행 전 예정 상태.** 최신 작업트리에는 NeoForge 백엔드 구현과 실제 소비자 TestKit·전체 오프라인 빌드 PASS 범위가 있으나 **실제 게임 런타임/GUI 미검증**이다. 이 절은 NeoForge 지원 도입을 위한 **스키마 계약과 구현·검증 범위 기록**이다. 기존 1–11절의 Fabric 중심 설명과 `schema: 1` 예시는 **명시적 v1 계약·과거 설계 이력**으로 보존한다. Prime은 Minecraft 26.3/ModDevGradle 2.0.148 NeoForge 단독 빌드·CC, Fabric/NeoForge 독립 및 Architectury 공유 Java/Kotlin 소비자 빌드, NeoForge-only Architectury Java/Kotlin TestKit, 스키마 1.1 클라이언트 단위 테스트, BAT 실행 선택 가짜 Gradle 스모크를 확인했다. **추가 확인:** 작업트리 `clean build validatePlugins --offline` **PASS(총 364개: 307 PASS, 57 SKIP, 실패/오류 0)**, dual Architectury·두 방향의 API/mod 혼용·dual API 실제 TestKit **4 PASS**, Fabric 전용 commons-lang3 JIJ 격리 **PASS**, 공통 저장소 ProjectBuilder **2 PASS**, `product` 배열 재정렬 JAR 안정성·CC의 **워밍 이후 HIT PASS**가 기록됐다. 단, `:common` JAR 최초 생성으로 **콜드 두 번째 실행에 1회 MISS**가 있어 엄격한 즉시 HIT 조건은 **미충족**이다(§12.9, §12.12.5). **공개 v0.2.0 릴리스에 NeoForge 지원이 포함됐다는 뜻이 아니며**, v0.3.0 프리릴리즈 게시, 공개 JitPack 배포·실제 Minecraft client/server 실행·IntelliJ GUI Reload·전체 NF/G 게이트는 아직 완료되지 않았다. 이 문서 작업 자체에서는 Gradle/테스트/게임을 실행하지 않았다. 최신 초기화·BAT 실행 선택 계약은 §12.12를 우선한다.
+> **상태(2026-11-17): 현행 main의 스키마 생략 기본값은 1.1, v0.3.0 GitHub 프리릴리즈 게시 및 공개 JitPack 소비자 빌드 검증 완료.** NeoForge 백엔드와 실제 소비자 TestKit·전체 오프라인 빌드 PASS가 있지만 **실제 게임 런타임/GUI 미검증**이다. 이 절은 NeoForge 지원 도입을 위한 **스키마 계약과 구현·검증 범위 기록**이다. 기존 1–11절의 Fabric 중심 설명과 `schema: 1` 예시는 **명시적 v1 계약·과거 설계 이력**으로 보존한다. Prime은 Minecraft 26.3/ModDevGradle 2.0.148 NeoForge 단독 빌드·CC, Fabric/NeoForge 독립 및 Architectury 공유 Java/Kotlin 소비자 빌드, NeoForge-only Architectury Java/Kotlin TestKit, 스키마 1.1 클라이언트 단위 테스트, BAT 실행 선택 가짜 Gradle 스모크를 확인했다. **당시 추가 확인:** 작업트리 `clean build validatePlugins --offline` **PASS(총 364개: 307 PASS, 57 SKIP, 실패/오류 0)**, dual Architectury·두 방향의 API/mod 혼용·dual API 실제 TestKit **4 PASS**, Fabric 전용 commons-lang3 JIJ 격리 **PASS**, 공통 저장소 ProjectBuilder **2 PASS**, `product` 배열 재정렬 JAR 안정성·CC의 **워밍 이후 HIT PASS**가 기록됐다. 단, `:common` JAR 최초 생성으로 **콜드 두 번째 실행에 1회 MISS**가 있어 엄격한 즉시 HIT 조건은 **미충족**이다(§12.9, §12.12.5). **공개 v0.2.0 릴리스에 NeoForge 지원이 포함됐다는 뜻이 아니다.** 이후 v0.3.0 릴리즈 9개 자산을 원격 재다운로드·SHA-256 검증하고, JitPack status `ok` 및 새 NeoForge+Architectury+Kotlin 소비자 `help`·검증·빌드·JAR 검증 PASS를 확인했다. 실제 Minecraft client/server 실행·IntelliJ GUI Reload·전체 NF/G 게이트는 아직 완료되지 않았다. 이 문서 상태 갱신 자체에서는 Gradle/테스트/게임을 실행하지 않았다. 최신 초기화·BAT 실행 선택 계약은 §12.12를 우선한다.
 
-**후속 릴리스 후보 실제 재검증(Prime, 2026-11-17):** 위의 364건은 앞선 작업트리 기준으로 보존하며, 이후 스키마 생략 기본값 1.1·문서 YAML 예제 정합성·Windows dual `build`/`validate`/`verify` 명령 분기 변경을 포함해 Gradle 9.7.1/JDK25 `clean build validatePlugins --offline` **371 tests = 314 PASS, 57 SKIP, 0 FAIL/ERROR / BUILD SUCCESSFUL**. BAT 초기화 4개 조합 실실행 스모크와 fake-Gradle 명령 라우팅 테스트는 통과했지만, 실제 Minecraft 게임 실행이나 공개 JitPack 원격 다운로드의 수락 증거는 아니다.
+**후속 릴리스 후보 실제 재검증(Prime, 2026-11-17):** 위의 364건은 앞선 작업트리 기준으로 보존하며, 이후 스키마 생략 기본값 1.1·문서 YAML 예제 정합성·Windows dual `build`/`validate`/`verify` 명령 분기 변경을 포함해 Gradle 9.7.1/JDK25 `clean build validatePlugins --offline` **371 tests = 314 PASS, 57 SKIP, 0 FAIL/ERROR / BUILD SUCCESSFUL**. BAT 초기화 4개 조합 실실행 스모크와 fake-Gradle 명령 라우팅 테스트를 통과했다. 이 소스 검증만으로 공개 다운로드/게임 실행이 입증되지는 않았지만, **그 후 별도의 GitHub Release 자산 검증과 JitPack 원격 소비자 빌드 검증은 성공**했다(§41, QA_REPORT.md). Minecraft 게임 실행은 여전히 미검증이다.
 
 ### 12.1. 제품 목표와 스키마 버전 정책
 
 1. 기존의 가장 중요한 조건인 **소비자 `settings.gradle.kts` + `mod.yaml`/`mod.yml`만으로 개발·빌드·실행**을 NeoForge 단독 모드에도 적용한다. 소비자가 `build.gradle(.kts)`, 수동 `fabric.mod.json`, 수동 `META-INF/neoforge.mods.toml`, 추가 로더 Gradle 속성을 작성하도록 요구하지 않는다. Java/Kotlin 소스와 실제 에셋은 개발자가 작성한다.
-2. **현행 develop 기본 스키마는 1.1이다.** 루트 `mod.yaml` 또는 `mod.yml`에서 **`schema`가 없으면 문자열 `schema: "1.1"`을 명시한 것과 같은 파서·검증 경로**로 정규화한다. 명시적 `schema: "1.1"` 역시 1.1이고, **`schema: 1`(정수)을 명시한 입력만 역사적 Fabric v1**로 해석한다. `schema: 1.1`처럼 **따옴표 없는 소수**, `schema: null`, 지원되지 않는 다른 버전은 FA003으로 거부한다. **기존에 스키마를 생략한 채 v1의 `minecraft.loader`·`mod.entrypoints` 등 레거시 형식을 사용한 문서는 더 이상 조용히 v1로 폴백하지 않으며 FA003으로 실패한다.** 마이그레이션하려면 레거시 문서에 `schema: 1`을 명시하거나, 1.1 공통/`fabric:`/`neoforge:` 필드 배치로 변경한다. 이것은 **개발 작업트리의 새 계약**이며 공개 v0.2.0과 구분한다.
-3. **v1.1 `product` 타입은 `string | string[]`이다.** 단일 대상은 `product: fabric/mod`, `product: neoforge/mod`처럼 기존 문자열 문법을 유지하고, 여러 대상은 `product: [fabric/mod, neoforge/mod]`처럼 **배열을 하나의 YAML에서 선언**한다. `product: [fabric/api, neoforge/api]`와 **서로 다른 로더의 `api`/`mod` 혼용**(`[fabric/api, neoforge/mod]`, 반대 조합 포함)도 설계상 지원한다. 기존 `fabric/api`·`fabric/library`(동의어) v1 계약은 유지하고, `neoforge/api`는 **새로 구현·검증해야 할 v1.1 대상 종류**로 추가한다. 세부 정규화·출력·API 게시 제약은 **12.11절**의 계약을 따른다. 현재 배포된 플러그인이 이를 이미 지원한다고 주장하지 않는다.
+2. **공개 v0.3.0 기본 스키마는 1.1이다.** 루트 `mod.yaml` 또는 `mod.yml`에서 **`schema`가 없으면 문자열 `schema: "1.1"`을 명시한 것과 같은 파서·검증 경로**로 정규화한다. 명시적 `schema: "1.1"` 역시 1.1이고, **`schema: 1`(정수)을 명시한 입력만 역사적 Fabric v1**로 해석한다. `schema: 1.1`처럼 **따옴표 없는 소수**, `schema: null`, 지원되지 않는 다른 버전은 FA003으로 거부한다. **기존에 스키마를 생략한 채 v1의 `minecraft.loader`·`mod.entrypoints` 등 레거시 형식을 사용한 문서는 더 이상 조용히 v1로 폴백하지 않으며 FA003으로 실패한다.** 마이그레이션하려면 레거시 문서에 `schema: 1`을 명시하거나, 1.1 공통/`fabric:`/`neoforge:` 필드 배치로 변경한다. 이것은 **공개 v0.3.0의 새 계약**이며 공개 v0.2.0과 구분한다.
+3. **v1.1 `product` 타입은 `string | string[]`이다.** 단일 대상은 `product: fabric/mod`, `product: neoforge/mod`처럼 기존 문자열 문법을 유지하고, 여러 대상은 `product: [fabric/mod, neoforge/mod]`처럼 **배열을 하나의 YAML에서 선언**한다. `product: [fabric/api, neoforge/api]`와 **서로 다른 로더의 `api`/`mod` 혼용**(`[fabric/api, neoforge/mod]`, 반대 조합 포함)도 지원한다. 기존 `fabric/api`·`fabric/library`(동의어) v1 계약은 유지하고, `neoforge/api`는 **v0.3.0에서 실제 TestKit 검증된 v1.1 대상 종류**로 추가한다. 세부 정규화·출력·API 게시 제약은 **12.11절**의 계약을 따른다. 선택 소비자 빌드 PASS가 모든 원격 게시나 게임 런타임 승인을 뜻하지는 않는다.
 4. **공통 필드는 계속 루트에, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`에 둔다.** 단일/배열 모두 동일한 이름공간을 사용한다. 단일 대상에서 선택하지 않은 로더 블록은 거부하되, **배열이 두 로더를 모두 선택했다면 두 블록을 모두 사용할 수 있다**. 선택 로더 고유의 루트 레거시 키를 혼합하면 조용히 무시하지 않고 위치가 있는 진단으로 거부한다. `architectury:`는 **공통 의도 선언**으로 남기되 각 타깃에 다른 실제 아티팩트를 연결한다.
 5. **하나의 YAML → 정규화된 하나 이상의 로더별 타깃 → 타깃별 독립 최종 JAR**로 확장한다. 단일 문자열과 1개짜리 배열은 한 로더 JAR을 만드는 동일 의미다. **최종 초기화 요구(12.12절)**에 따라 다중 타깃 중 `architectury.enable: true`인 경우에는 공유 `:common`과 `:fabric`·`:neoforge`를 생성하고, `false`인 경우에는 서로 독립된 `:fabric`·`:neoforge`를 생성하며 `:common`을 요구하지 않는다. 사용자에게 하위 프로젝트 `build.gradle(.kts)` 작성은 요구하지 않는다. Architectury API 의존성 활성화와 소스 공유·멀티로더 빌드의 실제 구현은 별도 NF 게이트로 검증한다.
 
@@ -634,7 +634,7 @@ fabric-amper-plugin/
 | `schema: 1` | **v1(명시)** — 기존 단일 Fabric 계약 | **허용**, 기존 형태·의미 보존 |
 | `schema: 1.1`, `schema: null`, 기타 미지원 버전 | **FA003 거부** | 조용한 기본값 대체 금지 |
 
-이 결정은 이전 버전에서 스키마를 생략했던 Fabric 소비자에게 **소스 호환 변경**이다. 구형 키를 유지할 경우 `schema: 1`을 추가해 기존 의미를 고정한다. 새 1.1 문서는 schema 필드를 생략해도 되지만 배포 템플릿에는 식별 편의를 위해 `schema: "1.1"`을 명시할 수 있다. 파서 동작과 JSON Schema/BAT 핀의 동치 여부는 v0.3.0 프리릴리즈 게이트에서 별도 검증한다.
+이 결정은 이전 버전에서 스키마를 생략했던 Fabric 소비자에게 **소스 호환 변경**이다. 구형 키를 유지할 경우 `schema: 1`을 추가해 기존 의미를 고정한다. 새 1.1 문서는 schema 필드를 생략해도 되지만 배포 템플릿에는 식별 편의를 위해 `schema: "1.1"`을 명시할 수 있다. **v0.3.0 공개 프리릴리즈에서 파서 기본값·JSON Schema·BAT 핀은 별도 회귀 및 배포 자산 해시 검증을 통과**했다.
 
 ### 12.2. 공식 자료에서 확인한 전제와 버전 후보
 
@@ -672,7 +672,7 @@ fabric-amper-plugin/
 | `neoforge.mixins/accessTransformers` | `[[mixins]]`, `[[accessTransformers]]` 및 실제 리소스 | Fabric classTweaker/AccessWidener를 NeoForge access transformer로 변환하지 않음 |
 | `neoforge.logoFile/displayURL/issueTrackerURL/credits/updateJSONURL/modProperties/features` | NeoForge TOML에서 의미가 다른 표시·부가 메타데이터 | 공통 `mod`에 이름만 같은 JSON 필드를 무리하게 합치지 않음 |
 
-**이 표는 원래 목표 API로 작성됐으나 2026-11-17 develop의 1.1 파서·검증기에서 핵심 이름공간과 대상 분기가 구현됐다.** 모든 필드의 런타임·IDE 검증이나 v0.3.0 출하가 끝났다는 뜻은 아니다. 표에서 이동하지 않은 공통 키까지 강제로 한쪽 블록에 밀어 넣지 않는다. 예를 들어 Maven 배포 주소와 JUnit은 특정 모드 로더에 종속되지 않는다.
+**이 표는 원래 목표 API로 작성됐으나 2026-11-17 공개 v0.3.0의 1.1 파서·검증기에서 핵심 이름공간과 대상 분기가 구현됐다.** 공개 프리릴리즈 배포는 완료됐으나 모든 필드의 게임 런타임·IDE 또는 전체 출하 게이트 검증까지 끝났다는 뜻은 아니다. 표에서 이동하지 않은 공통 키까지 강제로 한쪽 블록에 밀어 넣지 않는다. 예를 들어 Maven 배포 주소와 JUnit은 특정 모드 로더에 종속되지 않는다.
 
 ### 12.4. 목표 YAML 예시 (실행 예제가 아닌 설계 초안)
 
@@ -1162,7 +1162,7 @@ test-dependencies: []
 | 다중 타깃의 중립 `:common` 저장소 전달 | **PASS — ProjectBuilder 2 tests**, Maven Central 및 중립 저장소 구성 검사 | 외부 저장소 실제 다운로드나 모든 커스텀 Maven 규칙 미검증 |
 | `product` 순서 교체·다중 타깃 구성 캐시 | **PASS — 수정된 TestKit 3m54s**; 순서 교체 뒤 JAR 안정, 동일 세 번째 실행 CC HIT | 최초 `:common` JAR materialization으로 **콜드 두 번째 실행 1회 MISS**. **엄격한 즉시 두 번째 HIT 계약 NOT MET**; steady-state HIT만 확인 |
 
-**개발 버전 핀·프리릴리즈 주의:** 이 PASS는 테스트 당시 작업트리에서 사용된 **Minecraft 26.3 / MDG 2.0.148** 등의 조합에 한정된다. NeoForge 버전 예시 `26.3.0.101`은 설계 초기 핀 후보이며, 모든 fixture가 해당 버전을 썼거나 더 최신 버전과 호환된다는 뜻이 아니다. BAT가 생성한 JitPack/Settings 플러그인 참조·스키마 체크섬·실제 작업트리의 구현 버전은 서로 일치해야 한다. **v0.3.0은 현 시점 Prime의 최종 검증·게시 전인 프리릴리즈 계획 버전이지 업로드 완료된 배포물이 아니다.** 이 변경은 **공개 v0.2.0에 NeoForge 지원 또는 새 생략 스키마 정책을 소급 추가하지 않는다.** 실제 공식 출하 전 별도 버전 핀·소비자 새 설치·통합 릴리스 시험이 필요하다.
+**개발 버전 핀·프리릴리즈 주의:** 이 PASS는 테스트 당시 작업트리에서 사용된 **Minecraft 26.3 / MDG 2.0.148** 등의 조합에 한정된다. NeoForge 버전 예시 `26.3.0.101`은 설계 초기 핀 후보이며, 모든 fixture가 해당 버전을 썼거나 더 최신 버전과 호환된다는 뜻이 아니다. BAT가 생성한 JitPack/Settings 플러그인 참조·스키마 체크섬·실제 작업트리의 구현 버전은 서로 일치해야 한다. **v0.3.0은 2026-11-17에 이미 공개된 GitHub 프리릴리즈**로, 9개 릴리즈 자산 SHA-256 및 JitPack 원격 NeoForge+Architectury+Kotlin 새 소비자 빌드 PASS까지 확인했다. 이 변경은 **공개 v0.2.0에 NeoForge 지원 또는 새 생략 스키마 정책을 소급 추가하지 않는다.** 실제 게임/IDE·전체 게이트·엄격한 콜드 구성 캐시는 별도 검증이 필요하다.
 
 다음 표는 **이미 통과한 fixture를 포함하되 전체로는 여전히 완료되지 않은** 계약이다. 특정 PASS를 전체 행 또는 NF1–NF26/G1–G30 통과 판정으로 확대하지 않는다.
 
@@ -1179,7 +1179,7 @@ test-dependencies: []
 
 **이전 코드 스냅샷과 후속 통합의 구분:** §12.12 최초 문서 작성 시점에는 BAT의 Fabric-only `schema` 정책, dual non-Architectury `common/` 생성, NeoForge-only split 처리 및 Settings 멀티프로젝트 구현을 미확인·불일치 가능 사항으로 적었다. 이후 Prime의 **dual 독립 Java, dual Architectury 공통 Java, BAT Kotlin dual 독립+split, BAT Kotlin dual Architectury+split 무시의 실제 빌드 PASS**는 해당 테스트 fixture의 소스 경로와 로더별 프로젝트 구성이 작동한다는 증거다. 하지만 **기존 Fabric-only 기본 초기화, NeoForge-only split 오류 정책, 모든 조합의 정확한 생성 파일 목록과 아카이브 바이트 결정성**을 이 결과만으로 모두 검증했다고 단정하지 않는다. 최종 계약은 12.12.1–12.12.4절이며 나머지 세부 동작은 후속 QA/수락 시험에서 명시적으로 닫는다.
 
-**기존 여섯 빌드 fixture 및 NeoForge-only Architectury Java/Kotlin TestKit 2건은 각각 PASS**이며, 추가 dual Architectury·hybrid·dual API TestKit 4건, Fabric 전용 JIJ 격리, 중립 common 저장소 ProjectBuilder 2건, product 재정렬 및 워밍 후 CC HIT도 해당 범위에서 PASS다. 작업트리 전체 오프라인 clean/build/플러그인 검증 **364 tests = 307 PASS + 57 SKIP + 실패·오류 0**. 스키마 1.1 client 단위 테스트 8개와 BAT 가짜 Gradle 스모크도 이전 증거로 유지한다. **콜드 두 번째 실행 CC HIT는 1회 MISS로 엄격한 기준 NOT MET**이므로 워밍 후 세 번째 HIT와 혼동하지 않는다. 나머지 계약은 **추가 TestKit·실제 게임 실행·IDE GUI로 증명할 목표**다. 기존 §12.9의 NF1–NF26 및 기존 Fabric G1–G30은 계속 유효하다. 특히 `mod.yml` 동치, 완전한 모든 플래그·제품 조합, 실제 런타임·공개 JitPack 배포/원격 게시 성공은 확인된 빌드 PASS와 구별하며 **검증 전에 출하 완료라고 기록하지 않는다**.
+**기존 여섯 빌드 fixture 및 NeoForge-only Architectury Java/Kotlin TestKit 2건은 각각 PASS**이며, 추가 dual Architectury·hybrid·dual API TestKit 4건, Fabric 전용 JIJ 격리, 중립 common 저장소 ProjectBuilder 2건, product 재정렬 및 워밍 후 CC HIT도 해당 범위에서 PASS다. 당시 작업트리 전체 오프라인 clean/build/플러그인 검증 **364 tests = 307 PASS + 57 SKIP + 실패·오류 0**(이후 후보 전체 **371 = 314 PASS + 57 SKIP**). 스키마 1.1 client 단위 테스트 8개와 BAT 가짜 Gradle 스모크도 이전 증거로 유지한다. **콜드 두 번째 실행 CC HIT는 1회 MISS로 엄격한 기준 NOT MET**이므로 워밍 후 세 번째 HIT와 혼동하지 않는다. 나머지 계약은 **추가 TestKit·실제 게임 실행·IDE GUI로 증명할 목표**다. 기존 §12.9의 NF1–NF26 및 기존 Fabric G1–G30은 계속 유효하다. 특히 `mod.yml` 동치와 완전한 모든 플래그·제품 조합, 실제 게임 런타임 및 인증된 외부 게시 성공은 확인된 공개 JitPack 소비자 빌드 PASS와 구별하며 **전체 게이트 승인 전 출하 완료라고 기록하지 않는다**.
 
 #### 12.12.6. Windows BAT `run`·`server`의 명시적 로더 선택 (구현·가짜 Gradle 스모크 PASS)
 
