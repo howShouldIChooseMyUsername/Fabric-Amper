@@ -24,11 +24,80 @@ data class ModYamlModel(
     val publish: PublishSpec? = null,
     /** Optional Fabric Architectury API convenience switch. */
     val architectury: ArchitecturySpec = ArchitecturySpec(),
+    /** Exact authoring schema token. Kept separate from the v1 Int ABI. */
+    val schemaVersion: String = "1",
+    /** Normalized in stable loader order; never inferred from a declared dependency. */
+    val targets: List<LoaderTargetSpec> = listOf(LoaderTargetSpec("fabric", if (product == "fabric/api" || product == "fabric/library") "api" else "mod")),
+    /** Present only when a schema 1.1 Fabric target is selected. */
+    val fabric: FabricSpec? = null,
+    /** Present only when a schema 1.1 NeoForge target is selected. */
+    val neoforge: NeoForgeSpec? = null,
 ) {
     val modId: String get() = mod.id
+    val isMultiLoader: Boolean get() = targets.size > 1
 }
 
-/** Latest schema recognized by this binary. An omitted YAML schema selects it. */
+/** The loader is a build backend; kind describes the artifact/public API contract. */
+data class LoaderTargetSpec(val loader: String, val kind: String) {
+    val product: String get() = "$loader/$kind"
+}
+
+/** All Fabric-only v1.1 fields; legacy v1 fields remain available through mod/minecraft/settings. */
+data class FabricSpec(
+    val loader: String,
+    val api: String? = null,
+    val mappings: MappingSpec = MappingSpec(),
+    val environment: String = "*",
+    val entrypoints: Map<String, List<EntrypointSpec>> = emptyMap(),
+    val languageAdapters: Map<String, String> = emptyMap(),
+    val mixins: List<MixinSpec> = emptyList(),
+    val accessWidener: String? = null,
+    val provides: List<String> = emptyList(),
+    val depends: Map<String, Any> = emptyMap(),
+    val recommends: Map<String, Any> = emptyMap(),
+    val suggests: Map<String, Any> = emptyMap(),
+    val conflicts: Map<String, Any> = emptyMap(),
+    val breaks: Map<String, Any> = emptyMap(),
+    val custom: Map<String, Any?> = emptyMap(),
+    val icon: Any? = null,
+    val loom: LoomSettings = LoomSettings(),
+    val kotlin: FabricKotlinSpec = FabricKotlinSpec(),
+    val resources: ResourceSettings = ResourceSettings(),
+    val gradleDependencies: List<DependencySpec> = emptyList(),
+    val repositories: List<RepositorySpec> = emptyList(),
+)
+
+data class FabricKotlinSpec(val fabricLanguageKotlin: String = "1.14.2+kotlin.2.4.21")
+
+/** NeoForge metadata is not encoded as Fabric Loader predicates or JSON. */
+data class NeoForgeSpec(
+    val version: String,
+    val modLoader: String = "javafml",
+    val loaderVersion: String = "[1,)",
+    val dependencies: List<NeoForgeDependencySpec> = emptyList(),
+    val mixins: List<String> = emptyList(),
+    val accessTransformers: List<String> = emptyList(),
+    val logoFile: String? = null,
+    val displayURL: String? = null,
+    val issueTrackerURL: String? = null,
+    val credits: String? = null,
+    val updateJSONURL: String? = null,
+    val modProperties: Map<String, String> = emptyMap(),
+    val features: Map<String, String> = emptyMap(),
+    val gradleDependencies: List<DependencySpec> = emptyList(),
+    val repositories: List<RepositorySpec> = emptyList(),
+)
+
+data class NeoForgeDependencySpec(
+    val modId: String,
+    val type: String = "required",
+    val versionRange: String = "",
+    val ordering: String = "NONE",
+    val side: String = "BOTH",
+    val reason: String? = null,
+)
+
+/** Legacy integer schema ABI. Omitted YAML schema selects the v1.1 decoder directly. */
 object FabricAmperSchemaVersion {
     const val LATEST: Int = 1
 }

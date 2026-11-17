@@ -14,7 +14,7 @@ class PublishCommonAndSchemaFallbackUnitTest {
     @TempDir lateinit var project: Path
 
     private fun load(input: String) = ModYamlLoader.load(YamlFixtures.write(project, input))
-    private fun base() = YamlFixtures.valid.replace("schema: 1\n", "")
+    private fun base() = YamlFixtures.valid
     private fun publishing() = base() + """
         publish:
           common:
@@ -38,7 +38,7 @@ class PublishCommonAndSchemaFallbackUnitTest {
     """.trimIndent() + "\n"
 
     @Test
-    fun defaultAndExplicitSchema() {
+    fun explicitLegacySchemaAndInvalidVersionTokens() {
         assertEquals(1, FabricAmperSchemaVersion.LATEST)
         assertEquals(1, load(base()).schema)
         assertEquals(1, load(YamlFixtures.valid).schema)

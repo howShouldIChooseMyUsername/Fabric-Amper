@@ -1,4 +1,4 @@
-# Fabric Amper v0.2.0 migration helper. Called by fabric-amper.bat with
+# Fabric Amper v0.3.0 migration helper. Called by fabric-amper.bat with
 # FA_CONSUMER, FA_ROOT and FA_VERSION. PowerShell 5.1 and 7 compatible.
 # This is a static converter: source Gradle scripts are never evaluated.
 [CmdletBinding()]
@@ -1026,8 +1026,8 @@ function Migrate-Project {
         }
         $rootCursor = $rootCursor.Parent
     }
-    $version = if ($env:FA_VERSION) { $env:FA_VERSION } else { '0.2.0' }
-    if ($version -cnotmatch '^0\.2\.0$') { Fail "Unexpected helper version '$version'; this engine requires Fabric Amper 0.2.0." }
+    $version = if ($env:FA_VERSION) { $env:FA_VERSION } else { '0.3.0' }
+    if ($version -cnotmatch '^0\.3\.0$') { Fail "Unexpected helper version '$version'; this engine requires Fabric Amper 0.3.0." }
     if (-not $env:FA_ROOT -or -not (Test-Path -LiteralPath (Join-Path $env:FA_ROOT 'fabric-amper.schema.json') -PathType Leaf)) {
         Fail 'FA_ROOT must point to a Fabric Amper producer folder with fabric-amper.schema.json.'
     }

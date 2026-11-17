@@ -15,8 +15,9 @@ import java.nio.charset.StandardCharsets
 object MetadataMapper {
     @JvmStatic
     fun toJson(model: ModYamlModel): String {
-        ValidateFabricAmper.validate(model)
-        val mod = model.mod
+        val fabricModel = FabricV11Projection.fromModel(model)
+        ValidateFabricAmper.validate(fabricModel)
+        val mod = fabricModel.mod
         val fields = linkedMapOf<String, Any?>(
             "schemaVersion" to 1,
             "id" to mod.id,
@@ -42,7 +43,7 @@ object MetadataMapper {
         if (mod.mixins.isNotEmpty()) fields["mixins"] = mod.mixins.map(::mapMixin)
         mod.accessWidener?.let { fields["accessWidener"] = it }
 
-        fields["depends"] = resolvedDepends(model)
+        fields["depends"] = resolvedDepends(fabricModel)
         if (mod.recommends.isNotEmpty()) fields["recommends"] = mod.recommends
         if (mod.suggests.isNotEmpty()) fields["suggests"] = mod.suggests
         if (mod.conflicts.isNotEmpty()) fields["conflicts"] = mod.conflicts
@@ -59,9 +60,10 @@ object MetadataMapper {
     /** Values from mod.depends always win; a missing key gets a profile default. */
     @JvmStatic
     fun resolvedDepends(model: ModYamlModel): Map<String, Any> {
+        val projected = FabricV11Projection.fromModel(model)
         val result = linkedMapOf<String, Any>()
-        result.putAll(model.mod.depends)
-        for ((id, requirement) in generatedRequirements(model)) {
+        result.putAll(projected.mod.depends)
+        for ((id, requirement) in generatedRequirements(projected)) {
             result.putIfAbsent(id, requirement)
         }
         return result
@@ -70,7 +72,7 @@ object MetadataMapper {
     /** Exact user/generated origin retained by the config decoder. */
     @JvmStatic
     fun dependencyOrigins(model: ModYamlModel): Map<String, String> =
-        dependencyOrigins(model, model.authoredDependsKeys)
+        dependencyOrigins(model, FabricV11Projection.fromModel(model).authoredDependsKeys)
 
     /** Exact provenance when a strict YAML decoder supplies the authored keys. */
     @JvmStatic

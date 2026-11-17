@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 @EnabledOnOs(OS.WINDOWS)
 class FabricAmperInitSchemaUnitTest {
     @Test
-    fun `init copies current producer schema and omits pinned YAML schema for mod and api`() {
+    fun `init copies current producer schema and explicitly pins legacy Fabric starter for mod and api`() {
         val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val batch = producer.resolve("fabric-amper.bat")
         val originalSchema = Files.readAllBytes(producer.resolve("fabric-amper.schema.json"))
@@ -46,7 +46,9 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals(FabricAmperSchemaVersion.LATEST, effective.schema)
             assertEquals("fabric/$profile", effective.product)
             assertEquals(id, effective.mod.id)
-            assertFalse(Regex("(?m)^schema:").containsMatchIn(yaml), "init must not pin schema: 1")
+            assertTrue(Regex("(?m)^schema: 1$").containsMatchIn(yaml),
+                "legacy Fabric starter must pin schema: 1 now that omission means schema 1.1")
+            assertEquals("1", effective.schemaVersion)
             assertArrayEquals(originalSchema, Files.readAllBytes(consumer.resolve("schemas/mod.schema.json")))
             assertTrue(Files.isRegularFile(consumer.resolve(".vscode/settings.json")))
             assertTrue(
@@ -61,8 +63,8 @@ class FabricAmperInitSchemaUnitTest {
             assertTrue(settings.contains("mavenCentral()"))
             assertTrue(settings.contains("resolutionStrategy {"))
             assertTrue(settings.contains("if (requested.id.id == \"dev.fabric-amper.settings\") {"))
-            assertTrue(settings.contains("useModule(\"com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0\")"))
-            assertTrue(settings.contains("id(\"dev.fabric-amper.settings\") version \"0.2.0\""))
+            assertTrue(settings.contains("useModule(\"com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0\")"))
+            assertTrue(settings.contains("id(\"dev.fabric-amper.settings\") version \"0.3.0\""))
             assertFalse(settings.contains("build/g29-probe"), "init must not rely on local Maven setup")
             assertFalse(settings.contains("https://fabricmc.net\""), "Fabric Maven requires maven.fabricmc.net")
             assertTrue(Files.isRegularFile(consumer.resolve("src/main/java/org/example/ExampleMod.java")))
@@ -351,7 +353,7 @@ class FabricAmperInitSchemaUnitTest {
         ).directory(root.toFile()).redirectErrorStream(true)
         powershell.environment()["FA_ROOT"] = root.toString()
         powershell.environment()["FA_CONSUMER"] = folder.toString()
-        powershell.environment()["FA_VERSION"] = "0.2.0"
+        powershell.environment()["FA_VERSION"] = "0.3.0"
         val process = powershell.start()
         assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Forced-missing preview must not start a download")
         val output = process.inputStream.bufferedReader().readText()
@@ -420,7 +422,7 @@ class FabricAmperInitSchemaUnitTest {
         val missingPreview = runBat(batch, "doctor --fix --dry-run")
         assertEquals(0, missingPreview.first, "Missing helper must preview without fetching: ${missingPreview.second}")
         assertTrue(missingPreview.second.contains("Would fetch exactly fabric-amper-doctor-fix.ps1"))
-        assertTrue(missingPreview.second.contains("/releases/download/v0.2.0/fabric-amper-doctor-fix.ps1"))
+        assertTrue(missingPreview.second.contains("/releases/download/v0.3.0/fabric-amper-doctor-fix.ps1"))
         assertFalse(Files.exists(folder.resolve("scripts/fabric-amper-doctor-fix.ps1")))
         assertEquals(2, runBat(batch, "doctor --fix --unknown").first)
 
@@ -442,15 +444,25 @@ class FabricAmperInitSchemaUnitTest {
         // entire command so an executable path and arguments containing spaces
         // are both preserved when Windows parses them.
         val command = "\"\"$batch\" $args\""
-        val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
-            .directory(batch.parent.toFile())
-            .redirectErrorStream(true)
-            .start()
-        val finished = process.waitFor(30, TimeUnit.SECONDS)
-        if (!finished) {
-            process.destroyForcibly()
-            throw AssertionError("Windows init did not terminate in 30 seconds")
+        // Drain stdout concurrently through an OS file. Waiting for the child
+        // *before* reading its pipe can deadlock if Windows PowerShell/Gradle
+        // emits more diagnostic text than the small process pipe can hold.
+        val output = Files.createTempFile("fabric-amper-init-stdout-", ".log")
+        try {
+            val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
+                .directory(batch.parent.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(output.toFile())
+                .start()
+            val finished = process.waitFor(90, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                throw AssertionError("Windows init did not terminate in 90 seconds; output: " +
+                    Files.readString(output, StandardCharsets.UTF_8).take(4000))
+            }
+            return process.exitValue() to Files.readString(output, StandardCharsets.UTF_8)
+        } finally {
+            Files.deleteIfExists(output)
         }
-        return process.exitValue() to process.inputStream.bufferedReader(StandardCharsets.UTF_8).readText()
     }
 }

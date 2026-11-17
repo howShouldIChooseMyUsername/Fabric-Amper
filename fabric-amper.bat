@@ -5,16 +5,17 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.2.0"
+set "FA_VERSION=0.3.0"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
 set "FA_HELPER_SOURCE=release"
 rem Release-pinned helper downloads always go into the scripts directory.
 set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
-rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
-rem helper bytes change; releases must publish the matching verified script.
+rem Release-pinned helper hashes must match the exact uploaded bytes.
+rem Reusing a helper requires the v0.3.0 release to publish the same verified
+rem bytes; never assume a helper was updated just because FA_VERSION changed.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
-set "FA_MIGRATE_SHA256=36d794b15f89967c439eaa5646428adc22422f6e4b189d602550963de041eb19"
-set "FA_SCHEMA_SHA256=5a227b2a6fe3b40ae043949e89f3d6db9428d6b3913754733a94a578d31b70ee"
+set "FA_MIGRATE_SHA256=68cf6834064ded80dc30ae7f99366de3c284c9cca7c1b8029f12c59343f6313a"
+set "FA_SCHEMA_SHA256=453620efca0115d5b584ddf71c515da1a8908b4c4ce4bc084a82c8d3b9764573"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -73,20 +74,24 @@ echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
-echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury]
-echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury]
+echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
-echo               --kotlin generates ExampleMod.kt and enables Fabric Language Kotlin.
-echo               --splitEnvironmentSourceSets separates common and client sources.
-echo               --architectury enables Fabric Architectury API 22.0.5 and generates API examples.
-echo               With split sources, creates distinct common and client API examples.
-echo               The three optional flags can be combined in any order at the end.
+echo               No loader flag defaults to Fabric; a single flag creates one loader project.
+echo               Both loader flags create fabric/ and neoforge/; --architectury also creates common/.
+echo               --architectury enables per-loader Architectury API and shared examples.
+echo               --kotlin selects Kotlin examples; otherwise Java is used.
+echo               --splitEnvironmentSourceSets creates a Fabric client source set.
+echo               Both loaders with Architectury ignore the split flag.
+echo               Flags can be combined in any order after the optional folder/profile.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
-echo   validate    Gradle validateFabricAmper
-echo   build       Gradle validateFabricAmper, build, verifyFabricAmperJar
-echo   verify      Gradle verifyFabricAmperJar
+echo   validate    Validate every selected loader ^(dual: :fabric and :neoforge^)
+echo   build       Validate, build and verify every selected loader
+echo   verify      Verify every selected loader's distributable JAR
+echo               Dual-loader projects run both platform tasks explicitly.
+echo               No additional Gradle flags are accepted for these commands.
 echo   test        Gradle test
 echo   tasks       Gradle tasks --all
 echo   diagnose    Gradle fabricAmperDoctor for the consumer
@@ -99,8 +104,11 @@ echo               after the migration helper validates all generated outputs.
 echo               The first normal migrate fetches SHA-256 verified helpers into scripts\.
 echo               Missing helpers in --dry-run mode only preview the download.
 echo   clean       Gradle clean
-echo   run         Gradle runClient in the consumer development directory
-echo   server      Gradle runServer; user must review the Minecraft EULA
+echo   run [--mod-fabric^|--mod-neoforge]     Start the selected client.
+echo   server [--mod-fabric^|--mod-neoforge]  Start the selected server; review the Minecraft EULA.
+echo               Dual-loader projects require exactly one loader flag.
+echo               Single-loader projects accept no flag or their matching loader flag.
+echo               Example: fabric-amper.bat -C "consumer_folder" run --mod-neoforge
 echo   publish local^|maven^|modrinth^|curseforge^|all
 echo               Only remote targets ask for typed confirmation.
 echo.
@@ -116,7 +124,7 @@ echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
-echo Generated Settings projects resolve Fabric Amper v0.2.0 from JitPack.
+echo Generated Settings projects target the Fabric Amper v%FA_VERSION% prerelease via JitPack.
 echo Use --project or -C before consumer commands; doctor also accepts them after its name.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -319,8 +327,8 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0
-echo [INFO] Remote JitPack availability is not checked by doctor.
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v%FA_VERSION% ^(prerelease^).
+echo [INFO] Remote JitPack prerelease availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
 if /i "%FA_DOCTOR_MODE%"=="paths" (
@@ -462,17 +470,21 @@ exit /b 0
 
 :init
 if "%~2"=="" (
-    echo ERROR: init requires a lowercase Fabric mod ID.
+    echo ERROR: init requires a lowercase mod ID.
     goto :usageError
 )
 set "FA_INIT_ID=%~2"
 set "FA_INIT_KOTLIN=0"
 set "FA_INIT_SPLIT=0"
 set "FA_INIT_ARCHITECTURY=0"
+set "FA_INIT_FABRIC=0"
+set "FA_INIT_NEOFORGE=0"
+set "FA_INIT_MULTI=0"
+set "FA_INIT_V11=0"
+set "FA_INIT_SPLIT_IGNORED=0"
 set "FA_INIT_ARG3="
 set "FA_INIT_ARG4="
 set "FA_INIT_FLAGS_STARTED=0"
-if not "%~8"=="" goto :initExtraArguments
 call :initParseArgument "%~3"
 if errorlevel 1 exit /b 2
 call :initParseArgument "%~4"
@@ -483,6 +495,23 @@ call :initParseArgument "%~6"
 if errorlevel 1 exit /b 2
 call :initParseArgument "%~7"
 if errorlevel 1 exit /b 2
+call :initParseArgument "%~8"
+if errorlevel 1 exit /b 2
+call :initParseArgument "%~9"
+if errorlevel 1 exit /b 2
+rem Maximal accepted invocation has init + ID + folder + profile + five flags.
+rem All relevant values were copied into FA_INIT_* already. Shift the current
+rem argument frame to reject a tenth token without reparsing arbitrary input.
+shift
+shift
+shift
+shift
+shift
+shift
+shift
+shift
+shift
+if not "%~1"=="" goto :initExtraArguments
 goto :initArgumentsReady
 
 :initParseArgument
@@ -490,6 +519,11 @@ if "%~1"=="" exit /b 0
 if /i "%~1"=="--kotlin" goto :initParseKotlinFlag
 if /i "%~1"=="--splitEnvironmentSourceSets" goto :initParseSplitFlag
 if /i "%~1"=="--architectury" goto :initParseArchitecturyFlag
+if /i "%~1"=="--mod-fabric" goto :initParseFabricFlag
+if /i "%~1"=="--mod-neoforge" goto :initParseNeoForgeFlag
+rem Unknown switches must not silently become an output directory/profile.
+set "FA_INIT_CANDIDATE=%~1"
+if "%FA_INIT_CANDIDATE:~0,1%"=="-" if /i not "%~1"=="--here" goto :initExtraArguments
 if "%FA_INIT_FLAGS_STARTED%"=="1" goto :initExtraArguments
 if not "%FA_INIT_ARG3%"=="" goto :initParseFourthArgument
 set "FA_INIT_ARG3=%~1"
@@ -518,16 +552,46 @@ set "FA_INIT_ARCHITECTURY=1"
 set "FA_INIT_FLAGS_STARTED=1"
 exit /b 0
 
+:initParseFabricFlag
+if "%FA_INIT_FABRIC%"=="1" goto :initExtraArguments
+set "FA_INIT_FABRIC=1"
+set "FA_INIT_FLAGS_STARTED=1"
+exit /b 0
+
+:initParseNeoForgeFlag
+if "%FA_INIT_NEOFORGE%"=="1" goto :initExtraArguments
+set "FA_INIT_NEOFORGE=1"
+set "FA_INIT_FLAGS_STARTED=1"
+exit /b 0
+
 :initExtraArguments
 echo ERROR: init received unexpected, duplicated or misplaced arguments.
-echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--kotlin] [--splitEnvironmentSourceSets] [--architectury].
+echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets].
 exit /b 2
 
 :initArgumentsReady
+if "%FA_INIT_FABRIC%"=="0" if "%FA_INIT_NEOFORGE%"=="0" set "FA_INIT_FABRIC=1"
+if "%FA_INIT_NEOFORGE%"=="1" set "FA_INIT_V11=1"
+if "%FA_INIT_FABRIC%"=="1" if "%FA_INIT_NEOFORGE%"=="1" set "FA_INIT_MULTI=1"
+if "%FA_INIT_NEOFORGE%"=="1" if "%FA_INIT_FABRIC%"=="0" if "%FA_INIT_SPLIT%"=="1" (
+    echo ERROR: --splitEnvironmentSourceSets requires Fabric; NeoForge-only projects have no Loom client source set.
+    exit /b 2
+)
+if "%FA_INIT_MULTI%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" if "%FA_INIT_SPLIT%"=="1" (
+    set "FA_INIT_SPLIT=0"
+    set "FA_INIT_SPLIT_IGNORED=1"
+)
 powershell -NoProfile -NonInteractive -Command "if($env:FA_INIT_ID -cmatch '^[a-z][a-z0-9_-]{1,63}$'){exit 0}else{exit 1}"
 if errorlevel 1 (
     echo ERROR: Mod ID must start with lowercase a-z and be 2-64 chars [a-z0-9_-].
     exit /b 2
+)
+if "%FA_INIT_NEOFORGE%"=="1" (
+    powershell -NoProfile -NonInteractive -Command "if($env:FA_INIT_ID -cmatch '^[a-z][a-z0-9_]{1,63}$'){exit 0}else{exit 1}"
+    if errorlevel 1 (
+        echo ERROR: NeoForge mod IDs must use lowercase a-z, 0-9 and underscore; hyphen is not allowed.
+        exit /b 2
+    )
 )
 set "FA_INIT_HERE=0"
 if /i "%FA_INIT_ARG3%"=="--here" (
@@ -536,7 +600,7 @@ if /i "%FA_INIT_ARG3%"=="--here" (
 ) else (
     if /i "%FA_INIT_ARG4%"=="--here" goto :initInvalidHere
     if not "%FA_INIT_ARG3%"=="" (
-        set "FA_TARGET=%~f3"
+        for %%P in ("%FA_INIT_ARG3%") do set "FA_TARGET=%%~fP"
     ) else (
         if /i "%CD%\"=="%FA_ROOT%" (
             set "FA_TARGET=%FA_ROOT%..\%FA_INIT_ID%"
@@ -547,12 +611,20 @@ if /i "%FA_INIT_ARG3%"=="--here" (
 )
 set "FA_PROFILE=%FA_INIT_ARG4%"
 if not defined FA_PROFILE set "FA_PROFILE=mod"
-if /i "%FA_PROFILE%"=="mod" set "FA_PRODUCT=fabric/mod"
-if /i "%FA_PROFILE%"=="api" set "FA_PRODUCT=fabric/api"
+if /i "%FA_PROFILE%"=="mod" (
+    set "FA_PROFILE=mod"
+    set "FA_PRODUCT=fabric/mod"
+)
+if /i "%FA_PROFILE%"=="api" (
+    set "FA_PROFILE=api"
+    set "FA_PRODUCT=fabric/api"
+)
 if not defined FA_PRODUCT (
     echo ERROR: Profile must be mod or api.
     exit /b 2
 )
+if "%FA_INIT_NEOFORGE%"=="1" if "%FA_INIT_MULTI%"=="0" set "FA_PRODUCT=neoforge/%FA_PROFILE%"
+if "%FA_INIT_MULTI%"=="1" set "FA_PRODUCT=[fabric/%FA_PROFILE%, neoforge/%FA_PROFILE%]"
 if "%FA_INIT_HERE%"=="1" goto :initExistingDirectory
 if exist "%FA_TARGET%" (
     echo ERROR: Target already exists. Refusing to overwrite: "%FA_TARGET%"
@@ -569,16 +641,20 @@ rem Project files are never merged or overwritten by init --here, even when
 rem tool/config files like fabric-amper.bat, markdown or .gitignore exist.
 if exist "%FA_TARGET%\mod.yaml" goto :initConflict
 if exist "%FA_TARGET%\mod.yml" goto :initConflict
+if exist "%FA_TARGET%\settings.gradle" goto :initConflict
 if exist "%FA_TARGET%\settings.gradle.kts" goto :initConflict
 if exist "%FA_TARGET%\build.gradle.kts" goto :initConflict
 if exist "%FA_TARGET%\build.gradle" goto :initConflict
 if exist "%FA_TARGET%\src" goto :initConflict
+if "%FA_INIT_MULTI%"=="1" if exist "%FA_TARGET%\common" goto :initConflict
+if "%FA_INIT_MULTI%"=="1" if exist "%FA_TARGET%\fabric" goto :initConflict
+if "%FA_INIT_MULTI%"=="1" if exist "%FA_TARGET%\neoforge" goto :initConflict
 if exist "%FA_TARGET%\schemas\mod.schema.json" goto :initConflict
 goto :initPreflightDone
 
 :initConflict
 echo ERROR: Existing project files detected. init --here refuses to overwrite or merge them.
-echo        Check mod.yaml, mod.yml, settings.gradle.kts, build.gradle^(.kts^), src and schemas.
+echo        Check mod.yaml, mod.yml, settings.gradle^(.kts^), build.gradle^(.kts^), src, common, fabric, neoforge and schemas.
 exit /b 3
 
 :initInvalidHere
@@ -587,8 +663,8 @@ exit /b 2
 
 :initPreflightDone
 rem Always use the producer's CURRENT schema for editor completion. The YAML
-rem document itself omits schema: N so the plugin selects its latest supported
-rem schema at parse time (currently v1), instead of pinning init's version.
+rem Fabric-only starter uses the legacy field layout and MUST explicitly pin
+rem schema: 1; omitted schema now selects 1.1. NeoForge/dual use schema: "1.1".
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required to verify the init schema.
@@ -615,6 +691,14 @@ if errorlevel 1 (
     echo ERROR: Cannot copy current Fabric Amper schema into new project.
     exit /b 1
 )
+if "%FA_INIT_KOTLIN%"=="1" (
+    set "FA_INIT_SOURCE_LANG=kotlin"
+    set "FA_INIT_SOURCE_EXT=kt"
+) else (
+    set "FA_INIT_SOURCE_LANG=java"
+    set "FA_INIT_SOURCE_EXT=java"
+)
+if "%FA_INIT_MULTI%"=="1" goto :initMultiSourceDirectory
 if "%FA_INIT_KOTLIN%"=="1" goto :initKotlinSourceDirectory
 mkdir "%FA_TARGET%\src\main\java\org\example"
 goto :initSourceDirectoryDone
@@ -640,6 +724,29 @@ goto :initDirectoriesReady
 :initKotlinClientDirectory
 mkdir "%FA_TARGET%\src\client\kotlin\org\example"
 if errorlevel 1 exit /b 1
+goto :initDirectoriesReady
+
+:initMultiSourceDirectory
+if "%FA_INIT_ARCHITECTURY%"=="1" (
+    mkdir "%FA_TARGET%\common\src\main\%FA_INIT_SOURCE_LANG%\org\example"
+    if errorlevel 1 exit /b 1
+    mkdir "%FA_TARGET%\common\src\main\resources"
+    if errorlevel 1 exit /b 1
+)
+mkdir "%FA_TARGET%\fabric\src\main\%FA_INIT_SOURCE_LANG%\org\example"
+if errorlevel 1 exit /b 1
+mkdir "%FA_TARGET%\neoforge\src\main\%FA_INIT_SOURCE_LANG%\org\example"
+if errorlevel 1 exit /b 1
+mkdir "%FA_TARGET%\fabric\src\main\resources"
+if errorlevel 1 exit /b 1
+mkdir "%FA_TARGET%\neoforge\src\main\resources"
+if errorlevel 1 exit /b 1
+if "%FA_INIT_SPLIT%"=="1" (
+    mkdir "%FA_TARGET%\fabric\src\client\%FA_INIT_SOURCE_LANG%\org\example"
+    if errorlevel 1 exit /b 1
+    mkdir "%FA_TARGET%\fabric\src\client\resources"
+    if errorlevel 1 exit /b 1
+)
 
 :initDirectoriesReady
 if not exist "%FA_TARGET%\.vscode\settings.json" (
@@ -660,25 +767,30 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(    repositories {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://jitpack.io")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.fabricmc.net/")
+if "%FA_INIT_NEOFORGE%"=="1" >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.neoforged.net/releases/")
+if "%FA_INIT_V11%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.architectury.dev/")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        gradlePluginPortal()
 >> "%FA_TARGET%\settings.gradle.kts" echo(        mavenCentral()
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
 >> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
->> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.2.0")
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v%FA_VERSION%")
 >> "%FA_TARGET%\settings.gradle.kts" echo(            }
 >> "%FA_TARGET%\settings.gradle.kts" echo(        }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.2.0"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "%FA_VERSION%"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
+if "%FA_INIT_V11%"=="1" goto :initWriteSchema11
 rem New projects default to Java, with explicit --kotlin selecting a Kotlin entrypoint.
-rem Omitted schema selects the newest syntax supported by this plugin (currently v1).
+rem The plugin defaults omitted schema to 1.1. Keep this Fabric-only legacy
+rem starter's existing metadata layout with an explicit schema: 1 instead.
 > "%FA_TARGET%\mod.yaml" echo(# yaml-language-server: $schema=./schemas/mod.schema.json
 >> "%FA_TARGET%\mod.yaml" echo(# $schema: ./schemas/mod.schema.json
+>> "%FA_TARGET%\mod.yaml" echo(schema: 1
 >> "%FA_TARGET%\mod.yaml" echo(product: %FA_PRODUCT%
 >> "%FA_TARGET%\mod.yaml" echo(mod:
 >> "%FA_TARGET%\mod.yaml" echo(  id: %FA_INIT_ID%
@@ -868,11 +980,266 @@ if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).
 if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default, generated usage examples^).
-if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API is supplied by the Fabric Amper v0.2.0 plugin.
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury example targets Fabric Amper v%FA_VERSION% prerelease.
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Settings plugin: JitPack Fabric-Amper v0.2.0 ^(Internet required on first resolution^).
+echo [init] Settings plugin: JitPack Fabric-Amper v%FA_VERSION% prerelease ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.
+exit /b 0
+
+:initWriteSchema11
+rem Schema 1.1 keeps shared identity/settings at the root and isolates Loader
+rem configuration. The Settings plugin, not a consumer build script, owns the
+rem Gradle :common/:fabric/:neoforge project wiring for dual-loader builds.
+if "%FA_INIT_NEOFORGE%"=="1" if "%FA_INIT_MULTI%"=="0" (
+    mkdir "%FA_TARGET%\src\main\resources"
+    if errorlevel 1 exit /b 1
+)
+> "%FA_TARGET%\mod.yaml" echo(# yaml-language-server: $schema=./schemas/mod.schema.json
+>> "%FA_TARGET%\mod.yaml" echo(# $schema: ./schemas/mod.schema.json
+>> "%FA_TARGET%\mod.yaml" echo(schema: "1.1"
+>> "%FA_TARGET%\mod.yaml" echo(product: %FA_PRODUCT%
+>> "%FA_TARGET%\mod.yaml" echo(mod:
+>> "%FA_TARGET%\mod.yaml" echo(  id: %FA_INIT_ID%
+>> "%FA_TARGET%\mod.yaml" echo(  version: "1.0.0+26.3"
+>> "%FA_TARGET%\mod.yaml" echo(  group: org.example
+>> "%FA_TARGET%\mod.yaml" echo(  name: Example Mod
+>> "%FA_TARGET%\mod.yaml" echo(  license: MIT
+>> "%FA_TARGET%\mod.yaml" echo(minecraft:
+>> "%FA_TARGET%\mod.yaml" echo(  version: "26.3"
+>> "%FA_TARGET%\mod.yaml" echo(settings:
+>> "%FA_TARGET%\mod.yaml" echo(  java:
+>> "%FA_TARGET%\mod.yaml" echo(    release: 25
+>> "%FA_TARGET%\mod.yaml" echo(    sourcesJar: true
+>> "%FA_TARGET%\mod.yaml" echo(  kotlin:
+if "%FA_INIT_KOTLIN%"=="1" goto :initV11KotlinEnabled
+>> "%FA_TARGET%\mod.yaml" echo(    enabled: false
+goto :initV11KotlinDone
+
+:initV11KotlinEnabled
+>> "%FA_TARGET%\mod.yaml" echo(    enabled: true
+
+:initV11KotlinDone
+if "%FA_INIT_ARCHITECTURY%"=="1" (
+    >> "%FA_TARGET%\mod.yaml" echo(architectury:
+    >> "%FA_TARGET%\mod.yaml" echo(  enable: true
+    >> "%FA_TARGET%\mod.yaml" echo(  version: "22.0.5"
+)
+if "%FA_INIT_FABRIC%"=="1" goto :initV11FabricYaml
+goto :initV11NeoForgeYaml
+
+:initV11FabricYaml
+>> "%FA_TARGET%\mod.yaml" echo(fabric:
+>> "%FA_TARGET%\mod.yaml" echo(  loader: "0.20.1"
+>> "%FA_TARGET%\mod.yaml" echo(  api: "0.165.2+26.3"
+>> "%FA_TARGET%\mod.yaml" echo(  mappings: mojang
+>> "%FA_TARGET%\mod.yaml" echo(  entrypoints:
+>> "%FA_TARGET%\mod.yaml" echo(    main:
+>> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleFabric
+if "%FA_INIT_SPLIT%"=="1" (
+    >> "%FA_TARGET%\mod.yaml" echo(    client:
+    >> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleFabricClient
+    >> "%FA_TARGET%\mod.yaml" echo(  loom:
+    >> "%FA_TARGET%\mod.yaml" echo(    splitEnvironmentSourceSets: true
+)
+
+:initV11NeoForgeYaml
+>> "%FA_TARGET%\mod.yaml" echo(neoforge:
+>> "%FA_TARGET%\mod.yaml" echo(  version: "26.3.0.101"
+>> "%FA_TARGET%\mod.yaml" echo(  modLoader: javafml
+>> "%FA_TARGET%\mod.yaml" echo(repositories:
+>> "%FA_TARGET%\mod.yaml" echo(  - mavenCentral
+if "%FA_INIT_FABRIC%"=="1" >> "%FA_TARGET%\mod.yaml" echo(  - fabric
+>> "%FA_TARGET%\mod.yaml" echo(  - neoforge
+>> "%FA_TARGET%\mod.yaml" echo(dependencies: []
+if "%FA_INIT_MULTI%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" goto :initV11CommonSource
+if "%FA_INIT_MULTI%"=="1" goto :initV11FabricSource
+goto :initV11NeoForgeSource
+
+:initV11CommonSource
+if "%FA_INIT_KOTLIN%"=="1" goto :initV11KotlinCommonSource
+> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(package org.example;
+if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(import dev.architectury.platform.Platform;
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(public final class ExampleCommon {
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(    private ExampleCommon() {}
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(    public static void initialize() {
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initV11JavaCommonArch
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(        System.out.println("Shared loader-neutral mod logic initialized");
+goto :initV11JavaCommonEnd
+
+:initV11JavaCommonArch
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(        System.out.println("Architectury common on Minecraft " + Platform.getMinecraftVersion());
+
+:initV11JavaCommonEnd
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(    }
+>> "%FA_TARGET%\common\src\main\java\org\example\ExampleCommon.java" echo(}
+goto :initV11FabricSource
+
+:initV11KotlinCommonSource
+> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(package org.example
+if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(import dev.architectury.platform.Platform
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(object ExampleCommon {
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(    fun initialize() {
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initV11KotlinCommonArch
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(        println("Shared loader-neutral mod logic initialized")
+goto :initV11KotlinCommonEnd
+
+:initV11KotlinCommonArch
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(        println("Architectury common on Minecraft " + Platform.getMinecraftVersion())
+
+:initV11KotlinCommonEnd
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(    }
+>> "%FA_TARGET%\common\src\main\kotlin\org\example\ExampleCommon.kt" echo(}
+
+:initV11FabricSource
+if "%FA_INIT_KOTLIN%"=="1" goto :initV11KotlinFabricSource
+> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(package org.example;
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(import net.fabricmc.api.ModInitializer;
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(public final class ExampleFabric implements ModInitializer {
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(    @Override public void onInitialize() {
+if "%FA_INIT_ARCHITECTURY%"=="0" goto :initV11JavaFabricIndependent
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(        ExampleCommon.initialize();
+goto :initV11JavaFabricDone
+
+:initV11JavaFabricIndependent
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(        System.out.println("Independent Fabric starter initialized");
+
+:initV11JavaFabricDone
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(    }
+>> "%FA_TARGET%\fabric\src\main\java\org\example\ExampleFabric.java" echo(}
+goto :initV11FabricClientSource
+
+:initV11KotlinFabricSource
+> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(package org.example
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(import net.fabricmc.api.ModInitializer
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(class ExampleFabric : ModInitializer {
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(    override fun onInitialize() {
+if "%FA_INIT_ARCHITECTURY%"=="0" goto :initV11KotlinFabricIndependent
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(        ExampleCommon.initialize()
+goto :initV11KotlinFabricDone
+
+:initV11KotlinFabricIndependent
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(        println("Independent Fabric starter initialized")
+
+:initV11KotlinFabricDone
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(    }
+>> "%FA_TARGET%\fabric\src\main\kotlin\org\example\ExampleFabric.kt" echo(}
+
+:initV11FabricClientSource
+if "%FA_INIT_SPLIT%"=="0" goto :initV11NeoForgeSource
+if "%FA_INIT_KOTLIN%"=="1" goto :initV11KotlinFabricClientSource
+> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(package org.example;
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(import net.fabricmc.api.ClientModInitializer;
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(public final class ExampleFabricClient implements ClientModInitializer {
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(    @Override public void onInitializeClient() {
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(        System.out.println("Fabric client initialized");
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(    }
+>> "%FA_TARGET%\fabric\src\client\java\org\example\ExampleFabricClient.java" echo(}
+goto :initV11NeoForgeSource
+
+:initV11KotlinFabricClientSource
+> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(package org.example
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(import net.fabricmc.api.ClientModInitializer
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(class ExampleFabricClient : ClientModInitializer {
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(    override fun onInitializeClient() {
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(        println("Fabric client initialized")
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(    }
+>> "%FA_TARGET%\fabric\src\client\kotlin\org\example\ExampleFabricClient.kt" echo(}
+
+:initV11NeoForgeSource
+if "%FA_INIT_MULTI%"=="1" (set "FA_INIT_NEO_SRC=%FA_TARGET%\neoforge\src\main") else (set "FA_INIT_NEO_SRC=%FA_TARGET%\src\main")
+if "%FA_INIT_KOTLIN%"=="1" goto :initV11KotlinNeoForgeSource
+> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(package org.example;
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(import net.neoforged.bus.api.IEventBus;
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(import net.neoforged.fml.ModContainer;
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(import net.neoforged.fml.common.Mod;
+if "%FA_INIT_MULTI%"=="0" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(import dev.architectury.platform.Platform;
+rem Escape the closing parenthesis for cmd.exe; keep the literal @Mod("id") in Java.
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(@Mod("%FA_INIT_ID%"^)
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(public final class ExampleNeoForge {
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(    public ExampleNeoForge(IEventBus modEventBus, ModContainer modContainer) {
+if "%FA_INIT_MULTI%"=="1" goto :initV11NeoForgeJavaCommon
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initV11NeoForgeJavaArchitectury
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(        System.out.println("NeoForge starter initialized");
+goto :initV11NeoForgeJavaEnd
+
+:initV11NeoForgeJavaCommon
+if "%FA_INIT_ARCHITECTURY%"=="0" goto :initV11NeoForgeJavaIndependent
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(        ExampleCommon.initialize();
+goto :initV11NeoForgeJavaEnd
+
+:initV11NeoForgeJavaIndependent
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(        System.out.println("Independent NeoForge starter initialized");
+goto :initV11NeoForgeJavaEnd
+
+:initV11NeoForgeJavaArchitectury
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(        System.out.println("NeoForge Architectury on Minecraft " + Platform.getMinecraftVersion());
+
+:initV11NeoForgeJavaEnd
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(    }
+>> "%FA_INIT_NEO_SRC%\java\org\example\ExampleNeoForge.java" echo(}
+goto :initV11Verify
+
+:initV11KotlinNeoForgeSource
+> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(package org.example
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(import net.neoforged.bus.api.IEventBus
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(import net.neoforged.fml.ModContainer
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(import net.neoforged.fml.common.Mod
+if "%FA_INIT_MULTI%"=="0" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(import dev.architectury.platform.Platform
+rem Kotlin requires the same complete annotation; cmd.exe must not eat ')'.
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(@Mod("%FA_INIT_ID%"^)
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(class ExampleNeoForge(modEventBus: IEventBus, modContainer: ModContainer) {
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(    init {
+if "%FA_INIT_MULTI%"=="1" goto :initV11NeoForgeKotlinCommon
+if "%FA_INIT_ARCHITECTURY%"=="1" goto :initV11NeoForgeKotlinArchitectury
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(        println("NeoForge starter initialized")
+goto :initV11NeoForgeKotlinEnd
+
+:initV11NeoForgeKotlinCommon
+if "%FA_INIT_ARCHITECTURY%"=="0" goto :initV11NeoForgeKotlinIndependent
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(        ExampleCommon.initialize()
+goto :initV11NeoForgeKotlinEnd
+
+:initV11NeoForgeKotlinIndependent
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(        println("Independent NeoForge starter initialized")
+goto :initV11NeoForgeKotlinEnd
+
+:initV11NeoForgeKotlinArchitectury
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(        println("NeoForge Architectury on Minecraft " + Platform.getMinecraftVersion())
+
+:initV11NeoForgeKotlinEnd
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(    }
+>> "%FA_INIT_NEO_SRC%\kotlin\org\example\ExampleNeoForge.kt" echo(}
+
+:initV11Verify
+if not exist "%FA_TARGET%\mod.yaml" exit /b 1
+if not exist "%FA_TARGET%\settings.gradle.kts" exit /b 1
+if not exist "%FA_TARGET%\schemas\mod.schema.json" exit /b 1
+if not exist "%FA_INIT_NEO_SRC%\%FA_INIT_SOURCE_LANG%\org\example\ExampleNeoForge.%FA_INIT_SOURCE_EXT%" exit /b 1
+if exist "%FA_TARGET%\build.gradle" exit /b 1
+if exist "%FA_TARGET%\build.gradle.kts" exit /b 1
+if exist "%FA_TARGET%\src\main\resources\fabric.mod.json" exit /b 1
+if exist "%FA_TARGET%\src\main\resources\META-INF\neoforge.mods.toml" exit /b 1
+if "%FA_INIT_MULTI%"=="1" (
+    if "%FA_INIT_ARCHITECTURY%"=="1" if not exist "%FA_TARGET%\common\src\main\%FA_INIT_SOURCE_LANG%\org\example\ExampleCommon.%FA_INIT_SOURCE_EXT%" exit /b 1
+    if not exist "%FA_TARGET%\fabric\src\main\%FA_INIT_SOURCE_LANG%\org\example\ExampleFabric.%FA_INIT_SOURCE_EXT%" exit /b 1
+    if "%FA_INIT_SPLIT%"=="1" if not exist "%FA_TARGET%\fabric\src\client\%FA_INIT_SOURCE_LANG%\org\example\ExampleFabricClient.%FA_INIT_SOURCE_EXT%" exit /b 1
+    if exist "%FA_TARGET%\fabric\src\main\resources\fabric.mod.json" exit /b 1
+    if exist "%FA_TARGET%\neoforge\src\main\resources\META-INF\neoforge.mods.toml" exit /b 1
+)
+echo [init] Created: "%FA_TARGET%"
+echo [init] Schema: 1.1; product: %FA_PRODUCT%
+if "%FA_INIT_MULTI%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Modules: common, fabric, neoforge.
+if "%FA_INIT_MULTI%"=="1" if "%FA_INIT_ARCHITECTURY%"=="0" echo [init] Modules: fabric and neoforge ^(independent^).
+if "%FA_INIT_MULTI%"=="0" echo [init] Loader: NeoForge.
+if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin.
+if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
+if "%FA_INIT_SPLIT%"=="1" echo [init] Fabric splitEnvironmentSourceSets enabled.
+if "%FA_INIT_SPLIT_IGNORED%"=="1" echo [init] Fabric split flag ignored for this loader combination.
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default^).
+if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing tools preserved.
+echo [init] YAML autocomplete: schemas\mod.schema.json.
+echo [init] Settings-only JitPack Fabric-Amper v%FA_VERSION% prerelease ^(schema 1.1, Internet required on first resolution^).
 exit /b 0
 
 :tasks
@@ -918,15 +1285,57 @@ call :consumerGradle fabricAmperPortingReport "-PfabricAmperPortTarget=%FA_PORT_
 exit /b %errorlevel%
 
 :validate
-call :consumerGradle validateFabricAmper
-exit /b %errorlevel%
+set "FA_CONSUMER_ACTION=validate"
+goto :selectConsumerBuildTasks
 
 :build
-call :consumerGradle validateFabricAmper build verifyFabricAmperJar
-exit /b %errorlevel%
+set "FA_CONSUMER_ACTION=build"
+goto :selectConsumerBuildTasks
 
 :verify
-call :consumerGradle verifyFabricAmperJar
+set "FA_CONSUMER_ACTION=verify"
+goto :selectConsumerBuildTasks
+
+:selectConsumerBuildTasks
+rem Do not forward any caller-supplied arguments into Gradle. All task names
+rem below are exact literals, selected solely by the checked consumer product.
+if not "%~2"=="" goto :consumerBuildInvalidArgs
+if not "%~3"=="" goto :consumerBuildInvalidArgs
+call :checkConsumer
+if errorlevel 1 exit /b 2
+call :detectRunProduct
+if errorlevel 3 (
+    echo ERROR: Cannot safely determine loader targets from mod.yaml/mod.yml. No Gradle task started.
+    exit /b 2
+)
+if errorlevel 2 goto :dualConsumerBuildTasks
+goto :singleConsumerBuildTasks
+
+:singleConsumerBuildTasks
+set "FA_CONSUMER_TASKS="
+if "%FA_CONSUMER_ACTION%"=="validate" set "FA_CONSUMER_TASKS=validateFabricAmper"
+if "%FA_CONSUMER_ACTION%"=="verify" set "FA_CONSUMER_TASKS=verifyFabricAmperJar"
+if "%FA_CONSUMER_ACTION%"=="build" set "FA_CONSUMER_TASKS=validateFabricAmper build verifyFabricAmperJar"
+goto :invokeConsumerBuildTasks
+
+:dualConsumerBuildTasks
+set "FA_CONSUMER_TASKS="
+if "%FA_CONSUMER_ACTION%"=="validate" set "FA_CONSUMER_TASKS=:fabric:validateFabricAmper :neoforge:validateFabricAmper"
+if "%FA_CONSUMER_ACTION%"=="verify" set "FA_CONSUMER_TASKS=:fabric:verifyFabricAmperJar :neoforge:verifyFabricAmperJar"
+if "%FA_CONSUMER_ACTION%"=="build" set "FA_CONSUMER_TASKS=:fabric:validateFabricAmper :neoforge:validateFabricAmper build :fabric:verifyFabricAmperJar :neoforge:verifyFabricAmperJar"
+goto :invokeConsumerBuildTasks
+
+:consumerBuildInvalidArgs
+echo ERROR: validate/build/verify do not accept additional arguments or Gradle flags.
+exit /b 2
+
+:invokeConsumerBuildTasks
+if not defined FA_CONSUMER_TASKS (
+    echo ERROR: Internal unsupported consumer action. No Gradle task started.
+    exit /b 2
+)
+echo [%FA_CONSUMER_ACTION%] Gradle tasks: %FA_CONSUMER_TASKS%
+call :consumerGradle %FA_CONSUMER_TASKS%
 exit /b %errorlevel%
 
 :test
@@ -938,14 +1347,83 @@ call :consumerGradle clean
 exit /b %errorlevel%
 
 :run
-echo [run] Starting isolated Gradle runClient in consumer project: "%FA_CONSUMER%"
-call :consumerGradle runClient
-exit /b %errorlevel%
+set "FA_RUN_SIDE=Client"
+goto :selectRunLoader
 
 :server
-echo [server] Gradle runServer uses the consumer's development run directory.
-echo [server] The user must read and accept Minecraft's EULA manually.
-call :consumerGradle runServer
+set "FA_RUN_SIDE=Server"
+goto :selectRunLoader
+
+:selectRunLoader
+rem Only one of two literal loader flags is accepted. Never pass user-provided
+rem arguments through to Gradle or treat an ambiguous dual product as default.
+set "FA_RUN_LOADER="
+set "FA_RUN_TASK="
+if not "%~3"=="" goto :runInvalidArguments
+if "%~2"=="" goto :runArgumentsValid
+if /i "%~2"=="--mod-fabric" set "FA_RUN_LOADER=fabric"
+if /i "%~2"=="--mod-neoforge" set "FA_RUN_LOADER=neoforge"
+if not defined FA_RUN_LOADER goto :runInvalidArguments
+
+:runArgumentsValid
+call :checkConsumer
+if errorlevel 1 exit /b 2
+call :detectRunProduct
+if errorlevel 3 (
+    echo ERROR: Cannot safely determine the loader targets from mod.yaml/mod.yml. No game launched.
+    exit /b 2
+)
+if errorlevel 2 goto :runDualLoader
+if errorlevel 1 goto :runSingleNeoForge
+goto :runSingleFabric
+
+:runDualLoader
+if not defined FA_RUN_LOADER (
+    echo ERROR: Dual-loader project requires run/server --mod-fabric or --mod-neoforge.
+    echo        No client or server was started.
+    exit /b 2
+)
+if /i "%FA_RUN_LOADER%"=="fabric" set "FA_RUN_TASK=runFabric%FA_RUN_SIDE%"
+if /i "%FA_RUN_LOADER%"=="neoforge" set "FA_RUN_TASK=runNeoForge%FA_RUN_SIDE%"
+goto :invokeSelectedRun
+
+:runSingleFabric
+if defined FA_RUN_LOADER if /i not "%FA_RUN_LOADER%"=="fabric" goto :runLoaderMismatch
+set "FA_RUN_TASK=run%FA_RUN_SIDE%"
+goto :invokeSelectedRun
+
+:runSingleNeoForge
+if defined FA_RUN_LOADER if /i not "%FA_RUN_LOADER%"=="neoforge" goto :runLoaderMismatch
+set "FA_RUN_TASK=run%FA_RUN_SIDE%"
+goto :invokeSelectedRun
+
+:runLoaderMismatch
+echo ERROR: The requested loader is not selected by this consumer's product.
+echo        No client or server was started.
+exit /b 2
+
+:runInvalidArguments
+echo ERROR: run/server accepts at most one --mod-fabric or --mod-neoforge flag.
+echo        Arbitrary Gradle options and additional arguments are not accepted.
+exit /b 2
+
+:invokeSelectedRun
+if /i "%FA_RUN_SIDE%"=="Server" (
+    echo [server] The user must read and accept Minecraft's EULA manually.
+)
+echo [run] Starting Gradle %FA_RUN_TASK% in consumer project: "%FA_CONSUMER%"
+call :consumerGradle %FA_RUN_TASK%
+exit /b %errorlevel%
+
+:detectRunProduct
+rem Exit codes: 0 Fabric-only; 1 NeoForge-only; 2 both; 3+ unsafe/unknown.
+rem Bounded, read-only, UTF-8-strict inspection of the root YAML's schema and
+rem product declarations, shared by run/server and validate/build/verify.
+rem This is deliberately NOT a YAML evaluator: reject
+rem unsupported or ambiguous syntax instead of guessing a Gradle run target.
+set "FA_RUN_YAML=%FA_CONSUMER%\mod.yaml"
+if not exist "%FA_RUN_YAML%" set "FA_RUN_YAML=%FA_CONSUMER%\mod.yml"
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $p=$env:FA_RUN_YAML; $f=Get-Item -LiteralPath $p -Force; if(-not $f -or $f.PSIsContainer -or $f.Length -gt 1048576 -or (($f.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)){throw 'Unsafe or oversized mod YAML'}; $t=[IO.File]::ReadAllText($p,(New-Object System.Text.UTF8Encoding($false,$true))); $pr=[regex]::Matches($t,'(?m)^product[ \t]*:[ \t]*(.*)$'); if($pr.Count -ne 1){throw 'Expected exactly one plain root product key'}; $sr=[regex]::Matches($t,'(?m)^schema[ \t]*:[ \t]*(.*)$'); if($sr.Count -gt 1){throw 'Duplicate schema keys'}; $v=([string][char]34+'1.1'+[char]34); if($sr.Count -eq 1){$v=([regex]::Replace($sr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim()}; $v11=([string][char]34+'1.1'+[char]34); $v11s=([string][char]39+'1.1'+[char]39); if($v -cne '1' -and $v -cne $v11 -and $v -cne $v11s){throw 'Unsupported or unquoted schema'}; $raw=([regex]::Replace($pr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim(); $items=@(); $array=$false; if($raw.StartsWith('[') -and $raw.EndsWith(']')){$array=$true; $items=@($raw.Substring(1,$raw.Length-2) -split ',')} elseif($raw.Length -gt 0){$items=@($raw)} else {$array=$true; foreach($line in ($t.Substring($pr[0].Index+$pr[0].Length) -split '\r?\n')){if($line -match '^[ \t]*(?:#.*)?$'){continue}; if($line -cmatch '^[ \t]+-[ \t]+(.+)$'){$items+=([regex]::Replace($Matches[1],'[ \t]+#.*$','')).Trim(); continue}; if($line -cmatch '^[^ \t]'){break}; throw 'Unsupported block product syntax'}}; if($items.Count -lt 1 -or $items.Count -gt 2){throw 'Expected one or two loader products'}; $seen=@{}; foreach($item in $items){$item=$item.Trim(); if($item.Length -ge 2 -and (($item[0] -eq [char]34 -and $item[$item.Length-1] -eq [char]34) -or ($item[0] -eq [char]39 -and $item[$item.Length-1] -eq [char]39))){$item=$item.Substring(1,$item.Length-2)}; if($item -cnotmatch '^(fabric/(mod|api|library)|neoforge/(mod|api))$'){throw 'Unsupported loader product'}; $loader=$item.Split('/')[0]; if($seen.ContainsKey($loader)){throw 'Repeated loader target'}; $seen[$loader]=$true}; if(($array -or $seen.ContainsKey('neoforge')) -and $v -cne $v11 -and $v -cne $v11s){throw 'Schema 1.1 required'}; if($seen.Count -eq 2){exit 2}; if($seen.ContainsKey('neoforge')){exit 1}; exit 0 } catch { [Console]::Error.WriteLine('[ERROR] run/server product inspection: '+$_.Exception.Message); exit 3 }"
 exit /b %errorlevel%
 
 :publish

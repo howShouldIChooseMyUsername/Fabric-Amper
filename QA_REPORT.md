@@ -1509,3 +1509,16 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 **범위 제한:** 실제 winget/JDK/Gradle 설치나 사용자 PATH 레지스트리 변경을 자동 테스트에서 수행하지 않았다. `develop`의 HEAD 및 미커밋 파일은 보존한다. 기존 `v0.1.2` 태그는 이미 공개된 JitPack 구현 커밋을 참조하므로 **강제 이동하지 않는다**. 수정된 BAT·PS1은 같은 v0.1.2 GitHub Release의 자산 및 후속 main 소스에 반영하되, 기존 태그 소스 스냅샷과 이후 소스 커밋은 구별한다. 전체 G1–G30 상태는 계속 **NOT APPROVED**.
 
 **실제 GitHub 파일 다운로드 추가 검증:** `gh release upload v0.1.2 ...fabric-amper-doctor-fix.ps1`로 새 PS1 단독 asset을 업로드. 첫 실제 PowerShell `Invoke-WebRequest`는 **교체 전 자산을 CDN 캐시에서 받아 SHA-256 불일치로 EXIT1** 처리(설치 시작 없음). 이 문제 때문에 URL에 `?sha256=<BAT에 고정된 해시>`와 `Cache-Control/Pragma: no-cache`를 적용했다. 캐시 갱신된 URL은 PowerShell 실제 요청에서 현재 PS1 14,793바이트 및 SHA-256 `c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053`로 확인되었다. **테스트 전용 사본 BAT의 다운로드·검증 로직은 원본 그대로, 실행 인수만 `-Preview`로 대체**한 상태에서 최초 파일 없는 폴더에 `doctor --fix` 실행: **EXIT0**, `[OK] Saved verified doctor helper beside fabric-amper.bat.` 및 `[OK] Verified doctor helper SHA-256.`, JDK25·Gradle 사전 설치 탐지, 무변경 미리보기 모두 확인. 실제 설치는 하지 않았다.
+
+
+## 40. v0.3.0 프리릴리즈 후보 — 스키마 1.1 기본값·BAT 멀티로더 검증 (2026-11-17)
+
+**사용자 요구:** `mod.yaml` 또는 `mod.yml`에서 `schema`를 생략하면 1.1로 해석하고, 명시적 `schema: 1`은 기존 Fabric 단일 로더 스키마를 보존한다. 최신 NeoForge/듀얼로더 개발 구현을 `develop`에서 `main`으로 반영하고 AI 2개·사람용 2개 가이드를 양 브랜치에 동일하게 유지하여 v0.3.0 **프리릴리즈** 자산 9종을 기존 릴리스 형식으로 게시한다.
+
+**파서·스키마 변경:** `ModYamlDecoder`가 키 생략을 곧바로 `decodeV11`로 분기하고, `fabric-amper.schema.json` Draft-07의 기본값도 문자열 `"1.1"`로 정렬했다. 명시적 정수 `1`은 종전 v1으로 유지한다. 무인용 소수 `1.1`, null, 불일치하는 구형 필드, 알 수 없는 스키마는 FA003 진단으로 거부한다. 스키마 생략과 `mod.yaml`·`mod.yml` 별칭 조합, Fabric/NeoForge 단독 및 멀티 `product`, 레거시 v1 호환/비호환 부정을 단위 테스트에 추가했다.
+
+**Windows 명령 경로:** BAT 버전 및 생성 Settings/JitPack 모듈을 `0.3.0`/`v0.3.0`으로 통일. 기존 Fabric 단독 v1 형식의 `init` 예제는 명시적 `schema: 1`을 출력하고, NeoForge/듀얼 프로젝트는 `schema: "1.1"`을 출력한다. 명시적 로더 선택 `run`/`server`뿐 아니라 `validate`, `verify`, `build`도 듀얼에서는 각 `:fabric`·`:neoforge` 태스크에 안전하게 분기하도록 구현했다. 알 수 없는 인수·불명확/악성 YAML은 Gradle 호출 전 거부. 신규 BAT 가짜 Gradle 명령 매핑 테스트와 기존 `init` 4개 조합에 대한 BAT 단독 스모크는 PASS. 가짜 Gradle 명령 테스트는 **실제 Minecraft 런타임 시험이 아니다**.
+
+**실제 Gradle 실행:** Gradle **9.7.1**, JDK **25**, `clean build validatePlugins --offline --no-daemon --no-build-cache --console=plain`의 최신 후보 실행이 **BUILD SUCCESSFUL (2m22s)**. JUnit XML 71 suites / **371 tests = 314 PASS, 57 SKIP, 0 FAIL, 0 ERROR**. 스키마·문서 YAML 파서·BAT 명령 테스트의 이전 실패는 구형 계약 단언, 문서에서 누락한 NeoForge 필수 license와 구형 필드, Windows stdout 파이프 충돌 문제였으며 모두 수정하고 동일 필터/전체 명령에서 재검증했다. 57 SKIP는 PASS로 간주하지 않는다. 기존 364 tests(307 PASS, 57 SKIP) 기록은 **변경 전 기준선**이므로 덮어쓰지 않는다.
+
+**미수락:** 전체 G1–G30/NF1–NF26, Minecraft 26.3 클라이언트/전용 서버의 실제 NeoForge/듀얼 런타임, IntelliJ GUI Sync, 인증된 Modrinth/CurseForge 게시, 공개 JitPack `v0.3.0` 해석은 별도 시험 필요. dual Architectury `:common` JAR 첫 물질화로 구성 캐시 **콜드 두 번째 실행 1회 MISS**였고, 같은 상태의 세 번째 실행 HIT는 성공했으나 즉시 두 번째 HIT 엄격 기준은 **미충족**. 릴리스 전 원격 공개/실제 소비자 검증을 이미 통과했다고 주장하지 않는다.

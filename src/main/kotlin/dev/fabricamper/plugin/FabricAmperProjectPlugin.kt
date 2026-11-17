@@ -7,6 +7,7 @@ import dev.fabricamper.config.ModYamlModel
 import dev.fabricamper.config.RepositorySpec
 import dev.fabricamper.config.StrictYamlReader
 import dev.fabricamper.generator.GenerateFabricModJson
+import dev.fabricamper.generator.FabricV11Projection
 import dev.fabricamper.generator.MetadataMapper
 import dev.fabricamper.generator.ValidateFabricAmper
 import dev.fabricamper.generator.VerifyFabricAmperJar
@@ -43,13 +44,45 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
     abstract val flowProviders: FlowProviders
 
     override fun apply(target: Project) {
-        if (target.path != ":") return
-        val selectedYaml = selectYaml(target)
+        if (target.path != ":" && target.path !in setOf(":common", ":fabric", ":neoforge")) return
+        val selectedYaml = selectYaml(target.rootDir)
         // Project plugin and Settings plugin must both record an actual file read.
+        val yamlInput = target.layout.projectDirectory.file(
+            if (target.path == ":") selectedYaml.name else "../${selectedYaml.name}",
+        )
         val yamlBytes = target.providers.fileContents(
-            target.layout.projectDirectory.file(selectedYaml.name),
+            yamlInput,
         ).asBytes.get()
-        val config = ModYamlLoader.loadBytes(selectedYaml.toPath(), yamlBytes)
+        val parsed = ModYamlLoader.loadBytes(selectedYaml.toPath(), yamlBytes)
+        if (parsed.isMultiLoader && target.path == ":") {
+            configureMultiLoaderRoot(target, parsed)
+            return
+        }
+        if (parsed.isMultiLoader && target.path == ":common") {
+            FabricAmperCommonConfigurer.configure(target, parsed)
+            return
+        }
+        if (!parsed.isMultiLoader && target.path != ":") return
+        val selected = if (parsed.isMultiLoader) {
+            parsed.targets.singleOrNull { target.path == ":${it.loader}" }
+                ?: throw GradleException("FabricAmper FA003 product: no target matches project '${target.path}'")
+        } else {
+            parsed.targets.singleOrNull()
+                ?: throw GradleException("FabricAmper FA003 product: expected exactly one loader target")
+        }
+        if (selected.loader == "neoforge") {
+            NeoForgeAmperProjectBackend.configure(target, parsed, yamlInput)
+            if (parsed.isMultiLoader && target.rootDir.resolve("common").isDirectory) {
+                FabricAmperCommonConfigurer.linkToLoader(target)
+            }
+            return
+        }
+        if (selected.loader != "fabric") {
+            throw GradleException("FabricAmper FA003 product: unsupported loader '${selected.loader}'")
+        }
+        // Share the generator's exact v1.1 projection so Loom's early JSON
+        // mirror and the generated runtime JSON cannot diverge.
+        val config = FabricV11Projection.fromModel(parsed)
         registerMissingArtifactDiagnostic(selectedYaml, yamlBytes, config)
         if (LoomPluginSelector.isNonRemapping(config.minecraft.version) && Runtime.version().feature() < 25) {
             throw GradleException(
@@ -60,7 +93,7 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
         rejectExistingMetadata(target)
         // Validate real source resources and the classTweaker header before Loom
         // can read a configuration-time metadata snapshot.
-        ValidateFabricAmper.validateSourceResources(config)
+        ValidateFabricAmper.validateSourceResources(config, target.projectDir.toPath())
 
         val metadata = MetadataMapper.toUtf8Bytes(config)
         val mirror = LoomMetadataMirror.create(target, metadata, referencedResources(target, config))
@@ -80,7 +113,8 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
             accessWidener = config.mod.accessWidener,
         )
         target.extensions.getByType(BasePluginExtension::class.java)
-            .archivesName.set(config.mod.archivesName ?: config.mod.id)
+            .archivesName.set((config.mod.archivesName ?: config.mod.id) +
+                if (parsed.isMultiLoader) "-fabric" else "")
 
         // `fabric/library` is normalized to `fabric/api`. A regular fabric/mod
         // opts into Maven support only by authoring publish.maven. The older
@@ -112,7 +146,8 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
             FabricAmperPublishingConfigurer.configure(
                 project = target,
                 groupId = groupId,
-                artifactId = config.mod.archivesName ?: config.mod.id,
+                artifactId = (config.mod.archivesName ?: config.mod.id) +
+                    if (parsed.isMultiLoader) "-fabric" else "",
                 version = config.mod.version,
                 displayName = config.mod.name,
                 description = config.mod.description,
@@ -186,11 +221,11 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
         }
 
         val generate = target.tasks.register("generateFabricModJson", GenerateFabricModJson::class.java) { task ->
-            task.yamlFile.set(target.layout.projectDirectory.file(selectedYaml.name))
+            task.yamlFile.set(yamlInput)
             task.outputFile.set(target.layout.buildDirectory.file("generated/fabric-amper/resources/main/fabric.mod.json"))
         }
         val validate = target.tasks.register("validateFabricAmper", ValidateFabricAmper::class.java) { task ->
-            task.yamlFile.set(target.layout.projectDirectory.file(selectedYaml.name))
+            task.yamlFile.set(yamlInput)
         }
         val finalArchiveTask = if (remapping) "remapJar" else "jar"
         val archive = target.tasks.named(finalArchiveTask, Jar::class.java)
@@ -230,6 +265,9 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
             target.tasks.register("publishFabricAmperModrinth", FabricAmperPlatformUploadTask::class.java) { task ->
                 task.group = "publishing"
                 task.description = "Upload the verified production JAR to Modrinth"
+                if (parsed.isMultiLoader) task.doFirst {
+                    throw GradleException("FabricAmper FA003 publish.modrinth: multi-loader releases need a single validated multi-file publication; refusing separate Fabric upload")
+                }
                 task.platform.set("modrinth")
                 task.consumerDirectory.set(target.layout.projectDirectory)
                 task.metadataJson.set(FabricAmperPublishMetadata.modrinth(config))
@@ -245,6 +283,9 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
             target.tasks.register("publishFabricAmperCurseForge", FabricAmperPlatformUploadTask::class.java) { task ->
                 task.group = "publishing"
                 task.description = "Upload the verified production JAR to CurseForge"
+                if (parsed.isMultiLoader) task.doFirst {
+                    throw GradleException("FabricAmper FA003 publish.curseforge: multi-loader release relationships must be explicitly validated; refusing separate Fabric upload")
+                }
                 task.platform.set("curseforge")
                 task.consumerDirectory.set(target.layout.projectDirectory)
                 task.curseForgeProjectId.set(selected.projectId)
@@ -286,6 +327,9 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
             task.from(generate)
             task.duplicatesStrategy = DuplicatesStrategy.FAIL
         }
+        if (parsed.isMultiLoader && target.rootDir.resolve("common").isDirectory) {
+            FabricAmperCommonConfigurer.linkToLoader(target)
+        }
     }
 
     private fun registerMissingArtifactDiagnostic(selectedYaml: File, yamlBytes: ByteArray, config: ModYamlModel) {
@@ -310,8 +354,7 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
         }
     }
 
-    private fun selectYaml(project: Project): File {
-        val directory = project.layout.projectDirectory.asFile
+    private fun selectYaml(directory: File): File {
         val yaml = directory.resolve("mod.yaml")
         val yml = directory.resolve("mod.yml")
         if (yaml.isFile == yml.isFile) {
@@ -366,4 +409,33 @@ abstract class FabricAmperProjectPlugin : Plugin<Project> {
         exported = spec.exported,
         include = spec.include,
     )
+
+    private fun configureMultiLoaderRoot(project: Project, config: ModYamlModel) {
+        // Root is a lifecycle aggregator, not another mod. In particular,
+        // applying Loom or ModDevGradle here would contaminate both backends.
+        project.pluginManager.apply("base")
+        val children = config.targets.map { ":${it.loader}" } +
+            if (project.rootDir.resolve("common").isDirectory) listOf(":common") else emptyList()
+        listOf("assemble", "check", "build", "clean").forEach { taskName ->
+            project.tasks.named(taskName).configure { task ->
+                children.forEach { child -> task.dependsOn("$child:$taskName") }
+            }
+        }
+        // Multi-target run tasks must never start both game launchers just
+        // because a user typed a root `runClient`. Require an explicit loader
+        // name, but retain standard runClient/runServer inside each child.
+        config.targets.forEach { selected ->
+            val pretty = if (selected.loader == "fabric") "Fabric" else "NeoForge"
+            for ((aliasSuffix, childTask) in listOf(
+                "Client" to "runClient", "Server" to "runServer",
+            )) {
+                project.tasks.register("run$pretty$aliasSuffix") { task ->
+                    task.group = "fabric amper"
+                    task.description = "Launch $pretty $aliasSuffix in the isolated :${selected.loader} project"
+                    task.dependsOn(":${selected.loader}:$childTask")
+                }
+            }
+        }
+    }
+
 }
