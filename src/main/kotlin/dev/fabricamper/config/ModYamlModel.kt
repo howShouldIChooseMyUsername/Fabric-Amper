@@ -97,7 +97,7 @@ data class NeoForgeDependencySpec(
     val reason: String? = null,
 )
 
-/** Latest schema recognized by this binary. An omitted YAML schema selects it. */
+/** Legacy integer schema ABI. Omitted YAML schema selects the v1.1 decoder directly. */
 object FabricAmperSchemaVersion {
     const val LATEST: Int = 1
 }

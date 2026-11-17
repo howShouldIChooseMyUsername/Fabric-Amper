@@ -1,6 +1,6 @@
 ---
 name: fabric-amper
-description: Use when creating, editing, validating, building, testing, or explicitly publishing a Fabric Amper consumer configured with settings.gradle.kts and mod.yaml/mod.yml, without a consumer build.gradle.kts or authored fabric.mod.json.
+description: Use when creating, editing, validating, building, testing, or explicitly publishing a Fabric Amper schema 1.1 Fabric and/or NeoForge consumer configured with settings.gradle.kts and mod.yaml/mod.yml, without a consumer build.gradle.kts or authored Loader metadata.
 ---
 
 # Fabric Amper — AI Configuration and Operations Guide
@@ -16,7 +16,7 @@ Read this guide **when the user wants to create, change, debug, build, test, pac
 ### Source-of-truth and conflict order
 
 1. **The user's request and approved actions** determine intent; never infer permission to publish, accept a EULA, alter a real world, or reveal credentials.
-2. `specs.md` defines the foundational product contract and G1–G30 gates. The implemented API/library and new `publish` extensions are additionally specified in the latest root `README.md`.
+2. `specs.md` defines the foundational product contract, historical v1/G1–G30 gates, and schema 1.1 NeoForge/multi-loader (§12, especially §12.12). The implemented API/library and `publish` extensions are additionally specified in the latest `README.md`.
 3. **Actual source** — `src/main/kotlin/dev/fabricamper/config/ModYamlDecoder.kt`, `ModYamlModel.kt`, `ModYamlValidator.kt`, `StrictYamlReader.kt`, plugins and tests — decides what is accepted *today*.
 4. `fabric-amper.schema.json` (Draft-07) provides schema keys, types, enums, and editor guidance. It does **not** prove all cross-field constraints, resource existence, buildability, or publication readiness.
 5. `QA_REPORT.md` records tested behavior and unresolved gates. `HUMAN.md` explains the same contract for people.
@@ -26,10 +26,11 @@ When documentation and implementation disagree, **inspect the current implementa
 ## Non-negotiable invariants
 
 - One YAML file in the consumer root: `mod.yaml` **or** `mod.yml`, never both. One YAML document, root mapping, UTF-8, no duplicate keys, aliases, anchors, merge keys, arbitrary custom tags, or unsupported extra properties.
-- Required root keys: `product`, `mod` and `minecraft`. Required nested values: `mod.id`, `mod.version`, `minecraft.version` and `minecraft.loader`. Root `schema` is **optional**: absent selects the plugin's latest supported schema, **currently v1**; explicit `schema: 1` pins v1; explicit unknown schema numbers or wrong types **must fail** with FA003. Versions that look numeric **must be quoted strings**.
-- Supported products: `fabric/mod` and `fabric/api`; `fabric/library` is an exact API/library alias, not a different publishing feature.
+- Required root keys: `product`, `mod` and `minecraft`; nested `mod.id`, `mod.version`, `minecraft.version` are mandatory. **The latest development decoder now interprets omitted `schema` as 1.1** (Prime's latest code change, regression TestKit in progress); explicit quoted `schema: "1.1"` also selects 1.1; explicit integer `schema: 1` **preserves legacy Fabric v1**. An unquoted `schema: 1.1` is a YAML float and invalid. Before relying on a public installation, verify the v0.3.0 prerelease artifact and its matching decoder; use explicit `schema: "1.1"` in examples for clarity. Versions that look numeric **must be quoted strings**.
+- Schema **1.1** accepts a `product` scalar `fabric/mod`, `fabric/api`, `neoforge/mod`, `neoforge/api` (with `fabric/library` as Fabric API alias), or an array with **at most one target per loader**, e.g. `[fabric/mod, neoforge/mod]` or hybrid API/mod. The selected loader requires its corresponding `fabric:` and/or `neoforge:` block. Shared `mod` and `minecraft.version` remain at root; `minecraft.loader`, `minecraft.mappings`, `minecraft.fabricApi`, Fabric `mod.entrypoints` and `settings.loom` belong to **legacy v1**, not new 1.1 root fields.
+- With 1.1, Fabric-specific fields belong to `fabric.loader`, `fabric.api`, `fabric.mappings`, `fabric.entrypoints`, `fabric.loom.splitEnvironmentSourceSets`, `fabric.gradleDependencies`, etc.; NeoForge-specific fields belong to `neoforge.version`, `neoforge.modLoader`, `neoforge.dependencies`, `neoforge.gradleDependencies`, etc. Shared `settings.java` and `settings.kotlin` remain at root. **Legacy `schema: 1` still requires `minecraft.loader` and its original Fabric key locations.**
 - All values in YAML are *configuration values*, not fragments of Gradle Kotlin DSL. Only real keys from `ModYamlDecoder` and the schema are legal; unknown keys trigger `FA003`.
-- Never write `src/main/resources/fabric.mod.json` or `src/client/resources/fabric.mod.json`. Fabric Amper generates exactly one **root** `fabric.mod.json` in the production JAR. Never alter `build/generated/**` or `.gradle/fabric-amper/loom/**` mirrors by hand.
+- Never write `src/main/resources/fabric.mod.json`, `src/client/resources/fabric.mod.json`, or authored `META-INF/neoforge.mods.toml`. In schema 1.1 each **Fabric** target JAR has exactly one **root** `fabric.mod.json` and zero NeoForge metadata; each **NeoForge** target JAR has `META-INF/neoforge.mods.toml` and no Fabric JSON. Never alter `build/generated/**` or `.gradle/fabric-amper/loom/**` mirrors by hand.
 - Keep user code, existing Mod Loader dependencies/predicates, release notes, and assets intact unless the request clearly requires changing them. Do not downgrade versions or remove unrelated keys to make validation pass.
 - Use fixed, known Maven coordinates and actual existing platform project identifiers. Do not fabricate Maven artifacts, published Yarn versions, Modrinth/CurseForge IDs, account credentials, or a public plugin repository.
 - Do not embed secrets in YAML, Kotlin DSL, commands to be logged, sample output, tests, or commits. YAML publishing fields name **environment variables**, never token values.
@@ -42,7 +43,7 @@ When documentation and implementation disagree, **inspect the current implementa
 
 **When operating on Windows with an available complete Fabric Amper checkout, FIRST look for `fabric-amper.bat` and use it for any supported operation.** This is a binding execution-routing rule, not an optional shorthand: `help`, `version`, `docs`, `doctor` (including `--full`, `--paths`, opt-in `--fix`), `init` (including `--here`), `migrate` (including `-C`, `-D`, `--delete`, `--dry-run`), `tasks`, `validate`, `build`, `verify`, `test`, `clean`, `run`, `server`, `diagnose`, `explain`, `plan`, `port` and explicitly requested `publish` variants. Use `-C "consumer_path"` **before** most subcommands when necessary; `migrate` accepts `-C` / `--project` before **or after** the verb, and `doctor` also accepts `doctor -C ".\httpmod"` and `doctor --project ".\httpmod"`, with the path relative to the current terminal directory. The repeated form `doctor -C ".\httpmod" doctor` is supported. For an operation **not supported by the BAT wrapper** (such as a custom Gradle task, `validatePlugins`, a special TestKit filter, or direct producer-only publication), use its **original supported Gradle, Java, Kotlin, or other native command**. Do not claim the wrapper supports arbitrary Gradle tasks or invent a wrapper command.
 
-**Release-version inspection:** `fabric-amper.bat` with **no arguments**, `fabric-amper.bat -V`, `fabric-amper.bat --version`, and `fabric-amper.bat version` all print one line, `v0.1.3`, and exit without launching Gradle or altering files. An empty BAT invocation is **not** `help`; use `fabric-amper.bat help` / `--help` to list commands. This confirms the local BAT's embedded version only, not JitPack or release-asset availability.
+**Release-version inspection:** In this development worktree, `fabric-amper.bat` with **no arguments**, `-V`, `--version`, or `version` prints the configured `v0.3.0`, without Gradle or file changes. An empty BAT invocation is **not** `help`; use `fabric-amper.bat help` / `--help`. **v0.3.0 is the planned prerelease, not proof that the GitHub tag/release/JitPack module is published**; inspect the exact BAT on the user's installation and verify the remote release before any bootstrap claim. The earlier publicly released v0.2.0 must not be described as supporting NeoForge schema 1.1.
 
 **Never reflexively type `./gradlew` / `gradlew.bat`.** Only use a Gradle Wrapper when its files actually exist in the chosen project and are trusted/appropriate. Otherwise allow the BAT launcher to select a known compatible installed/cached Gradle, or use the native Gradle launcher for unsupported work. The presence of an unrelated `gradlew` in a parent or neighbor directory does not authorize using it. **Automatic repair policy:** when `doctor` confirms a required JDK/Gradle toolchain is missing or unusable, the AI agent should preview and then run `doctor --fix` **without asking for an additional consent step**, as part of the requested Fabric Amper development workflow. Do not expand this policy to unrelated installations, publication, accepting EULAs, or overwriting existing user files. The BAT first fetches the version-matched `fabric-amper-doctor-fix.ps1` from its GitHub Release into **`scripts/` below the BAT** if absent, then checks the pinned SHA-256 before executing. The `migrate` command independently fetches its own missing version-matched PS1 into **`scripts/`** and missing schema into the BAT root, each SHA-256 checked before conversion. An unexpected existing helper/schema is not overwritten or executed; a missing/stale asset, wrong hash or non-writable folder causes an error **before execution**. A checksum-keyed query/no-cache headers avoid stale replaced assets. Neither `doctor --fix --dry-run` nor `migrate --dry-run` downloads anything: **if a required local asset is missing, it only previews the download** rather than executing a partial inspection. `init --here` may preserve existing tool files but must refuse if project files already exist. Do not bypass the protection by renaming/deleting user files.
 
@@ -76,41 +77,45 @@ The **next table is the decision index**, not a substitute for the runnable reci
 
 | User asks for… | YAML change / actual file | Validation / caution |
 | --- | --- | --- |
-| A new ordinary Fabric mod | `product: fabric/mod`, `mod.id`, `mod.version`, `minecraft.version`, `minecraft.loader`; optional `schema: 1` | Create one YAML; `gradle help` then `gradle build` |
+| A new schema 1.1 Fabric mod | `product: fabric/mod`, `mod.id`, `mod.version`, `minecraft.version`, `fabric.loader`, `fabric.entrypoints`; optional `schema: "1.1"` for clarity | Omitted schema now selects 1.1 in develop source; validate final build; `gradle help` then `gradle build` |
+| A new schema 1.1 NeoForge mod | `product: neoforge/mod`, root shared `mod`/`minecraft.version`, `neoforge.version` and optional `neoforge.modLoader` | Real `@Mod` class, generated `META-INF/neoforge.mods.toml`; no Fabric entrypoint |
+| Independent dual-loader mod (no Architectury) | `product: [fabric/mod, neoforge/mod]`, both loader blocks, `architectury.enable: false` | `:fabric` and `:neoforge` only; **no `:common` directory/project**; two isolated JARs |
+| Dual loader with shared Architectury sources | Same product array, `architectury.enable: true` | `:common`, `:fabric`, `:neoforge`; split flag is **ignored with a notice** for dual+Architectury |
+| Explicit legacy Fabric configuration | `schema: 1`, `minecraft.loader`, `minecraft.fabricApi`, `mod.entrypoints`, `settings.loom` | Retain v1 paths and existing consumers; do not silently upgrade to 1.1 |
 | An API/library mod for downstream projects | `product: fabric/api` (or alias `fabric/library`), required `mod.group`, optional `mod.archivesName` | `gradle build`; explicit local Maven publish when needed |
-| A new display name/description/license | `mod.name`, `mod.description`, `mod.license` (string or list) | Inspect generated `fabric.mod.json` |
+| A new display name/description/license | `mod.name`, `mod.description`, `mod.license` (string or list) | Inspect target-specific generated JSON/TOML |
 | A different JAR file basename | `mod.archivesName`, not `base.archivesName` or `artifactId` | Verify filename and Maven publication identity |
 | A new mod ID/version | `mod.id` / `mod.version` | Update actual resource namespace and references if affected; inspect JAR JSON |
-| Minecraft 26.3 with official mappings | `minecraft.version: "26.3"`, `minecraft.mappings: mojang`, `settings.java.release: 25`, fixed `minecraft.loader` | No Yarn; Java 25; non-remapping Loom profile |
+| Minecraft 26.3 with official mappings | Schema 1.1: `minecraft.version: "26.3"`, `fabric.mappings: mojang`, `settings.java.release: 25`, `fabric.loader` and/or `neoforge.version` | No modern Yarn; Java 25; Fabric non-remap / NeoForge MDG |
 | Minecraft 1.21.11 legacy | `minecraft.version: "1.21.11"`, `settings.java.release: 21`, supported `minecraft.mappings` | Verify all API/Loader versions and real legacy game compatibility; remap profile |
 | Yarn mappings (legacy only) | `minecraft.mappings: {type: yarn, version: "VERIFIED_VERSION"}` | Never invent Yarn version; reject on 26.1+ (FA004) |
-| Fabric API dependency | `minecraft.fabricApi: "EXACT_PUBLISHED_VERSION"` | Check version matches game and actual artifact availability |
+| Fabric API dependency | 1.1 `fabric.api: "EXACT_PUBLISHED_VERSION"`; legacy v1 `minecraft.fabricApi` | Check version matches game and actual artifact availability |
 | Kotlin code and adapter | `settings.kotlin.enabled: true` with pinned Kotlin settings; optional adapter entrypoint object | Real Kotlin sources; `gradle compileKotlin`/`build`; FA006 |
-| Client-only mod | `mod.environment: client`; `mod.entrypoints.client` | Actual client code and side-safe Mixins; run isolated client |
-| Shared mod with client-only source or dependency | `settings.loom.splitEnvironmentSourceSets: true`; `dependencies[].target: client` where needed | Place client code in `src/client/`; never include/export client-targeted deps |
-| Loader-required installed mod | `mod.depends.<actual_mod_id>: ">=EXACT_VERSION"` (or OR list) | Runtime relationship; not a Maven download |
-| Recommended/suggested/incompatible Loader mod | `mod.recommends` / `mod.suggests` / `mod.conflicts` / `mod.breaks` | Preserve genuine version predicates; inspect generated JSON |
+| Client-only Fabric mod | Schema 1.1 `fabric.environment: client` and `fabric.entrypoints.client`; legacy v1 `mod.environment`/`mod.entrypoints` | Actual client code and side-safe Mixins; run isolated client |
+| Shared mod with client-only source or dependency | 1.1 `fabric.loom.splitEnvironmentSourceSets: true` / legacy v1 `settings.loom.splitEnvironmentSourceSets: true` | Fabric-only split or Fabric subproject of independent dual; never include/export client-targeted deps |
+| Loader-required installed mod | Schema 1.1 `fabric.depends.<actual_mod_id>: ">=EXACT_VERSION"`; NeoForge uses `neoforge.dependencies[]`; legacy v1 `mod.depends` | Runtime relationship, not a Maven download |
+| Recommended/suggested/incompatible Fabric mod | 1.1 `fabric.recommends/suggests/conflicts/breaks`; legacy v1 `mod.recommends/suggests/conflicts/breaks` | Preserve genuine predicates; inspect Fabric JSON |
 | Maven library for compilation/runtime | `repositories` and `dependencies[].maven`, optional `kind` / `scope` | Verify fixed GAV and repository, resolve via `gradle build` |
 | Mod hosted in Modrinth's Maven | `repositories: [modrinth]` plus `dependencies[].modrinth.project/version` and optional `kind: mod` | An artifact dependency, not a release-upload project ID |
 | Exported public API type | `dependencies[].exported: true` with `scope: all` | API/library publication; verify downstream compile variant |
 | Internal runtime-only helper | `dependencies[].scope: runtime-only` | Cannot also `exported` or `include` |
 | Development compile-only helper | `dependencies[].scope: compile-only` | Not packaged or runtime-transitive |
-| Nested JAR-in-JAR library | `dependencies[].include: true` and `scope: all` | Verify nested `META-INF/jars` and Loader `jars` metadata |
+| Nested Fabric JAR-in-JAR library | For 1.1 dual use `fabric.gradleDependencies[].include: true` and `scope: all`; legacy Fabric-only v1 `dependencies[].include` | Verify Fabric `META-INF/jars` and no NeoForge JIJ contamination |
 | JUnit tests | `test-dependencies` with a real fixed JUnit dependency | Create tests under `src/test/`; run `gradle test`; no export/client/include |
-| Mixin configuration | `mod.mixins` string or `{config, environment}` entry | Create real file in resources, check side behavior |
-| Modern Class Tweaker | `mod.accessWidener: "my_mod.classtweaker"` | Create file under `src/main/resources` with `classTweaker v1 official` header |
-| Legacy Access Widener | `mod.accessWidener: "my_mod.accesswidener"` | Correct `accessWidener v1/v2 named/intermediary` header; legacy only |
-| Icon | `mod.icon: "assets/my_mod/icon.png"` or positive-integer size map | Create real PNG in permitted source resources |
-| Custom Loader metadata | `mod.custom` JSON-compatible mapping | Inspect generated JSON; no invented Gradle effects |
+| Fabric Mixin configuration | 1.1 `fabric.mixins`, legacy v1 `mod.mixins` | Create real file in Fabric resources, check side behavior |
+| Modern Fabric Class Tweaker | 1.1 `fabric.accessWidener: "my_mod.classtweaker"`, legacy v1 `mod.accessWidener` | Create file under Fabric resources with `classTweaker v1 official` header |
+| Legacy Access Widener | Explicit schema v1 `mod.accessWidener: "my_mod.accesswidener"` | Correct `accessWidener v1/v2 named/intermediary` header; legacy only |
+| Fabric icon | 1.1 `fabric.icon`, legacy v1 `mod.icon` | Create real PNG in relevant platform resources |
+| Custom Fabric Loader metadata | 1.1 `fabric.custom`, legacy v1 `mod.custom` | Inspect generated JSON; no invented Gradle effects |
 | Local Maven library publication | `product: fabric/api` and `mod.group` | `gradle publishMavenJavaPublicationToFabricAmperLocalRepository` (writes inside consumer `build/`) |
 | Explicit remote Maven publication | `publish.maven.url` and optional `credentialsFromEnv: [USER_VAR, PASS_VAR]` | Requires `mod.group`; HTTPS only; explicit `gradle publishFabricAmperMaven` |
 | Modrinth release | `publish.modrinth.projectId`, `tokenEnv` and verified release options | No platform upload until explicitly asked; task `publishFabricAmperModrinth` |
 | CurseForge release | `publish.curseforge.projectId` (integer), `tokenEnv` and verified release options | Distinguish string tag names from integer version IDs |
 | Same release metadata for Modrinth and CurseForge | `publish.common.releaseType`, optional `name`, `gameVersions`, `changelog` OR `changelogFile`, and `dependencies[]` with `slug` / optional `modrinthId` and `curseforgeId` / `type` | Only applies to destinations explicitly present; platform values override, relations can override or append |
 | Legacy API remote Maven | `publishing.repository.url` and optional paired `usernameEnv`/`passwordEnv` | API/library only; do not also set `publish.maven` |
-| Avoid authored metadata collision | Never add any source `fabric.mod.json`; `settings.resources.failOnExistingFabricModJson` stays true | FA008; plugin generates metadata |
+| Avoid authored metadata collision | Never add source `fabric.mod.json` or `META-INF/neoforge.mods.toml`; 1.1 `fabric.resources.failOnExistingFabricModJson` remains true (legacy v1 `settings.resources`) | FA008 and platform-specific validation; plugin generates metadata |
 | IDE sync | Use generated Gradle model; manual or automatic IntelliJ sync must be actually observed | Do not mark G6/G28 passed from `gradle help` |
-| Game run | `gradle runClient` / `gradle runServer` in isolated environment | No real-world overwrites; EULA is for the user |
+| Game run | BAT `run` / `server` (dual requires exactly one of `--mod-fabric` or `--mod-neoforge`) | Single loader: original `runClient`/`runServer`; dual: `runFabricClient`/`runNeoForgeClient` and matching Server; **real runtime not verified** |
 | Fix configuration cache | Correct deterministic YAML and mirror resources; retry safe non-publish tasks | A remote Maven upload + CC HIT is not established |
 
 ## Complete starter files: Java-only Minecraft 26.3
@@ -130,23 +135,23 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0")
             }
         }
     }
 }
 
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.3"
+    id("dev.fabric-amper.settings") version "0.3.0"
 }
 ```
 
-The Settings plugin is redirected to JitPack using the **intended** GitHub tag `v0.1.3`, while the public plugin ID is requested with version `0.1.3`. The old local `fabric-amper.bat setup` flow has been removed; a direct producer-local Gradle publication is still available separately for tests. Check that the `v0.1.3` tag exists and that JitPack actually serves its module before claiming the bootstrap is operational. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
+**Planned v0.3.0 prerelease bootstrap, not yet confirmed published:** the Settings plugin is redirected to the prospective JitPack Git tag `v0.3.0`, and the requested Gradle plugin version is `0.3.0`. **Do not copy this into a build expected to resolve publicly until GitHub prerelease assets, matching helper/schema checksums and JitPack artifact are actually available.** For develop TestKit, use the verified local build/bootstrap instead. The old local `fabric-amper.bat setup` flow has been removed. Plugin repositories in `settings.gradle.kts` and artifact repositories in `mod.yaml` have separate jobs.
 
 **Consumer `mod.yaml`**:
 
 ```yaml
-schema: 1
+schema: "1.1"
 product: fabric/mod
 mod:
   id: example_mod
@@ -154,21 +159,22 @@ mod:
   group: org.example
   archivesName: example-mod
   name: Example Mod
-  environment: "*"
-  entrypoints:
-    main:
-      - org.example.ExampleMod
 minecraft:
   version: "26.3"
-  mappings: mojang
-  loader: "0.20.1"
-  fabricApi: "0.165.2+26.3"
 settings:
   java:
     release: 25
     sourcesJar: true
   kotlin:
     enabled: false
+fabric:
+  loader: "0.20.1"
+  mappings: mojang
+  api: "0.165.2+26.3"
+  environment: "*"
+  entrypoints:
+    main:
+      - org.example.ExampleMod
   resources:
     failOnExistingFabricModJson: true
 repositories:
@@ -210,11 +216,65 @@ gradle tasks --all
 gradle build
 ```
 
-On a successful build, inspect `build/libs/example-mod-1.0.0+26.3.jar` and the generated `build/generated/fabric-amper/resources/main/fabric.mod.json`. The production archive must have exactly one **root** `fabric.mod.json`, whose ID and version match the YAML. Do not claim the example is runnable if the plugin marker or game artifacts are inaccessible.
+On a successful **Fabric** build, inspect `build/libs/example-mod-1.0.0+26.3.jar` and the generated `fabric.mod.json`. The production archive must have exactly one **root** `fabric.mod.json`, whose ID and version match the YAML. Do not claim the example is runnable if the plugin marker or game artifacts are inaccessible.
+
+### Schema 1.1 loader-specific examples and source layout
+
+**The following is the v0.3.0 prerelease contract as tested in the development worktree; public JitPack publication remains pending.** The latest decoder **now defaults omitted `schema` to 1.1**; this particular source change still awaits Prime's integration regression result. Use explicit `schema: "1.1"` in examples for clarity. Explicit `schema: 1` preserves legacy `minecraft.loader`/`mod.entrypoints` behavior, and **must not** be combined with the 1.1 `fabric:`/`neoforge:` namespaced example.
+
+**NeoForge-only Java** (complete minimal `mod.yaml`; use a real source `@Mod("example_mod")` class in `src/main/java`):
+
+```yaml
+schema: "1.1"
+product: neoforge/mod
+mod:
+  id: example_mod
+  version: "1.0.0+26.3"
+  name: Example NeoForge Mod
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+neoforge:
+  version: "26.3.0.101" # example candidate; verify actual compatible release
+  modLoader: javafml
+repositories: [mavenCentral]
+```
+
+**Dual-loader without Architectury** (complete YAML; create real independent `fabric/src/main/java` `ModInitializer` and `neoforge/src/main/java` `@Mod` sources):
+
+```yaml
+schema: "1.1"
+product: [fabric/mod, neoforge/mod]
+mod:
+  id: example_mod
+  version: "1.0.0+26.3"
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+architectury:
+  enable: false
+fabric:
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  mappings: mojang
+  entrypoints:
+    main: [org.example.ExampleFabricMod]
+neoforge:
+  version: "26.3.0.101" # verify version with active NeoForge repository
+repositories: [mavenCentral]
+```
+
+The independent dual product creates **`:fabric` and `:neoforge` only, without `:common`**. With `architectury.enable: true`, a **real `:common`** module is built and consumed by both platform projects; do not create it when false. Java is the default; `--kotlin` creates actual `.kt` sources and uses each platform's compatible runtime setup. `--splitEnvironmentSourceSets` applies to the Fabric side alone in independent dual, is **accepted but explicitly ignored** in dual+Architectury, and must be **rejected** in NeoForge-only; Fabric-only split remains supported. Generated output is **one Fabric JAR with only Fabric metadata** and/or **one NeoForge JAR with only NeoForge TOML metadata**, never cross-polluted. Dual Architectury, independent dual, hybrid API/mod and Fabric-only JIJ isolation have real develop TestKit build evidence; **actual game runClient/runServer, IntelliJ GUI and public GitHub/JitPack prerelease remain unverified**. Keep `product: [fabric/api, neoforge/mod]` and the reverse valid as independent publication types; do not assume remote Maven upload has passed.
 
 ## Safe modification recipes
 
-**Recipe convention:** every `yaml` block labeled **FRAGMENT** below is an *illustrative subsection* to merge under the correct existing keys; it is **not** a new complete `mod.yaml`. Never append a second `mod:`/`settings:`/`dependencies:` mapping or duplicate a key. Preserve all unrelated fields. When replacing an existing value, edit that value in place.
+**Recipe convention:** every `yaml` block labeled **FRAGMENT** below is an *illustrative subsection* to merge under the correct existing keys; it is **not** a new complete `mod.yaml`. Many established recipes below use the **legacy v1 field layout** and remain correct **only with `schema: 1`**. For schema 1.1, translate legacy `mod.entrypoints/mixins/accessWidener/depends` to `fabric.*`, `minecraft.loader/mappings/fabricApi` to `fabric.loader/mappings/api`, `settings.loom/resources` to `fabric.loom/resources`, and separate loader-specific `gradleDependencies` under `fabric:` or `neoforge:`; consult the decoder for exact allowed keys before modifying. Never append a second `mod:`/`settings:`/`dependencies:` mapping or duplicate a key. Preserve all unrelated fields. When replacing an existing value, edit that value in place.
 
 ### Request: switch from a normal mod to a public API/library
 
@@ -437,7 +497,7 @@ Create actual JUnit Jupiter test classes under `src/test/java/` or `src/test/kot
 
 ## Complete API/library profile for Maven consumers
 
-This is a **complete YAML document** illustrating *valid syntax*. The `dev.example` coordinates are illustrative unresolvable placeholders; replace them with **verified, reachable** dependencies before expecting a real build or local publication.
+This is a **complete legacy `schema: 1` YAML document** illustrating *historically valid Fabric API syntax*. It is **not** a schema 1.1 default example; do not remove `schema: 1` without moving Loader fields into `fabric:`. The `dev.example` coordinates are illustrative unresolvable placeholders; replace them with **verified, reachable** dependencies before expecting a real build or local publication.
 
 ```yaml
 schema: 1
@@ -528,7 +588,7 @@ publish:
     gameVersionNames: ["26.3", "Fabric", "Client", "Server"]
 ```
 
-Do **not** infer that the sample IDs or compatibility tags are real. `common` may appear when one or both release targets are configured, but **does not create a destination by itself**; `common` with only `maven` fails FA003. `schema` may be omitted: this plugin selects its latest recognized **v1**; `schema: 1` explicitly pins v1 and any unsupported explicit version fails FA003.
+Do **not** infer that the sample IDs or compatibility tags are real. `publish.common` is release metadata and **not** the multi-loader Architectury `:common` module: it may appear when one or both release targets are configured, but **does not create a destination by itself**; `publish.common` with only `maven` fails FA003. In latest develop source, omitted `schema` **defaults to 1.1** (new decoder change, integration tests ongoing); `schema: "1.1"` explicitly selects it, while `schema: 1` pins old Fabric-only syntax. Never allow unquoted float `schema: 1.1`.
 
 | Authored shared field | Effective Modrinth field | Effective CurseForge field |
 | --- | --- | --- |
@@ -672,7 +732,7 @@ Read `fabric-amper.schema.json` and the strict decoder. A YAML language server m
 
 ```yaml
 # yaml-language-server: $schema=./fabric-amper.schema.json
-schema: 1
+schema: "1.1"
 ```
 
 The two lines above are a **FRAGMENT**, not a complete document. The schema file must actually be reachable from the consumer editor (copy or reference the repository's authoritative schema; do not assume it appears automatically in unrelated consumers).
@@ -789,7 +849,7 @@ Use these as **requirements-based scenarios**, not automatic claims of a PASS:
 Before reporting completion, confirm:
 
 - [ ] Consumer has `settings.gradle.kts` and exactly one `mod.yaml` or `mod.yml`, **no** consumer build script or authored Loader JSON.
-- [ ] YAML uses only documented schema-v1 fields, fixed versions, the correct product and matching game/Java/mappings profile.
+- [ ] YAML uses keys matching **effective schema** (omitted or quoted 1.1 vs explicitly integer 1), fixed versions, correct target scalar/array and matching game/Java/mappings profile.
 - [ ] Referenced code, resources, repository coordinates, and platform identifiers genuinely exist or are explicitly marked placeholders.
 - [ ] No secrets in files/output; no unauthorized publishing, `~/.m2` writes, world changes, EULA changes, or unintended network uploads.
 - [ ] Actual commands, their exit status, test counts, JAR path, and root metadata check are recorded when executed.
@@ -798,7 +858,7 @@ Before reporting completion, confirm:
 
 ## Known acceptance boundaries
 
-The producer has a historical Gradle 9.7.1 / JDK 25 clean-build baseline recorded in `QA_REPORT.md`: 46 suites, 247 tests, **207 PASS, 40 SKIP, 0 FAIL, 0 ERROR**. That producer result is **not blanket evidence** for new sample consumers, downstream users, IDE GUI sync, dedicated-server boot, external publishing, or every gate G1–G30. As of the documented baseline, the overall **shipping status remains NOT APPROVED**; dedicated-server full boot, IntelliJ GUI first import/manual+auto sync, full Minecraft 1.21.11 game runtime, and an authenticated native HTTPS Maven PUT with configuration-cache HIT are not all established. No actual outside Modrinth/CurseForge upload was authorized or performed. When status matters, read the current `QA_REPORT.md` rather than assuming earlier success persists.
+The historical Gradle 9.7.1 / JDK 25 baseline in `QA_REPORT.md` was 46 suites / 247 tests (207 PASS, 40 SKIP). Earlier develop-worktree verification had **364 tests = 307 PASS, 57 SKIP**. The **v0.3.0 source candidate** passed `clean build validatePlugins --offline` with **371 tests = 314 PASS, 57 SKIP, 0 fail/error**, including new schema-default and Windows command dispatch regressions. Prior actual schema 1.1 NeoForge-only, dual independent/Architectury, Kotlin, hybrid API/mod and Fabric-only nested JIJ TestKit builds passed. **Cold-cache caveat:** initial `:common` JAR creation caused one-time *second* configuration-cache MISS; identical third run HIT and product-order stable JARs passed, so strict immediate cold second HIT is **NOT MET**. These do **not** prove actual Minecraft client/server loading, IntelliJ GUI sync, publicly resolvable JitPack, authenticated uploads, or all G1–G30/NF1–NF26 gates. Treat the GitHub v0.3.0 prerelease as a developer preview, not a full shipping approval. Read current `QA_REPORT.md` for exact evidence.
 
 ## Windows command wrapper: fabric-amper.bat
 
@@ -817,6 +877,9 @@ fabric-amper.bat init strict_mode "Strict Mode" mod --splitEnvironmentSourceSets
 fabric-amper.bat init strict_kotlin "Strict Kotlin" mod --kotlin --splitEnvironmentSourceSets
 fabric-amper.bat init architectury_single "Architectury Single" mod --architectury
 fabric-amper.bat init architectury_split "Architectury Split" mod --architectury --splitEnvironmentSourceSets
+fabric-amper.bat init neo_mod "NeoForge Mod" mod --mod-neoforge
+fabric-amper.bat init dual_mod "Dual Mod" mod --mod-fabric --mod-neoforge
+fabric-amper.bat init dual_shared "Dual Architectury" mod --mod-fabric --mod-neoforge --architectury --kotlin
 rem Create within the current tools-only folder without replacing existing project files:
 fabric-amper.bat init night_vision --here
 fabric-amper.bat init example_api "C:\work\example_api" api
@@ -827,17 +890,21 @@ fabric-amper.bat migrate -C "C:\work\legacy_mod"
 
 rem Call from any other directory; provide full script path and consumer root.
 "C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\example_mod" build
+"C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\dual_mod" run --mod-fabric
+"C:\path\to\Fabric Amper\fabric-amper.bat" -C "C:\work\dual_mod" server --mod-neoforge
 ```
 
-`init <id> [new_folder] [mod|api] [--kotlin]` creates a **new** target folder with `settings.gradle.kts`, `mod.yaml`, a local editor schema snapshot, optional VS Code YAML mapping and a real `ModInitializer` source; it refuses an existing destination. **Java is the default**, generating `src/main/java/org/example/ExampleMod.java` with `settings.kotlin.enabled: false`. An optional trailing `--kotlin` flag (for `mod`, `api`, or `--here`) instead generates `src/main/kotlin/org/example/ExampleMod.kt` with `settings.kotlin.enabled: true`, no extra Java source, and an unchanged `org.example.ExampleMod` entrypoint; Fabric Amper supplies pinned Kotlin Gradle plugin 2.4.21 and Fabric Language Kotlin 1.14.2+kotlin.2.4.21. Never add a consumer `build.gradle(.kts)` or change the entrypoint to `ExampleModKt` for this Kotlin *class*. **When the BAT-side `fabric-amper.schema.json` is missing, `init` automatically downloads it from the public GitHub `main` branch into the BAT folder, verifying the SHA-256 pinned in the BAT before creating the target; it never overwrites or trusts a mismatched existing schema.** If `main` changes its schema bytes, the old BAT may reject the new version until the pinned hash is updated. `init <id> --here [mod|api] [--kotlin]` instead initializes inside the current folder **only when no project files already exist**: BAT/skill/`.md`/`.gitignore`/existing non-project `.vscode/settings.json` are preserved, but any `mod.yaml`, `mod.yml`, `settings.gradle.kts`, `build.gradle(.kts)`, `src`, or conflicting schema path blocks initialization with no overwrite. Generated YAML starts with `# yaml-language-server: $schema=./schemas/mod.schema.json`; this is relative to `mod.yaml` in the **new project**, where the verified schema snapshot is copied. Default placement without `--here` is a sibling of the checkout when launched there or a child of the current working directory elsewhere. The generated Settings script targets JitPack's tagged `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3` module via `resolutionStrategy` and does **not** require a local `setup` step. The API profile uses a placeholder `org.example` group to replace.
+`init <id> [new_folder] [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]` creates a new target folder with `settings.gradle.kts`, one `mod.yaml` and actual platform source files; `--here` is supported in an otherwise tools-only folder. **No loader flag defaults to Fabric-only; either flag selects that single loader; both flags select Fabric+NeoForge.** A single loader writes a scalar `product`; dual writes an array. Without `--architectury`, dual creates **`fabric/` and `neoforge/` only (no `common/`)**; with it, generates **`common/`, `fabric/`, `neoforge/`**. Java is the default, `--kotlin` generates actual Kotlin sources and Gradle settings. NeoForge uses a real `@Mod` initializer, Fabric uses `ModInitializer`; do not invent a common Fabric class for NeoForge. Generated 1.1 YAML uses loader-specific `fabric:`/`neoforge:` blocks. **The latest development decoder already interprets missing `schema` as 1.1 (integration tests pending); existing explicit `schema: 1` keeps legacy semantics.** Never add a consumer `build.gradle(.kts)` or hand-authored Loader metadata.
 
-**Split source sets at creation:** `init <id> [new_folder] [mod|api] [--kotlin] [--splitEnvironmentSourceSets]` and `init <id> --here [mod|api] [--kotlin] [--splitEnvironmentSourceSets]` accept both optional switches (in **either order, at the end**, no duplicates). The exact `--splitEnvironmentSourceSets` flag makes the generated YAML contain `settings.loom.splitEnvironmentSourceSets: true`. Without the flag, splitting is disabled by default. With the flag, generate common `src/main/java/org/example/ExampleMod.java` or Kotlin `.kt`, and client-only `src/client/java/org/example/ExampleModClient.java` or `src/client/kotlin/org/example/ExampleModClient.kt` implementing `ClientModInitializer`. Also create both `src/main/resources` and `src/client/resources`; register `mod.entrypoints.client` as `org.example.ExampleModClient` while preserving `mod.entrypoints.main`. This is *compile/source-set separation*: `src/main` remains common, **not** dedicated-server-only. Do **not** set `mod.environment: client` just because the flag was selected. Without the flag, generate no client source or client entrypoint.
+**Safe asset/bootstrap conditions:** when the BAT-side schema is missing, `init` downloads the SHA-256 pinned schema from the configured public source and rejects mismatches, unsafe pre-existing paths or overwrites. Verify the exact BAT pin/source rather than assuming a downloaded public v0.3.0 asset exists. `--here` rejects existing YAML, Settings, build script, `src` or conflicting schema path. Generated YAML's `# yaml-language-server: $schema=./schemas/mod.schema.json` resolves relative to the new consumer YAML. The generated Settings script **intends** JitPack `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0`; **the prerelease/JitPack module is not yet confirmed public**, so use a local plugin bootstrap for develop-only tests. The API profile uses a placeholder `org.example` group to replace.
 
-**Architectury starter on develop:** add trailing `--architectury` to any Java/Kotlin `init` (mod/api and `--here` supported). It writes root `architectury.enable: true` and deliberately omits `version` (fixed Minecraft 26.3 default `22.0.5`). A non-split project gets a single Architectury `Platform.getMinecraftVersion()` `ExampleMod` initializer. A split project gets distinct **common** `ExampleMod` and **client-only** `ExampleModClient` code, both importing and calling the API in their respective source sets. All three optional flags may appear in any order after positional arguments; duplicates, unknowns or positional arguments after flags fail before file creation. The Settings starter currently still pins public JitPack v0.1.3, which **does not support Architectury**. Until a new release, only validate the generated source using the locally built develop plugin under TestKit; do not promise an out-of-the-box build against v0.1.3.
+**Split source sets at creation:** `--splitEnvironmentSourceSets` creates Fabric `src/main` + `src/client` Java/Kotlin source/resource roots with the actual `ClientModInitializer`, and writes **`fabric.loom.splitEnvironmentSourceSets: true` / `fabric.entrypoints.client` for schema 1.1** (the old `settings.loom`/`mod.entrypoints` wording applies **only** to explicit v1). The client initializer must not load on a dedicated server. For **independent dual**, only the Fabric subproject is split. For **dual with Architectury**, the BAT accepts and explicitly **ignores** split, leaving shared `:common` layout and no Fabric client split. For **NeoForge-only**, split is rejected rather than silently ignored. Without a split flag, no Fabric client source or client entrypoint is generated. Do not change `mod.environment` to client merely because Fabric split was selected.
 
-### Convert a legacy Fabric Gradle mod with `migrate` (v0.1.3)
+**Architectury starter (develop v0.3.0 prerelease candidate):** `--architectury` writes `architectury.enable: true` and may use the pinned default API version for Minecraft 26.3. In **single-loader Fabric**, it retains the Fabric Architectury API example with optional client split. In **single-loader NeoForge**, it generates a platform-specific Java/Kotlin `@Mod` example using NeoForge Architectury API; real BAT TestKit Java and Kotlin consumer builds passed. In **dual-loader**, Architectury **creates the genuine `:common` module** and both loader modules; its split flag is accepted but **ignored with a clear message**. With `--architectury` **absent**, dual-loader has no `:common` at all. Real TestKit verified dual Architectury Java/Kotlin/hybrid build configurations; it **did not validate actual Minecraft runtime, IntelliJ GUI or public v0.3.0 JitPack**.
 
-Use `migrate` when the user has an **existing** Fabric mod with exactly one `build.gradle.kts` **or** Groovy `build.gradle`, and exactly one supported `src/main/resources/fabric.mod.json` (or `src/client/resources/fabric.mod.json`). This differs from `init`, which starts a new project, and `port`, which only prints a manual Minecraft version checklist. The migration helper lives at **`scripts/fabric-amper-migrate.ps1`**. If absent, normal `migrate` fetches the exact matching v0.1.3 GitHub Release asset (and the root schema if missing), verifies hard-coded SHA-256 values and only then executes the converter; manual PS1 installation is unnecessary. Both `migrate --dry-run` and `doctor --fix --dry-run` **never download or write files**; when the helper/schema is missing they show only the proposed download, not the actual conversion preview. Existing files with wrong hashes are rejected without overwriting or execution. The converter statically interprets a limited Gradle DSL subset and **never evaluates the original build script or starts Gradle**. It produces `mod.yaml` and `settings.gradle.kts` using the v0.1.3 JitPack plugin coordinates. A successful conversion alone does **not** establish that JitPack serves the tag, that the mod compiles, or that it runs.
+### Convert a legacy Fabric Gradle mod with `migrate` (v0.3.0 prerelease plan; legacy input)
+
+Use `migrate` when the user has an **existing** Fabric mod with exactly one `build.gradle.kts` **or** Groovy `build.gradle`, and exactly one supported `src/main/resources/fabric.mod.json` (or `src/client/resources/fabric.mod.json`). This differs from `init`, which starts a new project, and `port`, which only prints a manual Minecraft version checklist. The helper is **`scripts/fabric-amper-migrate.ps1`**. If absent, a normal v0.3.0 BAT migration will attempt a **version-matched v0.3.0 GitHub Release asset**, verify its pinned SHA-256 (and the schema if needed), and fail safely if the prerelease assets are **not yet published**. Both `migrate --dry-run` and `doctor --fix --dry-run` never download or write; missing helper/schema only previews an attempted download. Existing wrong-hash tools are rejected without overwrite or execution. The converter statically interprets a limited Gradle DSL subset and **never evaluates the old build script**. It generates `mod.yaml` and `settings.gradle.kts` intended for **v0.3.0 JitPack**, whose availability must be checked before relying on it; a conversion alone does **not** prove the mod compiles, runs or is remotely resolvable.
 
 ```bat
 rem Run these from the legacy project directory with the BAT on PATH or by full path:
@@ -860,7 +927,7 @@ rem Preview deletion semantics with no writes:
 
 **Preconditions and limits:** Reject an existing `mod.yaml`/`mod.yml`, pre-existing `gradle_backup/`, zero or two build scripts, two Settings files, missing or multiple source `fabric.mod.json`, unsupported resource locations, and symlinks/junctions in input paths. Only Fabric Loader `schemaVersion: 1`, statically resolvable fixed Minecraft/Loader/API/Kotlin/mapping versions, supported `fabric-loom` flavor and known declarative Gradle blocks can be converted safely. Unknown plugins, custom Gradle tasks, dynamic properties/interpolation, arbitrary script logic, multi-project setups, nonstandard repositories, or metadata that cannot be translated without loss **fail for manual migration**; the helper does not guess an equivalent YAML field. The generated product is `fabric/mod`; API/library publishing and external publishing targets must be reviewed and configured separately when truly requested. No `fabric.mod.json` is authored after conversion—the Amper plugin generates it for the JAR.
 
-**After migration:** Inspect the generated YAML (especially dependency `scope`, `kind`, `include`, `exported`, client split source sets, Kotlin entrypoints and mappings) and confirm the v0.1.3 JitPack artifact actually resolves. On Windows, use the established `doctor` → optional `doctor --fix --dry-run` → automatic `doctor --fix` → `doctor` recheck policy **only if a required toolchain is missing**. Then run `fabric-amper.bat -C "C:\work\legacy_mod" validate` and `build`, inspect the produced JAR for a single root `fabric.mod.json`, and perform separate client/server or IDE tests as required. A failed `validate`/`build` never justifies removing sources or silently modifying third-party Gradle logic. When a project falls outside the static converter's supported subset, report the exact blocker and give the user a manual conversion plan.
+**After migration:** Inspect whether the generated YAML is **explicit legacy `schema: 1`** or correctly namespaced 1.1 (never mix both); verify dependencies, client split, Kotlin entrypoints and mappings. Confirm the **planned v0.3.0 JitPack artifact actually resolves after publication** before promising a public bootstrap. On Windows, apply the documented doctor/repair policy only if a required toolchain is missing. Then run `fabric-amper.bat -C "C:\work\legacy_mod" validate` and `build`, inspect the produced JAR for a single root `fabric.mod.json`, and perform separate game client/server or IDE tests when required. Failed validation never justifies deleting sources or changing third-party build logic silently.
 
 | User intent | Wrapper command | Actual effect |
 | --- | --- | --- |
@@ -870,15 +937,15 @@ rem Preview deletion semantics with no writes:
 | Preview existing Fabric Gradle project conversion | `migrate --dry-run` or `migrate -C "C:\work\legacy_mod" --dry-run` | With verified local tools, parse and print YAML; if helper/schema is missing, only preview its download; never write or download |
 | Convert an existing Fabric Gradle project | `migrate` or `-C "C:\work\legacy_mod" migrate` | Download/hash-check missing `scripts/` helper and schema, then write YAML/Settings and back up original build, settings and source `fabric.mod.json` in `gradle_backup/` |
 | Convert and discard original build configuration | `migrate -D` or `migrate --delete` | Explicitly remove those original files only after staging and conversion; does not delete Java/Kotlin source or unrelated resources |
-| Initialize in current tools-only folder | `init <id> --here [mod\|api] [--kotlin] [--splitEnvironmentSourceSets]` | Preserve tools; optional Kotlin/strict client source sets; hard fail on existing consumer files |
-| Generate a new mod or API | `init <id> [folder] [mod|api] [--kotlin] [--splitEnvironmentSourceSets]` | Java by default, optional Kotlin `.kt`; split generates client `.java`/`.kt`, resource roots and client entrypoint; no overwrite, `build.gradle`, or authored `fabric.mod.json` |
+| Initialize in current tools-only folder | `init <id> --here [mod\|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]` | Preserve existing tools; hard fail on existing consumer files |
+| Generate Fabric, NeoForge or dual mod/API | `init <id> [folder] [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]` | No loader flags=Fabric; both=dual, Architectury on=shared common, off=no common; Java/Kotlin real sources; platform-specific split |
 | List/test/validate | `tasks`, `test`, `validate`, `verify` | `tasks --all` / `test` / `validateFabricAmper` / `verifyFabricAmperJar` |
 | Diagnose the consumer | `diagnose` / `explain` | `fabricAmperDoctor` toolchain summary / `fabricAmperExplain` independent dependency categories, no network lookups |
 | Inspect a prospective release | `plan` | `fabricAmperReleasePlan`; verifies final JAR and prints its checksum + effective release metadata without uploading |
 | Compare game profiles | `port 26.3` | `fabricAmperPortingReport -PfabricAmperPortTarget=26.3`; read-only manual migration checklist |
 | Package and verify | `build` | `validateFabricAmper build verifyFabricAmperJar` |
 | Remove local generated build outputs | `clean` | `gradle clean` for the chosen consumer |
-| Start Minecraft client/server | `run` / `server` | `runClient` / `runServer`, game process and normal EULA safeguards apply |
+| Start Minecraft client/server | `run` / `server` with optional `--mod-fabric` or `--mod-neoforge` | Dual **requires exactly one selector** and maps to `runFabricClient`/`runNeoForgeClient` or `runFabricServer`/`runNeoForgeServer`; single-loader no flag stays `runClient`/`runServer`. BAT fake-Gradle smoke PASS only; **actual game NOT RUN** |
 | Publish API to consumer-local Maven | `publish local` | `publishMavenJavaPublicationToFabricAmperLocalRepository` plus validation/build |
 | Publish one remote target | `publish maven` / `modrinth` / `curseforge` | Exact matching `publishFabricAmper...` task only after typed `PUBLISH` confirmation |
 | Publish all configured new remote targets | `publish all` | `publishFabricAmper` aggregator, **not** Gradle's broader `publish` |

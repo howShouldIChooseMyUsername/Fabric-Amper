@@ -5,16 +5,17 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.1.3"
+set "FA_VERSION=0.3.0"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
 set "FA_HELPER_SOURCE=release"
 rem Release-pinned helper downloads always go into the scripts directory.
 set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
-rem Verified SHA-256 of the unchanged doctor helper. Keep this pin until the
-rem helper bytes change; releases must publish the matching verified script.
+rem Release-pinned helper hashes must match the exact uploaded bytes.
+rem Reusing a helper requires the v0.3.0 release to publish the same verified
+rem bytes; never assume a helper was updated just because FA_VERSION changed.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
-set "FA_MIGRATE_SHA256=b4d1c0d28f48339b69c5d117348f66f85cb038f27cccb2270a27b26904dcd969"
-set "FA_SCHEMA_SHA256=ab6d2f74492d411ed16524b030e8234e1a2a26794420882ecb44d93bc72e0bc2"
+set "FA_MIGRATE_SHA256=68cf6834064ded80dc30ae7f99366de3c284c9cca7c1b8029f12c59343f6313a"
+set "FA_SCHEMA_SHA256=453620efca0115d5b584ddf71c515da1a8908b4c4ce4bc084a82c8d3b9764573"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption
@@ -77,7 +78,7 @@ echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [
 echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
 echo               No loader flag defaults to Fabric; a single flag creates one loader project.
-echo               Both loader flags create common/, fabric/, neoforge/ modules from schema 1.1.
+echo               Both loader flags create fabric/ and neoforge/; --architectury also creates common/.
 echo               --architectury enables per-loader Architectury API and shared examples.
 echo               --kotlin selects Kotlin examples; otherwise Java is used.
 echo               --splitEnvironmentSourceSets creates a Fabric client source set.
@@ -86,9 +87,11 @@ echo               Flags can be combined in any order after the optional folder/
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
 echo Consumer commands:
-echo   validate    Gradle validateFabricAmper
-echo   build       Gradle validateFabricAmper, build, verifyFabricAmperJar
-echo   verify      Gradle verifyFabricAmperJar
+echo   validate    Validate every selected loader ^(dual: :fabric and :neoforge^)
+echo   build       Validate, build and verify every selected loader
+echo   verify      Verify every selected loader's distributable JAR
+echo               Dual-loader projects run both platform tasks explicitly.
+echo               No additional Gradle flags are accepted for these commands.
 echo   test        Gradle test
 echo   tasks       Gradle tasks --all
 echo   diagnose    Gradle fabricAmperDoctor for the consumer
@@ -121,7 +124,7 @@ echo.
 echo If invoked from this producer directory, init creates a sibling folder.
 echo Otherwise init creates a new child folder in the current directory.
 echo init --here keeps existing tools and notes, but rejects existing project files.
-echo Generated Settings projects resolve Fabric Amper v0.1.3 from JitPack.
+echo Generated Settings projects target the Fabric Amper v%FA_VERSION% prerelease via JitPack.
 echo Use --project or -C before consumer commands; doctor also accepts them after its name.
 echo See HUMAN_QuickGuide.md and FabricAmperSKILL_SYN.md.
 exit /b 0
@@ -324,8 +327,8 @@ echo.
 echo [doctor] Producer: "%FA_ROOT%"
 echo [doctor] Consumer: "%FA_CONSUMER%"
 set "FA_DOCTOR_ERROR=0"
-echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3
-echo [INFO] Remote JitPack availability is not checked by doctor.
+echo [doctor] Plugin source: JitPack com.github.howShouldIChooseMyUsername:Fabric-Amper:v%FA_VERSION% ^(prerelease^).
+echo [INFO] Remote JitPack prerelease availability is not checked by doctor.
 if /i "%FA_DOCTOR_MODE%"=="full" call :doctorPaths
 if errorlevel 1 exit /b 1
 if /i "%FA_DOCTOR_MODE%"=="paths" (
@@ -660,8 +663,8 @@ exit /b 2
 
 :initPreflightDone
 rem Always use the producer's CURRENT schema for editor completion. The YAML
-rem Fabric-only legacy initialization omits schema; NeoForge and dual-loader
-rem initialization explicitly use schema: "1.1" and platform-specific keys.
+rem Fabric-only starter uses the legacy field layout and MUST explicitly pin
+rem schema: 1; omitted schema now selects 1.1. NeoForge/dual use schema: "1.1".
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required to verify the init schema.
@@ -772,20 +775,22 @@ if "%FA_INIT_V11%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\setting
 >> "%FA_TARGET%\settings.gradle.kts" echo(    resolutionStrategy {
 >> "%FA_TARGET%\settings.gradle.kts" echo(        eachPlugin {
 >> "%FA_TARGET%\settings.gradle.kts" echo(            if ^(requested.id.id == "dev.fabric-amper.settings"^) {
->> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+>> "%FA_TARGET%\settings.gradle.kts" echo(                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v%FA_VERSION%")
 >> "%FA_TARGET%\settings.gradle.kts" echo(            }
 >> "%FA_TARGET%\settings.gradle.kts" echo(        }
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 >> "%FA_TARGET%\settings.gradle.kts" echo(plugins {
->> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "0.1.3"
+>> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "%FA_VERSION%"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
 if "%FA_INIT_V11%"=="1" goto :initWriteSchema11
 rem New projects default to Java, with explicit --kotlin selecting a Kotlin entrypoint.
-rem Omitted schema selects the newest syntax supported by this plugin (currently v1).
+rem The plugin defaults omitted schema to 1.1. Keep this Fabric-only legacy
+rem starter's existing metadata layout with an explicit schema: 1 instead.
 > "%FA_TARGET%\mod.yaml" echo(# yaml-language-server: $schema=./schemas/mod.schema.json
 >> "%FA_TARGET%\mod.yaml" echo(# $schema: ./schemas/mod.schema.json
+>> "%FA_TARGET%\mod.yaml" echo(schema: 1
 >> "%FA_TARGET%\mod.yaml" echo(product: %FA_PRODUCT%
 >> "%FA_TARGET%\mod.yaml" echo(mod:
 >> "%FA_TARGET%\mod.yaml" echo(  id: %FA_INIT_ID%
@@ -975,10 +980,10 @@ if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).
 if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default, generated usage examples^).
-if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] DEV ONLY: JitPack v0.1.3 does not yet support architectury; test with the develop plugin until the next release.
+if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury example targets Fabric Amper v%FA_VERSION% prerelease.
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing non-project tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json ^(current producer schema snapshot^).
-echo [init] Settings plugin: JitPack Fabric-Amper v0.1.3 ^(Internet required on first resolution^).
+echo [init] Settings plugin: JitPack Fabric-Amper v%FA_VERSION% prerelease ^(Internet required on first resolution^).
 echo [init] Next: cd to the new folder and run build.
 exit /b 0
 
@@ -1234,7 +1239,7 @@ if "%FA_INIT_SPLIT_IGNORED%"=="1" echo [init] Fabric split flag ignored for this
 if "%FA_INIT_ARCHITECTURY%"=="1" echo [init] Architectury API: enabled ^(22.0.5 default^).
 if "%FA_INIT_HERE%"=="1" echo [init] Mode: --here; existing tools preserved.
 echo [init] YAML autocomplete: schemas\mod.schema.json.
-echo [init] Settings-only JitPack v0.1.3 is emitted; schema 1.1 requires a compatible development plugin until released.
+echo [init] Settings-only JitPack Fabric-Amper v%FA_VERSION% prerelease ^(schema 1.1, Internet required on first resolution^).
 exit /b 0
 
 :tasks
@@ -1280,15 +1285,57 @@ call :consumerGradle fabricAmperPortingReport "-PfabricAmperPortTarget=%FA_PORT_
 exit /b %errorlevel%
 
 :validate
-call :consumerGradle validateFabricAmper
-exit /b %errorlevel%
+set "FA_CONSUMER_ACTION=validate"
+goto :selectConsumerBuildTasks
 
 :build
-call :consumerGradle validateFabricAmper build verifyFabricAmperJar
-exit /b %errorlevel%
+set "FA_CONSUMER_ACTION=build"
+goto :selectConsumerBuildTasks
 
 :verify
-call :consumerGradle verifyFabricAmperJar
+set "FA_CONSUMER_ACTION=verify"
+goto :selectConsumerBuildTasks
+
+:selectConsumerBuildTasks
+rem Do not forward any caller-supplied arguments into Gradle. All task names
+rem below are exact literals, selected solely by the checked consumer product.
+if not "%~2"=="" goto :consumerBuildInvalidArgs
+if not "%~3"=="" goto :consumerBuildInvalidArgs
+call :checkConsumer
+if errorlevel 1 exit /b 2
+call :detectRunProduct
+if errorlevel 3 (
+    echo ERROR: Cannot safely determine loader targets from mod.yaml/mod.yml. No Gradle task started.
+    exit /b 2
+)
+if errorlevel 2 goto :dualConsumerBuildTasks
+goto :singleConsumerBuildTasks
+
+:singleConsumerBuildTasks
+set "FA_CONSUMER_TASKS="
+if "%FA_CONSUMER_ACTION%"=="validate" set "FA_CONSUMER_TASKS=validateFabricAmper"
+if "%FA_CONSUMER_ACTION%"=="verify" set "FA_CONSUMER_TASKS=verifyFabricAmperJar"
+if "%FA_CONSUMER_ACTION%"=="build" set "FA_CONSUMER_TASKS=validateFabricAmper build verifyFabricAmperJar"
+goto :invokeConsumerBuildTasks
+
+:dualConsumerBuildTasks
+set "FA_CONSUMER_TASKS="
+if "%FA_CONSUMER_ACTION%"=="validate" set "FA_CONSUMER_TASKS=:fabric:validateFabricAmper :neoforge:validateFabricAmper"
+if "%FA_CONSUMER_ACTION%"=="verify" set "FA_CONSUMER_TASKS=:fabric:verifyFabricAmperJar :neoforge:verifyFabricAmperJar"
+if "%FA_CONSUMER_ACTION%"=="build" set "FA_CONSUMER_TASKS=:fabric:validateFabricAmper :neoforge:validateFabricAmper build :fabric:verifyFabricAmperJar :neoforge:verifyFabricAmperJar"
+goto :invokeConsumerBuildTasks
+
+:consumerBuildInvalidArgs
+echo ERROR: validate/build/verify do not accept additional arguments or Gradle flags.
+exit /b 2
+
+:invokeConsumerBuildTasks
+if not defined FA_CONSUMER_TASKS (
+    echo ERROR: Internal unsupported consumer action. No Gradle task started.
+    exit /b 2
+)
+echo [%FA_CONSUMER_ACTION%] Gradle tasks: %FA_CONSUMER_TASKS%
+call :consumerGradle %FA_CONSUMER_TASKS%
 exit /b %errorlevel%
 
 :test
@@ -1371,11 +1418,12 @@ exit /b %errorlevel%
 :detectRunProduct
 rem Exit codes: 0 Fabric-only; 1 NeoForge-only; 2 both; 3+ unsafe/unknown.
 rem Bounded, read-only, UTF-8-strict inspection of the root YAML's schema and
-rem product declarations. This is deliberately NOT a YAML evaluator: reject
+rem product declarations, shared by run/server and validate/build/verify.
+rem This is deliberately NOT a YAML evaluator: reject
 rem unsupported or ambiguous syntax instead of guessing a Gradle run target.
 set "FA_RUN_YAML=%FA_CONSUMER%\mod.yaml"
 if not exist "%FA_RUN_YAML%" set "FA_RUN_YAML=%FA_CONSUMER%\mod.yml"
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $p=$env:FA_RUN_YAML; $f=Get-Item -LiteralPath $p -Force; if(-not $f -or $f.PSIsContainer -or $f.Length -gt 1048576 -or (($f.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)){throw 'Unsafe or oversized mod YAML'}; $t=[IO.File]::ReadAllText($p,(New-Object System.Text.UTF8Encoding($false,$true))); $pr=[regex]::Matches($t,'(?m)^product[ \t]*:[ \t]*(.*)$'); if($pr.Count -ne 1){throw 'Expected exactly one plain root product key'}; $sr=[regex]::Matches($t,'(?m)^schema[ \t]*:[ \t]*(.*)$'); if($sr.Count -gt 1){throw 'Duplicate schema keys'}; $v='1'; if($sr.Count -eq 1){$v=([regex]::Replace($sr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim()}; $v11=([string][char]34+'1.1'+[char]34); $v11s=([string][char]39+'1.1'+[char]39); if($v -cne '1' -and $v -cne $v11 -and $v -cne $v11s){throw 'Unsupported or unquoted schema'}; $raw=([regex]::Replace($pr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim(); $items=@(); $array=$false; if($raw.StartsWith('[') -and $raw.EndsWith(']')){$array=$true; $items=@($raw.Substring(1,$raw.Length-2) -split ',')} elseif($raw.Length -gt 0){$items=@($raw)} else {$array=$true; foreach($line in ($t.Substring($pr[0].Index+$pr[0].Length) -split '\r?\n')){if($line -match '^[ \t]*(?:#.*)?$'){continue}; if($line -cmatch '^[ \t]+-[ \t]+(.+)$'){$items+=([regex]::Replace($Matches[1],'[ \t]+#.*$','')).Trim(); continue}; if($line -cmatch '^[^ \t]'){break}; throw 'Unsupported block product syntax'}}; if($items.Count -lt 1 -or $items.Count -gt 2){throw 'Expected one or two loader products'}; $seen=@{}; foreach($item in $items){$item=$item.Trim(); if($item.Length -ge 2 -and (($item[0] -eq [char]34 -and $item[$item.Length-1] -eq [char]34) -or ($item[0] -eq [char]39 -and $item[$item.Length-1] -eq [char]39))){$item=$item.Substring(1,$item.Length-2)}; if($item -cnotmatch '^(fabric/(mod|api|library)|neoforge/(mod|api))$'){throw 'Unsupported loader product'}; $loader=$item.Split('/')[0]; if($seen.ContainsKey($loader)){throw 'Repeated loader target'}; $seen[$loader]=$true}; if(($array -or $seen.ContainsKey('neoforge')) -and $v -cne $v11 -and $v -cne $v11s){throw 'Schema 1.1 required'}; if($seen.Count -eq 2){exit 2}; if($seen.ContainsKey('neoforge')){exit 1}; exit 0 } catch { [Console]::Error.WriteLine('[ERROR] run/server product inspection: '+$_.Exception.Message); exit 3 }"
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { $p=$env:FA_RUN_YAML; $f=Get-Item -LiteralPath $p -Force; if(-not $f -or $f.PSIsContainer -or $f.Length -gt 1048576 -or (($f.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)){throw 'Unsafe or oversized mod YAML'}; $t=[IO.File]::ReadAllText($p,(New-Object System.Text.UTF8Encoding($false,$true))); $pr=[regex]::Matches($t,'(?m)^product[ \t]*:[ \t]*(.*)$'); if($pr.Count -ne 1){throw 'Expected exactly one plain root product key'}; $sr=[regex]::Matches($t,'(?m)^schema[ \t]*:[ \t]*(.*)$'); if($sr.Count -gt 1){throw 'Duplicate schema keys'}; $v=([string][char]34+'1.1'+[char]34); if($sr.Count -eq 1){$v=([regex]::Replace($sr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim()}; $v11=([string][char]34+'1.1'+[char]34); $v11s=([string][char]39+'1.1'+[char]39); if($v -cne '1' -and $v -cne $v11 -and $v -cne $v11s){throw 'Unsupported or unquoted schema'}; $raw=([regex]::Replace($pr[0].Groups[1].Value,'[ \t]+#.*$','')).Trim(); $items=@(); $array=$false; if($raw.StartsWith('[') -and $raw.EndsWith(']')){$array=$true; $items=@($raw.Substring(1,$raw.Length-2) -split ',')} elseif($raw.Length -gt 0){$items=@($raw)} else {$array=$true; foreach($line in ($t.Substring($pr[0].Index+$pr[0].Length) -split '\r?\n')){if($line -match '^[ \t]*(?:#.*)?$'){continue}; if($line -cmatch '^[ \t]+-[ \t]+(.+)$'){$items+=([regex]::Replace($Matches[1],'[ \t]+#.*$','')).Trim(); continue}; if($line -cmatch '^[^ \t]'){break}; throw 'Unsupported block product syntax'}}; if($items.Count -lt 1 -or $items.Count -gt 2){throw 'Expected one or two loader products'}; $seen=@{}; foreach($item in $items){$item=$item.Trim(); if($item.Length -ge 2 -and (($item[0] -eq [char]34 -and $item[$item.Length-1] -eq [char]34) -or ($item[0] -eq [char]39 -and $item[$item.Length-1] -eq [char]39))){$item=$item.Substring(1,$item.Length-2)}; if($item -cnotmatch '^(fabric/(mod|api|library)|neoforge/(mod|api))$'){throw 'Unsupported loader product'}; $loader=$item.Split('/')[0]; if($seen.ContainsKey($loader)){throw 'Repeated loader target'}; $seen[$loader]=$true}; if(($array -or $seen.ContainsKey('neoforge')) -and $v -cne $v11 -and $v -cne $v11s){throw 'Schema 1.1 required'}; if($seen.Count -eq 2){exit 2}; if($seen.ContainsKey('neoforge')){exit 1}; exit 0 } catch { [Console]::Error.WriteLine('[ERROR] run/server product inspection: '+$_.Exception.Message); exit 3 }"
 exit /b %errorlevel%
 
 :publish

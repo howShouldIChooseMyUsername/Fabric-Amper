@@ -17,13 +17,72 @@ class FabricAmperSchema11ParsingTest {
     private var sequence = 0
 
     @Test
-    fun `old Fabric schema keeps its single target when schema is omitted`() {
-        val legacy = YamlFixtures.valid.replace("schema: 1\n", "")
-        val original = ModYamlLoader.load(YamlFixtures.write(workspace, legacy))
+    fun `old Fabric schema keeps its single target when schema 1 is explicit`() {
+        val original = ModYamlLoader.load(YamlFixtures.write(workspace, YamlFixtures.valid))
         assertEquals(listOf("fabric/mod"), original.targets.map { it.product })
         assertFalse(original.isMultiLoader)
         assertEquals("1", original.schemaVersion)
         assertNull(original.neoforge)
+    }
+
+    @Test
+    fun `namespaced Fabric NeoForge and dual use schema 11 with explicit or omitted schema in yaml and yml`() {
+        val scenarios = listOf(
+            Triple("fabric/mod", true, false),
+            Triple("neoforge/mod", false, true),
+            Triple("[fabric/mod, neoforge/mod]", true, true),
+        )
+        for (fileName in listOf("mod.yaml", "mod.yml")) {
+            for (omitSchema in listOf(false, true)) {
+                for ((product, hasFabric, hasNeoForge) in scenarios) {
+                    val explicit = config(product, hasFabric, hasNeoForge)
+                    val yaml = if (omitSchema) explicit.removePrefix("schema: \"1.1\"\n") else explicit
+                    if (omitSchema) {
+                        assertFalse(yaml.startsWith("schema:"), "Fixture must omit schema entirely")
+                    }
+                    val model = load(yaml, fileName)
+                    val label = "$fileName $product omitSchema=$omitSchema"
+                    val expectedProducts = buildList {
+                        if (hasFabric) add("fabric/mod")
+                        if (hasNeoForge) add("neoforge/mod")
+                    }
+                    assertEquals("1.1", model.schemaVersion, label)
+                    assertEquals(expectedProducts, model.targets.map { it.product }, label)
+                    assertEquals(hasFabric && hasNeoForge, model.isMultiLoader, label)
+                    assertEquals(hasFabric, model.fabric != null, label)
+                    assertEquals(hasNeoForge, model.neoforge != null, label)
+                    if (hasFabric) {
+                        assertEquals("0.20.1", model.fabric!!.loader, label)
+                        assertEquals("0.165.2+26.3", model.fabric!!.api, label)
+                    }
+                    if (hasNeoForge) {
+                        assertEquals("26.3.0.101", model.neoforge!!.version, label)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `schema 1 explicitly retains legacy fields in yaml and yml`() {
+        for (fileName in listOf("mod.yaml", "mod.yml")) {
+            val model = load(YamlFixtures.valid, fileName)
+            assertEquals("1", model.schemaVersion, fileName)
+            assertEquals(listOf("fabric/mod"), model.targets.map { it.product }, fileName)
+            assertFalse(model.isMultiLoader, fileName)
+            assertEquals("0.20.1", model.minecraft.loader, fileName)
+            assertNull(model.neoforge)
+        }
+    }
+
+    @Test
+    fun `omitted schema never falls back to legacy root loader fields in yaml or yml`() {
+        val legacyWithoutSchema = YamlFixtures.valid.replace("schema: 1\n", "")
+        for (fileName in listOf("mod.yaml", "mod.yml")) {
+            YamlFixtures.configError("FA003") {
+                load(legacyWithoutSchema, fileName)
+            }
+        }
     }
 
     @Test
@@ -124,11 +183,13 @@ class FabricAmperSchema11ParsingTest {
         }
     }
 
-    private fun load(text: String) = Files.createDirectory(workspace.resolve("schema11-" + sequence++)).let {
-        val path = it.resolve("mod.yaml")
-        Files.writeString(path, text)
-        ModYamlLoader.load(path)
-    }
+    private fun load(text: String, fileName: String = "mod.yaml") =
+        Files.createDirectory(workspace.resolve("schema11-" + sequence++)).let {
+            require(fileName == "mod.yaml" || fileName == "mod.yml")
+            val path = it.resolve(fileName)
+            Files.writeString(path, text)
+            ModYamlLoader.load(path)
+        }
 
     private fun config(product: String, fabric: Boolean, neoforge: Boolean): String = buildString {
         appendLine("schema: \"1.1\"")

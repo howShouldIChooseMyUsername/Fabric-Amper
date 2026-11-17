@@ -54,8 +54,9 @@ class FabricAmperDocumentationContractUnitTest {
                 } catch (failure: Exception) {
                     throw AssertionError("$document YAML block $index does not satisfy the current strict decoder: ${failure.message}", failure)
                 }
-                assertEquals("fabric", model.product.substringBefore("/"))
-                assertEquals(1, model.schema)
+                assertTrue(model.targets.isNotEmpty(), "Documentation must select at least one supported loader")
+                assertTrue(model.schemaVersion in setOf("1", "1.1"),
+                    "Documentation must select either explicit legacy schema 1 or namespaced schema 1.1")
                 verified++
             }
         }
@@ -78,14 +79,14 @@ class FabricAmperDocumentationContractUnitTest {
             "## Windows command cheat sheet",
             "## Troubleshooting and next steps",
             "fabric-amper.bat init quick_mod",
-            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3",
+            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0",
             "fabric-amper.bat plan",
             "publish.common",
         ).forEach { expected ->
             assertTrue(quickGuide.contains(expected), "Merged English Quick Guide is missing '$expected'")
         }
         assertTrue(
-            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\n# \$schema: ./schemas/mod.schema.json\nproduct: fabric/mod"),
+            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\n# \$schema: ./schemas/mod.schema.json\nschema: 1\nproduct: fabric/mod"),
             "Quick Guide must provide a complete starter YAML with both YAML Language Server and IntelliJ schema directives",
         )
         assertTrue(quickGuide.contains("```kotlin\npluginManagement"), "Quick Guide must provide Settings bootstrap")

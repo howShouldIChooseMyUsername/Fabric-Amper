@@ -1,17 +1,127 @@
-# Fabric Amper (개발·검증 중)
+# Fabric Amper — v0.3.0 프리릴리즈 준비 (Fabric · NeoForge)
 
-Minecraft Fabric 모드를 **소비자 프로젝트의 `settings.gradle.kts`와 `mod.yaml` 또는 `mod.yml`만으로** 구성하는 Gradle 바이너리 플러그인입니다. 소비자에게 `build.gradle`, `build.gradle.kts`, 직접 작성한 `fabric.mod.json`은 필요하지 않습니다. **명세의 G1~G30 및 출하 게이트는 아직 모두 닫히지 않았으므로 정식 출시 완료 상태가 아닙니다.** 정확한 수행 이력과 남은 제한은 [`QA_REPORT.md`](QA_REPORT.md), 필수 계약은 [`specs.md`](specs.md)를 기준으로 합니다.
+Minecraft **Fabric·NeoForge·두 로더 동시 개발**을 `settings.gradle.kts`와 정확히 하나의 `mod.yaml` 또는 `mod.yml`로 구성하는 **Gradle 바이너리 플러그인**입니다. 소비자 프로젝트에 `build.gradle(.kts)`, 직접 작성한 `fabric.mod.json`이나 `META-INF/neoforge.mods.toml`을 요구하지 않습니다. Java/Kotlin 모드 클래스, Mixin, Class Tweaker/Access Transformer, 아이콘 등 실제 소스·리소스는 개발자가 작성합니다. **두 로더의 배포 JAR과 메타데이터는 별개**이며 만능 통합 JAR 하나가 생성되지는 않습니다.
 
-> **v0.1.3 준비 상태 (2026-11-14):** 이 소스의 Gradle 프로젝트·Windows BAT·새 소비자 Settings 예제는 `0.1.3`을 대상으로 합니다. 앞서 공개된 프리릴리즈는 **[v0.1.2](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.1.2)**이며, **v0.1.3 Git 태그·Release 자산·JitPack 모듈이 실제 공개되고 다운로드되는지는 별도로 확인해야 합니다.** `doctor --fix`는 BAT 자체 버전의 GitHub Release에서 SHA-256 고정 PS1을 받아 검증한 후 환경 복구를 수행합니다. `--dry-run`은 다운로드하지 않습니다. 자세한 현재 사용법은 [HUMAN.md](HUMAN.md), [HUMAN_QuickGuide.md](HUMAN_QuickGuide.md), [FabricAmperSKILL.md](FabricAmperSKILL.md), [FabricAmperSKILL_SYN.md](FabricAmperSKILL_SYN.md)를 참고하세요. 아래의 예전 `0.1.0` 산출물 해시·테스트 기록은 **과거 검증 증거**이며 v0.1.3 빌드 결과가 아닙니다.
+> **현재 상태 — v0.3.0 prerelease 목표, 게시 완료 선언 아님.** develop의 schema 1.1 NeoForge/듀얼/Architectury 기능에는 일부 실제 소비자 빌드·TestKit 증거가 있으나, **실제 멀티로더 Minecraft 게임 런타임·IntelliJ GUI Sync·콜드 configuration cache 전체 행렬·공개 JitPack v0.3.0 다운로드는 아직 수락 증거가 아닙니다.** 메인 반영·태그·GitHub Release 자산·JitPack 생성은 Prime의 별도 릴리즈 단계입니다. 아래의 v0.1.0/0.1.3 JAR 해시와 QA 수치는 **당시 역사적 검증 기록**이며 v0.3.0 바이너리 결과로 재사용하지 않습니다. [사람용 상세](HUMAN.md) · [빠른 안내](HUMAN_QuickGuide.md) · [AI용 상세](FabricAmperSKILL.md) · [AI용 요약](FabricAmperSKILL_SYN.md) · [QA 기록](QA_REPORT.md)
+
+## v0.3.0 핵심 — 스키마 1.1, 로더 선택, 독립 JAR
+
+| YAML 루트 `schema` | 해석 규칙 |
+| --- | --- |
+| **생략** | 기본값 **1.1**, `fabric:` / `neoforge:` 로더별 네임스페이스 |
+| `schema: "1.1"` | v1.1을 명시적으로 고정(마이그레이션 중 권장) |
+| `schema: 1` | 기존 **Fabric 전용 v1**: `mod.entrypoints`, `minecraft.loader`, `settings.loom` 등 |
+| `schema: 1.1` | 잘못된 YAML 숫자형 스칼라. 반드시 따옴표 있는 `"1.1"` 사용 |
+
+v1.1 `product`는 `fabric/mod`, `fabric/api`, `fabric/library`(API 별칭), `neoforge/mod`, `neoforge/api` 또는 로더별 하나씩 묶은 배열을 지원합니다. **예전 v1 YAML의 스키마를 생략해도 자동으로 v1으로 되돌아가지 않습니다.** 오래된 루트 필드를 쓰려면 `schema: 1`을 명시하세요. 두 YAML 파일이 동시에 있거나 둘 다 없으면 FA001입니다.
+
+**v0.3.0용 `settings.gradle.kts` (실제 JitPack 태그·아티팩트가 사용 가능할 때만):**
+
+```kotlin
+pluginManagement {
+    repositories {
+        maven("https://jitpack.io")
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.neoforged.net/releases/")
+        gradlePluginPortal()
+        mavenCentral()
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "dev.fabric-amper.settings") {
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0")
+            }
+        }
+    }
+}
+plugins {
+    id("dev.fabric-amper.settings") version "0.3.0"
+}
+```
+
+JitPack `v0.3.0` 참조는 **공개 배포·다운로드 성공을 증명하지 않습니다**. Settings 플러그인 `dev.fabric-amper.settings`만 직접 적용하며, 내부 Project 플러그인·Fabric Loom·NeoForge ModDevGradle을 수동 적용하지 마세요.
+
+**v1.1 Fabric 전용 `mod.yaml` (스키마 생략의 실제 예):**
+
+```yaml
+product: fabric/mod
+mod:
+  id: examplemod
+  version: "1.0.0+26.3"
+  name: Example Mod
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+fabric:
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  mappings: mojang
+  entrypoints:
+    main: [org.example.ExampleFabric]
+repositories: [fabric, mavenCentral]
+```
+
+`org.example.ExampleFabric`는 실제 `ModInitializer` 구현이어야 합니다. NeoForge 전용은 `product: neoforge/mod`로 바꾸고 위 `fabric:`을 `neoforge: {version: "26.3.0.101"}`로 대체하며 `repositories: [mavenCentral, neoforge]`를 사용합니다. 실제 `@Mod("examplemod")` 진입점과 `mod.license`가 필요합니다. Fabric JAR은 루트 `fabric.mod.json` 한 개, NeoForge JAR은 `META-INF/neoforge.mods.toml` 한 개를 가지며 상대 로더의 메타데이터를 포함하지 않습니다. NeoForge 버전은 **고정 예시**, 최신 버전 자동 탐색이 아닙니다.
+
+**듀얼 v1.1 (Architectury 공통 모듈 사용 예):**
+
+```yaml
+schema: "1.1"
+product: [fabric/mod, neoforge/mod]
+mod:
+  id: examplemod
+  version: "1.0.0+26.3"
+  name: Example Mod
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+architectury:
+  enable: true
+fabric:
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  mappings: mojang
+  entrypoints:
+    main: [org.example.ExampleFabric]
+neoforge:
+  version: "26.3.0.101"
+repositories: [mavenCentral, fabric, neoforge]
+```
+
+`architectury.enable: true`는 `:common`, `:fabric`, `:neoforge`를 만듭니다. 공통 소스는 `common/src/main/java`, 각 로더 초기화는 `fabric/src/main/java`와 `neoforge/src/main/java`에서 관리합니다. **`architectury`를 생략하거나 끄면 공통 모듈 없이 `:fabric`·`:neoforge`만** 생성되며 코드 공유를 자동으로 제공하지 않습니다. 루트 `dependencies`와 로더별 `fabric.gradleDependencies`/`neoforge.gradleDependencies`(빌드 클래스패스), `fabric.depends`/`neoforge.dependencies`(Loader 런타임 메타데이터)는 구별합니다.
+
+**Windows BAT 초기화와 로더별 실행:**
+
+```bat
+fabric-amper.bat --version
+fabric-amper.bat init examplemod                               rem 기본 Fabric/Java
+fabric-amper.bat init examplemod neo mod --mod-neoforge
+fabric-amper.bat init examplemod dual mod --mod-fabric --mod-neoforge --architectury
+fabric-amper.bat init examplemod independent mod --mod-fabric --mod-neoforge --kotlin
+fabric-amper.bat init examplemod splitdual mod --mod-fabric --mod-neoforge --splitEnvironmentSourceSets
+fabric-amper.bat -C "dual" build
+fabric-amper.bat -C "dual" run --mod-fabric
+fabric-amper.bat -C "dual" run --mod-neoforge
+fabric-amper.bat -C "dual" server --mod-fabric
+fabric-amper.bat -C "dual" server --mod-neoforge
+```
+
+로더 플래그 없음 → Fabric, `--mod-neoforge`만 → NeoForge, 두 플래그 → 듀얼입니다. `--architectury`는 듀얼 공통 모듈을, `--kotlin`은 Kotlin 소스를 생성합니다. `--splitEnvironmentSourceSets`는 **Fabric 전용**(NeoForge 단독 거부, 듀얼 독립은 Fabric에만 적용, 듀얼 Architectury는 무시)입니다. 듀얼 `run`/`server`는 **로더를 정확히 하나 지정**해야 하며 각기 `runFabricClient`/`runNeoForgeClient` 및 `runFabricServer`/`runNeoForgeServer` 태스크에 대응합니다. 게임 실행 성공을 보장하지 않으며 Minecraft EULA를 자동 수락하지 않습니다.
 
 **Windows `doctor` 경로 옵션:** `fabric-amper.bat -C ".\httpmod" doctor`뿐 아니라 `fabric-amper.bat doctor -C ".\httpmod"` 및 `--project` 별칭도 지원합니다. `doctor -C ".\httpmod" doctor`처럼 명령어가 한 번 더 붙어도 호환을 위해 허용합니다. 상대경로는 BAT 파일 위치가 아닌 **현재 터미널 폴더** 기준입니다. 다른 소비자 명령에서는 기존처럼 `-C`를 명령 앞에 둡니다.
 
-## 기존 Fabric Gradle 모드를 YAML로 옮기기 — `migrate` (v0.1.3)
+## 기존 Fabric Gradle 모드를 YAML로 옮기기 — `migrate` (v0.3.0 준비)
 
 Windows에서 기존 **Kotlin DSL `build.gradle.kts` 또는 Groovy DSL `build.gradle`** 프로젝트와 **`src/main/resources/fabric.mod.json` 또는 `src/client/resources/fabric.mod.json`** 메타데이터를 읽어 Fabric Amper 형식의 `mod.yaml` 및 `settings.gradle.kts`로 전환할 수 있는 보수적 변환 명령입니다. 런처 옆에 **동일한 버전의 `fabric-amper-migrate.ps1`**이 필요합니다. 변환기는 Gradle DSL을 실행하지 않고 확인 가능한 정적 표현식만 해석합니다.
 
 ```bat
-rem 기존 Fabric Gradle 프로젝트 폴더에서, v0.1.3 런처를 지정:
+rem 기존 Fabric Gradle 프로젝트 폴더에서, v0.3.0 런처를 지정:
 "C:\tools\Fabric Amper\fabric-amper.bat" migrate --dry-run
 "C:\tools\Fabric Amper\fabric-amper.bat" migrate
 
@@ -24,20 +134,20 @@ rem 성공적으로 변환·검증된 뒤 원본을 영구 삭제하도록 명�
 rem -D 는 --delete 의 동일한 별칭
 ```
 
-기본 `migrate`는 원본 Gradle 스크립트·기존 Settings(있다면)·Loader JSON을 **`gradle_backup/`에 보관**하며, `--dry-run`은 정적 분석 결과와 생성 예정 YAML을 보여주고 파일을 생성·변경·삭제하지 않습니다. `--delete`(`-D`)는 정적 변환과 출력 파일 생성에 성공하면 기존 원본을 **삭제 모드로 처리**하는 선택 옵션이며, 이것이 **Gradle 빌드·실행 성공을 검증했다는 뜻은 아닙니다**. 복원이 필요하면 기본 보관 모드를 사용하세요. 기존 `mod.yaml`/`mod.yml`, `gradle_backup/` 등이 있다면 변환을 거부합니다. 결과로 생성되는 Settings는 **JitPack `v0.1.3`**을 지정하므로 해당 태그의 실제 배포 상태를 확인해야 합니다.
+기본 `migrate`는 원본 Gradle 스크립트·기존 Settings(있다면)·Loader JSON을 **`gradle_backup/`에 보관**하며, `--dry-run`은 정적 분석 결과와 생성 예정 YAML을 보여주고 파일을 생성·변경·삭제하지 않습니다. `--delete`(`-D`)는 정적 변환과 출력 파일 생성에 성공하면 기존 원본을 **삭제 모드로 처리**하는 선택 옵션이며, 이것이 **Gradle 빌드·실행 성공을 검증했다는 뜻은 아닙니다**. 복원이 필요하면 기본 보관 모드를 사용하세요. 기존 `mod.yaml`/`mod.yml`, `gradle_backup/` 등이 있다면 변환을 거부합니다. 결과 Settings는 **JitPack `v0.3.0` 프리릴리즈**를 참조하도록 준비 중이며, 실제 태그·아티팩트 해석은 별도로 확인해야 합니다. 레거시 Fabric 루트 필드를 출력하는 변환 결과에는 **`schema: 1`이 명시되어야** 새 생략 기본값 v1.1과 충돌하지 않습니다.
 
 복잡한 함수 호출, 동적 의존성, 임의 태스크/플러그인, 평가가 필요한 Gradle DSL, 지원하지 않는 Loader 메타데이터 구조는 자동으로 추측하지 않고 **오류와 수동 이전 필요 사항**으로 남깁니다. 이 명령은 Java/Kotlin·Mixin 구현을 다시 작성하거나 Minecraft 버전을 자동 포팅하는 도구가 아닙니다. 변환 뒤에는 소스·의존성·리소스를 직접 점검하고 `validate` → `build` → 게임/IDE 검증을 별도로 수행하세요. 자세한 조건은 [HUMAN.md](HUMAN.md)와 [Quick Guide](HUMAN_QuickGuide.md)를 참고하세요.
 
-## 파일을 작성하지 않고 배포하는 통합 `publish` 계약 (2026-11-13 추가 요구)
+## 명시적 게시 계약 — Fabric v1의 검증된 기록과 v1.1 확장 범위
 
-> **현재 구현과 검증 범위:** YAML 기반 게시 기능과 `publish.common` 공유 설정은 구현됐습니다. 로컬 Maven 게시·독립 소비자 작업 구성·플랫폼 업로드 `--dry-run`은 검증했고, [QA §28](QA_REPORT.md)에서는 **127.0.0.1 루프백 HTTPS 서버에 대한 네이티브 Maven 인증 PUT**을 성공했습니다. **외부 Modrinth/CurseForge 업로드는 아직 실행하지 않았고**, 실제 Maven 게시 시 Gradle 9.7.1 configuration cache HIT도 검증되지 않았습니다. 이 결과를 외부 게시 승인으로 해석하지 않습니다.
+> **범위 구분:** 아래 예제와 수락 기록 대부분은 **이전 schema 1 / Fabric 게시 기능**을 대상으로 합니다. `publish.common`과 로컬 Maven 게시·독립 소비자 작업 구성·플랫폼 업로드 `--dry-run`이 검증됐으며, [QA §28](QA_REPORT.md)에서는 **127.0.0.1 루프백 HTTPS에 대한 Fabric API Maven 인증 PUT**이 성공했습니다. 이것이 새 v1.1 NeoForge/듀얼의 실제 원격 게시나 외부 Modrinth/CurseForge 전송을 입증하지는 않습니다. 실제 게시의 Gradle 9.7.1 configuration cache HIT도 미검증입니다.
 
 ### 소비자가 작성할 내용
 
-`fabric/mod`, `fabric/api`, `fabric/library` 모두 `mod.yaml`/`mod.yml`에 선택적으로 **새 최상위 `publish:`** 블록을 적을 수 있습니다. 기존 라이브러리 사용자의 `publishing.repository`는 그대로 지원하는 **레거시 Maven 설정**이며 제거하거나 이름을 바꾸지 않습니다. 새로운 `publish.maven`과 기존 `publishing.repository`가 **동시에 원격을 지정하면 오류**로 처리합니다. `publish` 블록을 생략한 일반 `fabric/mod` 소비자에게 원격 게시 작업이나 원격 전송이 생기지 않습니다.
+`fabric/mod`, `fabric/api`, `fabric/library`의 **명시적 `schema: 1` 레거시 예제**에는 선택적 최상위 `publish:` 블록을 적을 수 있습니다. 기존 라이브러리 사용자의 `publishing.repository`는 보존되는 **레거시 Maven 설정**입니다. `publish.maven`과 `publishing.repository`가 동시에 원격을 지정하면 오류로 처리합니다. v1.1의 로더별 결과물에 대한 게시 범위는 해당 로더의 실제 작업·검증 결과를 따르며, 단일 Fabric 게시 기록으로 NeoForge 게시 성공을 추정하지 마세요.
 
 ```yaml
-# schema: 1                  # 선택: 생략하면 플러그인의 최신 내장 스키마(현재 v1)
+schema: 1                   # 아래 예제는 기존 Fabric 전용 v1 문법
 product: fabric/mod              # fabric/api, fabric/library도 동일한 publish 문법
 mod:
   id: sample-mod
@@ -70,7 +180,7 @@ publish:
 
 이 예제의 프로젝트 ID·Maven 주소·토큰 환경변수명은 **예시용**입니다. 실제 기존 프로젝트·적절한 권한을 가진 작성자 토큰이 있어야 하며, 프로젝트 생성·계정 권한 취득·게임 버전 지원 여부를 플러그인이 추측하거나 자동 승인하지 않습니다. 변경 기록 파일은 소비자 프로젝트 루트 기준의 일반 파일이며, 프로젝트 밖 상대 경로·심볼릭 링크 탈출을 금지합니다. `changelog` 문자열과 `changelogFile`을 둘 다 지정할 수 없습니다.
 
-**스키마 버전:** YAML의 `schema`는 이제 **선택적**입니다. 생략하면 플러그인에 구현된 최신 문법(현재 **1**)을 적용하며, 명시적으로 `schema: 1`을 적어 v1을 고정할 수 있습니다. 존재하지 않는 명시적 버전은 FA003으로 거부합니다.
+**스키마 버전:** v0.3.0에서는 `schema`를 **생략하면 1.1**, `schema: "1.1"`도 1.1이며, 위와 같이 `schema: 1`을 적으면 **Fabric v1**입니다. 게시 예제의 `mod`/`minecraft` 루트 Loader 필드를 schema 생략 상태로 복사하지 마세요. 존재하지 않는 버전 및 unquoted `schema: 1.1`은 FA003으로 거부합니다.
 
 **공통 게시 레이어:** `publish.common`의 `releaseType`·`name`·`gameVersions`(문자열 배열)·`changelog`/`changelogFile`·`dependencies`는 **명시적으로 선언한 Modrinth/CurseForge 대상에만** 상속합니다. `name`은 Modrinth `versionName`과 CurseForge `displayName`에, `gameVersions`는 Modrinth `gameVersions`와 CurseForge의 **문자열** `gameVersionNames`에 대응합니다. CurseForge 숫자 버전 ID `gameVersions`는 추론하지 않습니다. 공통 의존성 항목은 `{slug, type, modrinthId?, curseforgeId?}`이고 타입 `required/optional/incompatible/embedded`를 플랫폼별 타입으로 변환합니다. 플랫폼별 동일 ID/slug는 덮어쓰고 신규 항목은 추가하며, 명시적 `[]`로 해당 플랫폼 상속 목록을 비웁니다. 배포 대상의 `projectId`·`tokenEnv`는 항상 개별 블록에 작성합니다. `common`만으로 업로드 대상이 만들어지지 않습니다. 자세한 예제는 [HUMAN.md](HUMAN.md#share-release-fields-with-publishcommon)를 참고하세요.
 
@@ -84,7 +194,7 @@ publish:
 
 ### Gradle 작업과 실행 시점의 안전 경계
 
-설정 플러그인이 YAML을 읽는 **구성 시점에는 HTTP 요청이나 토큰 확인을 하지 않습니다**. 실제 게시 작업이 호출될 때만 빌드·검증이 선행되며, 정상 생산 JAR(Minecraft 26.3 non-remap `jar`, 레거시 remap `remapJar`)의 **루트 `fabric.mod.json` 1개**를 확인한 뒤 해당 파일만 전송합니다. 개발용·sources JAR을 메인 릴리스로 착각해 업로드하지 않습니다.
+설정 플러그인이 YAML을 읽는 **구성 시점에는 HTTP 요청이나 토큰 확인을 하지 않습니다**. 실제 게시 작업이 호출될 때만 빌드·검증이 선행됩니다. **Fabric**의 정상 생산 JAR(Minecraft 26.3 non-remap `jar`, 레거시 remap `remapJar`)에는 루트 `fabric.mod.json`이 정확히 하나 있어야 합니다. **NeoForge**는 별도 플랫폼 JAR의 `META-INF/neoforge.mods.toml`을 검증해야 합니다. 아래의 Fabric 기존 게시 테스트만으로 NeoForge 실제 업로드가 검증됐다고 보지 마세요.
 
 ```powershell
 gradle build                        # 빌드만 수행; 절대 업로드하지 않음
@@ -109,11 +219,11 @@ gradle publish                       # Gradle 표준 Maven publish + 선택한 �
 
 CurseForge `releaseType`은 작성자 업로드 API에서 **문자열** `release|beta|alpha`입니다. 다른 CurseForge 조회 API에서 반환하는 숫자 enum과 혼동하지 않습니다. CurseForge `gameVersionNames`는 플랫폼 태그 이름이므로 버전 문자열을 수치 ID로 단정하거나 임의의 고정 `Fabric` ID를 만들어내지 않습니다. Modrinth `file_parts`는 multipart 파트 이름과 정확히 일치해야 하며, 토큰은 `Bearer ` 접두사를 자동 추가하지 않습니다.
 
-**공식 근거 (2026-11-13에 확인):** [Modrinth Create Version](https://docs.modrinth.com/api/operations/createversion/), [Modrinth API Overview: token/User-Agent/rate limit](https://docs.modrinth.com/api/), [CurseForge 작성자 Upload API (2026-09-27 업데이트)](https://support.curseforge.com/support/solutions/articles/9000197321), [CurseForge 게시 심사](https://support.curseforge.com/support/solutions/articles/9000197241-creating-and-submitting-a-project), [CurseForgeGradle](https://github.com/Darkhax/CurseForgeGradle). 외부 API 테스트·실제 게시를 수행하지 말라는 사용자 요청 때문에 **유효 HTTP 전송·인증·원격 심사 성공은 미검증**으로 남깁니다.
+**공식 근거 (2026-11-13에 확인):** [Modrinth Create Version](https://docs.modrinth.com/api/operations/createversion/), [Modrinth API Overview: token/User-Agent/rate limit](https://docs.modrinth.com/api/), [CurseForge 작성자 Upload API (2026-09-27 업데이트)](https://support.curseforge.com/support/solutions/articles/9000197321), [CurseForge 게시 심사](https://support.curseforge.com/support/solutions/articles/9000197241-creating-and-submitting-a-project), [CurseForgeGradle](https://github.com/Darkhax/CurseForgeGradle). **외부 Modrinth/CurseForge의 실제 HTTP 업로드·토큰 권한·심사 성공은 검증되지 않았습니다.** 내부 루프백 Maven 인증 PUT의 기존 PASS는 위와 별도입니다.
 
-## 라이브러리/API 제품 구현 계약 (2026-11-13)
+## Fabric API/라이브러리 게시 계약 — schema 1 역사적 검증
 
-> **구현·검증 계약:** 이 절은 기존 `fabric/mod` 명세를 확장하는 라이브러리 제품의 동작 기준입니다. 신규 API/별칭의 실제 Maven 게시·다운스트림 의존성 TestKit 및 기본 클린 빌드는 아래에 기록한 범위에서 통과했습니다. 다만 기존 `specs.md` G1~G30 전체 및 출하 게이트가 닫힌 것은 아니므로 **정식 출시 승인과 구별**합니다.
+> **기존 검증 범위:** 이 절의 YAML은 명시적 **`schema: 1` Fabric API/라이브러리** 계약을 보여줍니다. 실제 로컬 Maven 게시·다운스트림 의존성 TestKit PASS는 보존하되, v1.1 `neoforge/api`와 두 로더별 출판까지 동일하게 검증됐다는 뜻은 아닙니다. 새 API 제품은 `product: neoforge/api` 및 로더 네임스페이스를 사용하며, 실물 네이티브 게시/소비자 검증 범위를 별도로 확인해야 합니다.
 
 ### 제품 선택과 결과물
 
@@ -210,7 +320,7 @@ Maven/Modrinth 쪽 원본 모듈이 POM이나 올바른 메타데이터를 제�
 
 ### IDE 완성과 SchemaStore 제출
 
-새 기능 구현과 수락 검증 후 프로젝트 루트에 **독립 파일** `fabric-amper.schema.json`을 제공합니다. `schema`, 세 제품 값, 기존 Loader/YAML 구조, 의존성 축약형과 상세형, `publishing`을 실제 strict decoder와 일치시켜 자동완성 및 잘못된 키 표시를 지원합니다. SchemaStore의 폭넓은 IDE 호환성을 우선하여 JSON Schema **Draft-07**을 사용하며 조건 분기는 `oneOf`/`if`/`then`과 `definitions`로 기술합니다. `mod.custom`처럼 의도적으로 사용자 확장을 받는 곳은 닫지 않습니다. Schema `default`는 문서화 힌트이지 플러그인 값을 자동 삽입하는 기능이 아닙니다.
+프로젝트 루트의 **`fabric-amper.schema.json`은 schema 1과 1.1을 모두 기술**합니다. `schema` 생략은 최신 1.1, 명시적 `schema: 1`은 기존 Fabric 문법이며, v1.1의 NeoForge/듀얼 로더와 각 네임스페이스를 구분합니다. SchemaStore의 폭넓은 IDE 호환성을 위해 JSON Schema **Draft-07**을 사용합니다. 스키마는 자동완성·정적 힌트이고 최종 strict parser/validator를 대신하지 않습니다. `default`는 편집기 힌트일 뿐 플러그인 설정을 자동 삽입하지 않습니다.
 
 VS Code의 YAML 확장에서는 예제 첫 줄의 `# yaml-language-server: $schema=./fabric-amper.schema.json` 주석이나 `yaml.schemas` 설정으로 연결합니다. **상대경로 예제는 해당 스키마 파일을 소비자 프로젝트에도 복사했을 때만 유효**하며, SchemaStore 등 외부 URL로 제공하는 경우에는 실제 배포된 URL로 바꿉니다. IntelliJ IDEA에서는 JSON Schema Mappings를 통해 `mod.yaml`/`mod.yml`과 파일을 연결할 수 있습니다. 두 IDE 모두 플러그인에 허용하지 않은 YAML 루트 `$schema:` 키를 **추가해서는 안 됩니다**. SchemaStore 등록 시 전역 `mod.yaml` 같은 지나치게 일반적인 파일 패턴의 자동 연결은 피하고, 사용자가 직접 schema URL/매핑을 선택하도록 안내합니다. SchemaStore 목록 등록 자체는 사용자가 직접 진행합니다.
 
@@ -220,14 +330,14 @@ VS Code의 YAML 확장에서는 예제 첫 줄의 `# yaml-language-server: $sche
 - [Fabric 예제 26.3 Gradle 설정](https://github.com/FabricMC/fabric-example-mod/blob/26.3/build.gradle), [Fabric Loom 문서](https://docs.fabricmc.net/develop/loom/), [GeckoLib 5 Fabric 사용 안내](https://wiki.geckolib.com/docs/geckolib5/setup/fabric/quick-reference/). GeckoLib의 다중 플랫폼 배포와 Maven 게시를 혼동하지 않습니다.
 - [Gradle Java Library](https://docs.gradle.org/current/userguide/java_library_plugin.html), [Maven Publish](https://docs.gradle.org/current/userguide/publishing_maven.html), [Module Metadata](https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html), [SchemaStore CONTRIBUTING](https://github.com/SchemaStore/schemastore/blob/master/CONTRIBUTING.md), [YAML Language Server](https://github.com/redhat-developer/yaml-language-server/blob/main/README.md).
 
-## 환경과 플러그인
+## 환경과 플러그인 — v0.3.0 프리릴리즈 목표
 
 - 플러그인 ID: `dev.fabric-amper.settings` (소비자 설정에서 이 플러그인 **하나만** 적용), 내부 프로젝트 플러그인 `dev.fabric-amper.project`.
-- Fabric Amper 현재 준비 버전: `0.1.3` (Git/JitPack 게시 여부 별도 확인).
-- 기본값: Minecraft **26.3**, Java **25**, Fabric Loader **0.20.1**, Fabric API **0.165.2+26.3**, Mojang 공식 클래스명, non-remapping Fabric Loom.
-- 개발 당시 검증된 기본 Gradle: **9.7.1**. 별도 소비자에서는 Gradle **9.7.0 + Loom 1.18.4** 및 **9.9.1 + Loom 1.19.4** 조합의 컴파일·배포 JAR 빌드도 검증했습니다. 이들은 빌드 시점에 선택한 각각의 플러그인 바이너리로 검증한 조합이며, 소비자 YAML에서 Loom 버전을 임의로 바꿀 수 있다는 뜻이 아닙니다.
+- 현재 개발 목표: **v0.3.0 prerelease** (GitHub 태그·Release·공개 JitPack 다운로드 성공은 별도 확인). develop BAT의 `FA_VERSION=0.3.0` 및 생성 Settings의 `v0.3.0` 좌표를 사용하되, **실제 릴리즈 파일과 보조 스크립트 SHA-256은 Prime의 최종 패키징 검사 대상**입니다.
+- v1.1 예제: Minecraft **26.3**, Java **25**, Fabric Loader **0.20.1**, Fabric API **0.165.2+26.3**, NeoForge **26.3.0.101**(고정 예시), Mojang 공식 클래스명. JDK 25/Gradle 및 각 로더 플러그인 조건을 함께 확인하세요.
+- 과거 **Fabric-only** 검증: Gradle **9.7.1**, 별도 Gradle **9.7.0 + Loom 1.18.4** 및 **9.9.1 + Loom 1.19.4** 정확 조합의 빌드 PASS. 이는 v0.3.0 NeoForge·듀얼·Kotlin·게임 런타임 전체 조합의 수락으로 확대하지 않습니다.
 
-## 최소 소비자 프로젝트
+## 최소 소비자 프로젝트 — v0.3.0 / 스키마 1.1
 
 디렉터리 구조:
 
@@ -238,26 +348,27 @@ my-fabric-mod/
 └── src/main/java/org/example/ExampleMod.java
 ```
 
-JitPack의 `v0.1.3` Git 태그가 실제로 게시되고 빌드된 후 사용할 수 있는 `settings.gradle.kts` 예시입니다. Git 태그를 만든 것만으로 JitPack 해석이 성공한 것은 아니며, 공개 Gradle Plugin Portal에는 게시됐다고 가정하지 않습니다.
+위 v0.3.0 예시와 같은 `settings.gradle.kts`이며, **JitPack `v0.3.0`이 실제 게시·해결 가능한 경우에만** 아래 설정을 그대로 사용할 수 있습니다. Git 태그 생성만으로 JitPack 해석 성공이 보장되지 않으며 공개 Gradle Plugin Portal 게시도 확인되지 않았습니다.
 
 ```kotlin
 pluginManagement {
     repositories {
         maven("https://jitpack.io")
         maven("https://maven.fabricmc.net/")
+        maven("https://maven.neoforged.net/releases/")
         gradlePluginPortal()
         mavenCentral()
     }
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.fabric-amper.settings") {
-                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.1.3")
+                useModule("com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0")
             }
         }
     }
 }
 plugins {
-    id("dev.fabric-amper.settings") version "0.1.3"
+    id("dev.fabric-amper.settings") version "0.3.0"
 }
 ```
 
@@ -273,10 +384,9 @@ gradle publishAllPublicationsToG29ProbeRepository -PfabricAmperProbeMavenRepo=tr
 maven { url = uri("../Fabric Amper/build/g29-probe/maven-repo") }
 ```
 
-`mod.yaml` 최소 예시:
+`mod.yaml`의 **v1.1 최소 Fabric 예시** (schema 생략 → 1.1):
 
 ```yaml
-schema: 1
 product: fabric/mod
 mod:
   id: example_mod
@@ -284,25 +394,21 @@ mod:
   group: org.example
   archivesName: example-mod
   name: "Example Mod"
-  environment: "*"
-  entrypoints:
-    main:
-      - org.example.ExampleMod
 minecraft:
   version: "26.3"
-  mappings: mojang
-  loader: "0.20.1"
-  fabricApi: "0.165.2+26.3"
 settings:
   java:
     release: 25
     sourcesJar: true
   kotlin:
     enabled: false
-  loom:
-    splitEnvironmentSourceSets: false
-  resources:
-    failOnExistingFabricModJson: true
+fabric:
+  mappings: mojang
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  entrypoints:
+    main:
+      - org.example.ExampleMod
 repositories:
   - fabric
   - mavenCentral
@@ -323,7 +429,7 @@ public final class ExampleMod implements ModInitializer {
 }
 ```
 
-필요한 Gradle과 JDK 25가 준비된 환경에서 소비자 폴더에서 `gradle help`, `gradle build`, `gradle runClient`를 차례로 사용할 수 있습니다. `build/libs/example-mod-1.0.0+26.3.jar`가 배포 파일이며, 플러그인이 `fabric.mod.json`을 자동 생성해 JAR 루트에 정확히 하나만 포함하는지 검증합니다. 소비자에 수동 `fabric.mod.json`을 추가하지 마세요. `mod.yml`을 사용해도 되지만 **`mod.yaml`과 `mod.yml`을 동시에 두면 FA001**입니다.
+실제 v0.3.0 플러그인이 해결되고 JDK 25/호환 Gradle이 준비됐다면 소비자 폴더에서 `gradle help`·`gradle build`를 실행하여 배포 JAR을 확인하세요. 이 **단일 Fabric 예제의 예상 경로**는 `build/libs/example-mod-1.0.0+26.3.jar`이며 루트 `fabric.mod.json`을 정확히 하나 생성합니다. `gradle runClient`는 별도의 게임 실행이며 빌드 성공만으로 런타임 통과를 보장하지 않습니다. 듀얼 프로젝트는 각 로더별 하위 모듈 JAR을 확인하고 `runFabricClient` 또는 `runNeoForgeClient`를 선택합니다. 수동 `fabric.mod.json`이나 `neoforge.mods.toml`을 추가하지 마세요. `mod.yaml`과 `mod.yml`의 동시 존재는 FA001입니다.
 
 `runServer`는 별도의 테스트 서버에서만 사용하세요. 플러그인은 Minecraft EULA를 자동 승인하지 않으며, 기존 서버의 EULA·월드·계정·인증 설정을 변경하지 않습니다. 아직 전용 서버 실제 기동 수락은 완료되지 않았습니다.
 
@@ -333,13 +439,12 @@ IntelliJ IDEA에서 소비자 폴더 자체를 **Gradle 프로젝트로 열고**
 
 ## 주요 스키마 기능
 
-- `mod.entrypoints`, `mod.mixins`, `mod.accessWidener`, `mod.custom` 등 Loader 메타데이터를 YAML에서 표현합니다.
-- `dependencies`의 Maven 및 Modrinth 좌표, `compile-only`, `runtime-only`, `exported`, `include`, `target: client`를 지원합니다. `include`는 실제 배포 JAR 안에 nested JAR과 Loader `jars` 메타데이터를 만듭니다.
-- `settings.loom.splitEnvironmentSourceSets: true`면 client 코드 및 client 전용 Gradle 의존성을 분리합니다. `target: client`인 라이브러리가 자동으로 Loader의 전역 `depends`가 되지는 않습니다.
-- `settings.kotlin.enabled: true`는 검증된 고정 KGP/FLK 버전을 사용합니다. `enabled: false`여도 현재 배포 플러그인의 정적 전이 클래스패스 때문에 KGP JAR 다운로드 비용이 남아 있습니다.
-- **develop 선행 기능:** `fabric-amper.bat init arch_mod "Architectury Mod" mod --architectury`는 Fabric Architectury API `22.0.5`를 활성화하는 YAML과 실제 `Platform.getMinecraftVersion()`을 호출하는 Java 시작 코드를 생성합니다. `--kotlin`을 함께 쓰면 Kotlin 예제로 바뀝니다.
-- `--architectury --splitEnvironmentSourceSets`를 함께 쓰면 `src/main`의 공통 예제와 `src/client`의 클라이언트 전용 Architectury 예제를 각각 생성합니다. 세 옵션의 순서는 자유롭습니다. **공개 v0.1.3 플러그인은 아직 `architectury` 키를 지원하지 않으므로**, 현재는 develop TestKit에서 로컬 플러그인으로 빌드 검증한 기능이며 새 릴리즈에 포함되기 전에는 일반 JitPack v0.1.3 소비자 빌드를 지원하지 않습니다.
-- 미러 경로 `.gradle/fabric-amper/loom/`의 구성 시점 `fabric.mod.json`과 최종 생성 메타데이터는 동일한 JSON 바이트를 사용하도록 구성합니다.
+- v1.1에서 공통 `mod` 정체성과 `minecraft.version`을 공유하고, **Fabric**의 `fabric.entrypoints`/`fabric.mixins`/`fabric.depends` 및 **NeoForge**의 `neoforge.mixins`/`neoforge.dependencies`/`neoforge.accessTransformers`를 분리합니다. **명시적 v1**은 기존 `mod.entrypoints`/`mod.mixins`/`mod.accessWidener`를 유지합니다.
+- `dependencies`의 Maven·Modrinth 좌표, `compile-only`/`runtime-only`/`exported`/`include`/`target: client`를 지원하되, **Fabric `include` JAR-in-JAR의 동작을 NeoForge에 그대로 일반화하면 안 됩니다.** 두 플랫폼의 클래스패스/런타임 메타데이터를 구분합니다.
+- v1.1의 `fabric.loom.splitEnvironmentSourceSets: true`는 Fabric에만 적용됩니다. NeoForge 단독 프로젝트의 해당 옵션은 허용되지 않으며, 듀얼 독립 프로젝트에서는 Fabric 소스셋에만 적용됩니다. 레거시 v1은 `settings.loom.splitEnvironmentSourceSets`입니다.
+- `settings.kotlin.enabled: true`는 고정 KGP·Fabric FLK 조합을 사용합니다. Fabric Language Kotlin은 **Fabric 측 런타임 어댑터**이며 NeoForge Kotlin `@Mod` 진입점과 동등하지 않습니다. `enabled: false`에서도 KGP 클래스패스 다운로드 비용이 남을 수 있습니다.
+- `architectury.enable: true`는 듀얼에서 공통 `common/` 모듈과 양측 Architectury API 의존성을 구성합니다. 생략/false면 로더별 독립 프로젝트입니다. **기존 0.1.3 공개 바이너리의 기능으로 주장하지 않으며**, v0.3.0 공개 태그/JitPack이 실제 준비되기 전에는 로컬 develop 플러그인 검증에 한정합니다.
+- Fabric 구성 미러 `.gradle/fabric-amper/loom/`와 최종 `fabric.mod.json`은 구성 시점 메타데이터와 빌드 결과가 일치하도록 검증합니다. NeoForge에는 별도 생성 `META-INF/neoforge.mods.toml` 및 자체 리소스/아카이브 규칙이 있습니다.
 
 ### 읽기 전용 진단·배포 미리보기
 
@@ -361,13 +466,15 @@ Windows에서는 `fabric-amper.bat diagnose`, `explain`, `plan`, `port 26.3`과 
 
 ## 검증 상태와 제한
 
-독립 실제 소비자의 Gradle 빌드, 두 G13 조합, G25 native `.module`, G20 병렬 미러 복구, 공식 Loader 버전 조건 비교, Maven JAR-in-JAR의 실제 Loader 로딩과 라이브러리 호출, Modrinth 실물 client-only compile, YAML custom 인터페이스 주입의 양성·음성 Java 컴파일, G19 실제 외부 Loom 1.18.4와 기본 Loom 1.17.21의 분리 및 `FA010` 충돌 진단, G27 client-only Mixin/의존성 분리 등을 선별 검증했습니다.
+**v0.3.0 프리릴리즈 후보의 별도 판정:** Gradle 9.7.1/JDK 25 `clean build validatePlugins --offline` **371 tests = 314 PASS + 57 SKIP, 0 FAIL/ERROR**, 단위 테스트·문서 YAML 파싱·Windows BAT 분기 테스트를 통과했습니다. develop에서 NeoForge 단독·Fabric/NeoForge 듀얼(Architectury 공유 또는 독립) Java/Kotlin **선택 소비자 빌드·TestKit** 범위도 검증됐습니다. 다만 게임 클라이언트/서버 실제 런타임, IntelliJ GUI Sync, Gradle 콜드 두 번째 실행의 엄격한 configuration-cache HIT와 공개 JitPack `v0.3.0` 설치·배포는 **별도 미수락**입니다. 공통 JAR이 최초 생성되면서 CC가 한 번 추가 무효화되는 사례가 있어, 후속 warm HIT를 최초 cold HIT와 혼동하지 않습니다. 실제 게이트는 [QA](QA_REPORT.md)와 [Human Guide](HUMAN.md)를 확인하세요.
+
+**다음 문단부터는 v0.1.0/0.1.3 Fabric-only 테스트와 게시 확장의 날짜별 역사적 기록입니다.** 독립 실제 Fabric 소비자의 Gradle 빌드, 두 G13 조합, G25 native `.module`, G20 병렬 미러 복구, 공식 Loader 버전 조건 비교, Maven JAR-in-JAR의 실제 Loader 로딩과 라이브러리 호출, Modrinth 실물 client-only compile, YAML custom 인터페이스 주입의 양성·음성 Java 컴파일, G19 실제 외부 Loom 1.18.4와 기본 Loom 1.17.21의 분리 및 `FA010` 충돌 진단, G27 client-only Mixin/의존성 분리 등을 선별 검증했습니다.
 
 **출시 전 남은 조건:** 실제 IntelliJ 최초 import·수동/자동 GUI Sync, 일부 외부 TLS/Modrinth 오류 분류와 원격 Maven 인증, EULA 동의 후 전용 서버 완전 기동, 레거시 remap 게임 런타임, Kotlin 비활성 상태의 선택적 지연 KGP 최적화 및 일부 G1~G30 전체 행렬. 실제 외부 KGP 2.4.20 사전 적용 vs 번들 2.4.21 충돌은 후속 TestKit에서 `FA010` **1 PASS**로 확인했습니다. **새로 격리 실행한 G15 메인·클라이언트·게임 틱 1 PASS 및 G17 실제 인터페이스 주입·기본 메서드 호출·게임 틱 1 PASS**를 각각 무캐시 실행·XML로 확인했습니다. 단, 이전 G17 런타임은 게임 틱 전에 Windows `0xC0000409`로 종료돼 **별도 JUnit FAIL**이었으며 당시 실패를 소급해 없애지 않습니다. 시스템별 네이티브 재현성이 보장된다는 뜻은 아닙니다. 별도 G27 테스트에서 `runServer`가 Fabric Loader와 모드 초기화까지 진입했지만, **EULA 동의가 없어 서버 완전 부팅은 차단**된 것도 관측했습니다. `eula.txt`를 자동 수락하지 않았습니다.
 
 **신규 API/라이브러리 실소비자 검증:** 설정 파일과 YAML만 쓰는 별도 Fabric 라이브러리 A(`fabric/api`와 `fabric/library` 각각)를 실제 로컬 Maven 저장소에 게시하고, 독립 소비자 B가 API 공개 타입을 전이받아 컴파일하는지 확인했습니다. POM `compile`/`runtime` 범위, Gradle `.module` API/runtime variants, `compile-only`·테스트 의존성 미전파, JAR-in-JAR, 배포 JAR의 정확히 하나인 `fabric.mod.json`, 소스 JAR 및 별칭의 결과 일치에 대한 **opt-in TestKit JUnit 1 PASS / 0 FAIL**, outer **BUILD SUCCESSFUL in 1m 4s**입니다. XML은 `analysis/acceptance-evidence-2026-11-13/API-library-publishing-1PASS.xml`에 별도로 보관했습니다. 초기 두 실패는 테스트 fixture의 저장소 우선순위와 Kotlin DSL 콜백 구문이 원인이어서 **실제 fixture를 수정한 뒤 엄격한 검사 없이 PASS로 처리하지 않았습니다**.
 
-**통합 게시 구현 이후 선택 실소비자 검증(2026-11-13):** 원격 게시의 안전한 `help`/`tasks`/실제 `build`와 플랫폼 `--dry-run`에 대해 `fabric/mod`·`fabric/api`·`fabric/library` **3 PASS**; Maven 없는 `fabric/mod`의 Modrinth+CurseForge 전용 게시 그래프 **1 PASS**; 실제 로컬 API Maven 게시의 configuration-cache `STORE → HIT → YAML 수정 MISS/STORE → HIT` **1 PASS**입니다. 레거시 Java 21 API의 실 `remapJar`·`remapSourcesJar` 로컬 Maven 게시 및 하위 소비자 컴파일 **1 PASS**, G24 Mixin/Class Tweaker/icon 리소스 변경 후 실제 재패키징 **1 PASS**, API/library 로컬 Maven 전이 회귀 **1 PASS**, 기존 G5 구성 캐시 회귀 **1 PASS**를 각 선택 실행 XML로 보존했습니다. 새로운 파일명 안전 검사와 레거시 Maven 자격증명 쌍 규칙, Draft-07 스키마 동등성 단위 회귀도 통과했습니다. 실제 원격 Modrinth/CurseForge API 업로드·원격 Maven 인증 테스트는 전혀 하지 않았습니다.
+**통합 게시 구현 이후 선택 실소비자 검증(2026-11-13 당시):** 원격 게시의 안전한 `help`/`tasks`/실제 `build`와 플랫폼 `--dry-run`에 대해 `fabric/mod`·`fabric/api`·`fabric/library` **3 PASS**; Maven 없는 `fabric/mod`의 Modrinth+CurseForge 전용 게시 그래프 **1 PASS**; 실제 로컬 API Maven 게시의 configuration-cache `STORE → HIT → YAML 수정 MISS/STORE → HIT` **1 PASS**입니다. 레거시 Java 21 API의 실 `remapJar`·`remapSourcesJar` 로컬 Maven 게시 및 하위 소비자 컴파일 **1 PASS**, G24 Mixin/Class Tweaker/icon 리소스 변경 후 실제 재패키징 **1 PASS**, API/library 로컬 Maven 전이 회귀 **1 PASS**, 기존 G5 구성 캐시 회귀 **1 PASS**를 각 선택 실행 XML로 보존했습니다. 파일명 안전 검사와 레거시 Maven 자격증명 쌍 규칙, Draft-07 스키마 동등성 단위 회귀도 통과했습니다. **외부** Modrinth/CurseForge API 업로드는 수행하지 않았으며, **로컬 HTTPS 원격 Maven 수락은 이후 QA §28에서 별도로 수행**했습니다.
 
 **추가 G5/G20/G30 오프라인 수락:** 독립 settings-only 소비자에서 **`settings.java.sourcesJar: true→false→true`** 변경 시 `tasks --all --configuration-cache --offline`의 **STORE→HIT→MISS→HIT→MISS→HIT 6회 PASS**와 `sourcesJar` 태스크 ON/OFF를 확인했습니다. **G20 손상 미러/삭제 아이콘의 두 GradleRunner 병렬 원자 복구 1 PASS**, **G30 `mod.yml→mod.yaml` 변경과 CC MISS→HIT 1 PASS**도 다시 검증했습니다. 근거는 `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-G5-java-setting-CC-6run-PASS.json`, `FOLLOWUP-RECHECK-FabricAmperParallelMirrorConsumerTest-1PASS.xml`, `FOLLOWUP-RECHECK-FabricAmperExtendedConsumerTest-1PASS.xml`입니다. 선택 검증 PASS는 아래 기본 JUnit 246개 수치에 중복 합산하지 않습니다.
 
@@ -381,17 +488,17 @@ Windows에서는 `fabric-amper.bat diagnose`, `explain`, `plan`, `port 26.3`과 
 
 **원격 Maven 실제 HTTP/CC의 정확한 경계:** 프로젝트 내부 별도 fixture의 Python `ThreadingHTTPServer`가 **`127.0.0.1`에만 바인드**되고, 자체 서명 SAN IP 인증서/JDK 전용 truststore를 이용한 HTTPS 연결과 인증 없는 GET에 대한 **Basic 401 challenge**를 실제 확인했습니다. 수정 전 Gradle 9.7.1 실제 네이티브 게시 태스크의 `task.repository` 직렬화 후 접근 오류를 발견·수정했습니다. 이후 시험에서는 **`--offline`이 loopback HTTPS PUT도 거부**했고, 명시적 인증값을 설정하는 네이티브 `PublishToMavenRepository`가 **configuration cache 호환 불가**로 판정되었습니다. 실제 인증된 native PUT과 CC STORE→HIT를 동시에 검증했다고 주장하지 않습니다. `--dry-run --configuration-cache --offline`에서 명시적 인증 설정을 생략하도록 보정하여 실제 선택 JUnit **1 PASS/0 FAIL**, **STORE→HIT**, 작업 전부 SKIPPED로 회복했으며, 보정 전의 회귀 **1 FAIL** XML도 보존했습니다. 외부 Modrinth/CurseForge 전송은 **0건**입니다.
 
-**마지막 제품 빌드 (후속 변경 이후):** Gradle **9.7.1/JDK 25**, `clean build validatePlugins --offline --no-build-cache --rerun-tasks -Pkotlin.incremental=false` 실제 PASS, 기본 **46 XML suites / 247 tests = 207 PASS + 40 SKIP + 0 FAIL + 0 ERROR**. 원격 인증 코드를 보정한 최신 `build/libs/fabric-amper-0.1.0.jar`은 **315,071바이트**, SHA-256 **`2DC9F20238BED6284C0D80C898F47C13B49AC897DE41D819DBE8667274E00264`**, `-sources.jar`은 **67,690바이트**, SHA-256 **`E31E8461EA8F57A3FCBCEB04A2892BC6387D07DC29B696F63D677BE819320803`**, 스키마 SHA-256 **`D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233`**입니다. 실제 로컬 G29 Maven marker·게시 JAR/sources와 출력 바이트 일치 PASS. 증거는 `analysis/final-post-dryrun-correction-2026-11-13/run/manifest.json`, `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-FINAL-JUnit-XML.zip`, `FOLLOWUP-POST-REMOTE-DRYRUN-CC-RESTORED-1PASS.xml`, `FOLLOWUP-G11-G30-hostile-YAML-CC-preservation-PASS.json`, `FOLLOWUP-G11-resource-FA001-FA008-FA009-FA012-CC-PASS.json`, `FOLLOWUP-G20-FOUR-MIRROR-FILES-PARALLEL-CC-1PASS.xml`입니다. **현재 전체 출시 판정 `NOT APPROVED`**: 실제 IntelliJ GUI 최초 import/수동·자동 Sync, 직접 EULA 검토·동의 후의 dedicated server 완전 부팅, 구형 게임 실제 런타임 및 원격 native Maven 인증+CC 동시 수락은 별도 조건이 남아 있습니다. **40 SKIP는 PASS가 아닙니다.**
+**QA §26 당시 제품 빌드:** Gradle **9.7.1/JDK 25**, `clean build validatePlugins --offline --no-build-cache --rerun-tasks -Pkotlin.incremental=false` 실제 PASS, 기본 **46 XML suites / 247 tests = 207 PASS + 40 SKIP + 0 FAIL + 0 ERROR**. 당시 `build/libs/fabric-amper-0.1.0.jar`은 **315,071바이트**, SHA-256 **`2DC9F20238BED6284C0D80C898F47C13B49AC897DE41D819DBE8667274E00264`**, `-sources.jar`은 **67,690바이트**, SHA-256 **`E31E8461EA8F57A3FCBCEB04A2892BC6387D07DC29B696F63D677BE819320803`**, 당시 스키마 SHA-256 **`D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233`**입니다. 실제 로컬 G29 Maven marker·게시 JAR/sources와 당시 출력 바이트 일치 PASS. 증거는 `analysis/final-post-dryrun-correction-2026-11-13/run/manifest.json`, `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-DRYRUN-FINAL-JUnit-XML.zip`, `FOLLOWUP-POST-REMOTE-DRYRUN-CC-RESTORED-1PASS.xml`, `FOLLOWUP-G11-G30-hostile-YAML-CC-preservation-PASS.json`, `FOLLOWUP-G11-resource-FA001-FA008-FA009-FA012-CC-PASS.json`, `FOLLOWUP-G20-FOUR-MIRROR-FILES-PARALLEL-CC-1PASS.xml`입니다. **이것은 v0.3.0의 결과가 아닙니다.** 실제 IntelliJ GUI 최초 import/수동·자동 Sync, 직접 EULA 검토·동의 후 dedicated server 완전 부팅, 구형 게임 실제 런타임 및 원격 native Maven 인증+CC 동시 수락은 별도 조건입니다. **40 SKIP는 PASS가 아닙니다.**
 
-### 가장 최신 결과: FA003 원격 Maven 음성 수락 및 최종 JAR (QA §27)
+### 2026-11-13 당시 결과: FA003 원격 Maven 음성 수락 및 JAR (QA §27)
 
 §26 이후 **추가 제품 결함을 찾아 수정**했습니다. 실제 `publishMavenJavaPublicationToFabricAmperRemoteRepository --offline`에 자격증명 환경변수가 없을 때, 처음에는 Gradle의 `Value not set credentials.username` 오류가 플러그인의 `doFirst`보다 먼저 발생했습니다. 원격 게시 태스크의 native credential 입력이 미설정이 되지 않도록 빈 문자열을 임시값으로 설정하고, **전송 전** 원래 Gradle Provider의 환경변수를 검사해 없는 값/공백을 **FA003으로 명시적 거부**하도록 수정했습니다. 이 임시값을 실제 인증 수단으로 받아들이는 동작은 없습니다.
 
 신규 독립 settings-only/`fabric/api` 소비자에서 오프라인 실 Gradle **음성 테스트 2/2 PASS**: (1) 자격증명 env 두 개가 없으면 실제 native remote publish task가 `FabricAmper FA003 publish.maven`으로 실패하며 YAML 입력 보존, (2) `http://127.0.0.1` URL은 `help` 설정 단계의 `FA003 publish.maven.url`로 거부되며 JAR을 생성하지 않습니다. 각각 기대한 **실패 코드 1**을 판정한 것이고 실제 성공 PUT이 아닙니다. 증거 `analysis/local-https-maven-probe-2026-11-13/negative-contract-v2-2026-11-13/manifest.json`과 두 단계 로그, 실패했던 첫 fixture도 보존합니다.
 
-**최종 코드로 다시 수행한 결과:** Gradle **9.7.1/JDK25**, `clean build validatePlugins --offline --no-build-cache --rerun-tasks` **BUILD SUCCESSFUL**, **46 suites / 247 tests = 207 PASS·40 SKIP·0 FAIL·0 ERROR**, `validatePlugins` PASS, 실제 프로젝트 내부 G29 로컬 Maven 게시 artifact/markers와 최종 산출물 바이트 일치. 최신 `build/libs/fabric-amper-0.1.0.jar`은 **315,122 bytes, SHA-256 `13022B24ADE7C9809400FC6AEBE99E7751783A9DAE7EF8B8C53780FE70B698AD`**, sources JAR은 **67,799 bytes, SHA-256 `C3E69E8188B516F4F290588B3342F1D21BB24391658A75B4E26BEA3A5175B510`**, 스키마는 **26,823 bytes, SHA-256 `D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233`**입니다. 그 직후 최종 source에서 원격 Maven **`--dry-run --configuration-cache --offline` 실제 JUnit 1 PASS / 0 FAIL**, **STORE→HIT**, 태스크 전부 SKIPPED를 다시 확인했습니다.
+**당시 코드로 다시 수행한 결과:** Gradle **9.7.1/JDK25**, `clean build validatePlugins --offline --no-build-cache --rerun-tasks` **BUILD SUCCESSFUL**, **46 suites / 247 tests = 207 PASS·40 SKIP·0 FAIL·0 ERROR**, `validatePlugins` PASS, 실제 프로젝트 내부 G29 로컬 Maven 게시 artifact/markers와 당시 산출물 바이트 일치. 당시 `build/libs/fabric-amper-0.1.0.jar`은 **315,122 bytes, SHA-256 `13022B24ADE7C9809400FC6AEBE99E7751783A9DAE7EF8B8C53780FE70B698AD`**, sources JAR은 **67,799 bytes, SHA-256 `C3E69E8188B516F4F290588B3342F1D21BB24391658A75B4E26BEA3A5175B510`**, 스키마는 **26,823 bytes, SHA-256 `D5FD84098F1FD6AB926D504F23C69EC991AD17CBCF127B4C14308672B1BC5233`**입니다. 그 직후 당시 source에서 원격 Maven **`--dry-run --configuration-cache --offline` 실제 JUnit 1 PASS / 0 FAIL**, **STORE→HIT**, 태스크 전부 SKIPPED를 다시 확인했습니다. 이것은 **v0.3.0 산출물 SHA가 아닙니다**.
 
-최신 빌드 및 기본 JUnit XML 증거는 `analysis/final-post-missing-credential-fix-2026-11-13/run/manifest.json`, `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-CREDENTIAL-NEGATIVE-FINAL-JUnit-XML.zip`, 선택 dry-run XML `FOLLOWUP-POST-REMOTE-FA003-DRYRUN-CC-1PASS.xml`에 있습니다. `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-FINAL-2026-11-13-remaining-verification-index.json`은 최신 JAR 해시·G11/G30 17종·G20 복합 1 PASS·원격 Maven 음성 2종·dry-run 1 PASS를 교차 점검한 완료 인덱스입니다. **이전 §24–26의 JAR 해시/수치는 각 당시에 유효했던 역사적 기록**이므로 최신 값과 혼동하지 마세요.
+당시 빌드 및 기본 JUnit XML 증거는 `analysis/final-post-missing-credential-fix-2026-11-13/run/manifest.json`, `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-POST-REMOTE-CREDENTIAL-NEGATIVE-FINAL-JUnit-XML.zip`, 선택 dry-run XML `FOLLOWUP-POST-REMOTE-FA003-DRYRUN-CC-1PASS.xml`에 있습니다. `analysis/acceptance-evidence-2026-11-13/FOLLOWUP-FINAL-2026-11-13-remaining-verification-index.json`은 **당시** JAR 해시·G11/G30 17종·G20 복합 1 PASS·원격 Maven 음성 2종·dry-run 1 PASS를 교차 점검한 완료 인덱스입니다. **§24–28의 JAR 해시/수치는 모두 당시 역사적 기록이며 현재 v0.3.0 바이너리 해시가 아닙니다.**
 
 **아직 승인되지 않은 조건:** 실제 IntelliJ GUI 최초 import/수동·자동 Sync, 사용자 EULA 결정 후 dedicated server 완전 기동, 구형 Minecraft 게임 런타임, 네이티브 Maven의 **실제 인증된 HTTPS PUT과 구성 캐시 HIT의 동시 충족**은 완료 증거가 없습니다. Gradle `--offline`은 localhost HTTPS 게시도 차단하고 Gradle 9.7.1 native explicit PasswordCredentials는 구성 캐시 비호환입니다. 실제 Modrinth·CurseForge API 업로드는 사용자 금지에 따라 **0건**입니다. **G1–G30 전체 출하 승인 `NOT APPROVED`; 기본 40 SKIP는 PASS가 아닙니다.**
 
@@ -399,6 +506,6 @@ Windows에서는 `fabric-amper.bat diagnose`, `explain`, `plan`, `port 26.3`과 
 
 기존 `--offline`의 localhost HTTPS 차단을 피하되 외부 네트워크 접근은 프로젝트 안의 **거부 전용 localhost HTTP(S) 프록시 설정**으로 제한한 독립 시험을 추가했습니다. Gradle 9.7.1의 실제 `publishMavenJavaPublicationToFabricAmperRemoteRepository`를 두 번 실행했고, **두 번 모두 `BUILD SUCCESSFUL`, 테스트 서버에서 Basic 인증된 성공 PUT 각 25건(총 50건)**을 관측했습니다. 메인 JAR, sources JAR, POM, Gradle module metadata의 서버 수신 바이트·SHA가 로컬 산출물과 동일하고 1·2차 SHA도 같음을 검증했습니다. GAV 및 JAR 루트에 하나뿐인 `fabric.mod.json`도 검사했습니다. 실제 Modrinth·CurseForge API 요청/업로드는 0건이며 개인 인증정보를 사용하지 않았습니다.
 
-**중요한 구분:** 실제 네이티브 PUT은 **PASS**지만, Gradle 9.7.1은 명시적 Maven `PasswordCredentials`가 연결된 해당 태스크의 구성 캐시를 **두 번 모두 비활성화**했습니다. **실제 게시 configuration cache STORE→HIT는 여전히 미충족**이며, 별도로 PASS한 `--dry-run` CC 검사로 대체할 수 없습니다. 증거는 `analysis/local-https-maven-probe-2026-11-13/online-loopback-2026-11-14/manifest.json`, 두 `publish-0*-with-cc.log`, `QA_REPORT.md` §28. 최신 플러그인 main/sources JAR은 §27 해시와 동일합니다. 실제 IntelliJ GUI, EULA 후 서버, 레거시 게임 런타임과 원격 게시 CC가 남아 있으므로 **전체 출하 판정 `NOT APPROVED`**입니다.
+**중요한 구분:** 실제 네이티브 PUT은 **PASS**지만, Gradle 9.7.1은 명시적 Maven `PasswordCredentials`가 연결된 해당 태스크의 구성 캐시를 **두 번 모두 비활성화**했습니다. **실제 게시 configuration cache STORE→HIT는 미충족**이며, 별도로 PASS한 `--dry-run` CC 검사로 대체할 수 없습니다. 증거는 `analysis/local-https-maven-probe-2026-11-13/online-loopback-2026-11-14/manifest.json`, 두 `publish-0*-with-cc.log`, `QA_REPORT.md` §28. **당시** 플러그인 main/sources JAR은 §27 해시와 동일합니다. 실제 IntelliJ GUI, EULA 후 서버, 레거시 게임 런타임과 원격 게시 CC가 남아 있으므로 **전체 출하 판정 `NOT APPROVED`**입니다.
 
 독립 사후 증거 대조 스크립트 `analysis/acceptance-evidence-2026-11-13/verify_2026_11_14_native_https.py`의 실제 실행도 **PASS**했으며, 요약은 `FOLLOWUP-2026-11-14-real-native-HTTPS-PUT-summary.json`에 있습니다.

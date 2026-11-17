@@ -78,10 +78,105 @@ class FabricAmperMultiLoaderRunSelectionTest {
         }
     }
 
+    @Test
+    fun dualLoaderValidateVerifyAndBuildDispatchExpectedPlatformTasks() {
+        val dual = consumer("Dual Build", """
+            schema: "1.1"
+            product: [fabric/mod, neoforge/mod]
+        """.trimIndent())
+        assertTasks(dual, invoke(dual, "dual-validate", "validate"),
+            ":fabric:validateFabricAmper", ":neoforge:validateFabricAmper")
+        assertTasks(dual, invoke(dual, "dual-verify", "verify"),
+            ":fabric:verifyFabricAmperJar", ":neoforge:verifyFabricAmperJar")
+        assertTasks(dual, invoke(dual, "dual-build", "build"),
+            ":fabric:validateFabricAmper", ":neoforge:validateFabricAmper",
+            // The root build task aggregates both child builds; do not force
+            // separate :fabric:build/:neoforge:build invocations.
+            "build",
+            ":fabric:verifyFabricAmperJar", ":neoforge:verifyFabricAmperJar")
+    }
+
+    @Test
+    fun singleLoaderValidateVerifyAndBuildKeepOriginalUnqualifiedTasks() {
+        val consumers = listOf(
+            consumer("Single Build Fabric", "schema: 1\nproduct: fabric/mod"),
+            consumer("Single Build NeoForge", "schema: \"1.1\"\nproduct: neoforge/mod"),
+        )
+        for (root in consumers) {
+            assertTasks(root, invoke(root, "single-validate", "validate"),
+                "validateFabricAmper")
+            assertTasks(root, invoke(root, "single-verify", "verify"),
+                "verifyFabricAmperJar")
+            assertTasks(root, invoke(root, "single-build", "build"),
+                "validateFabricAmper", "build", "verifyFabricAmperJar")
+        }
+    }
+
+    @Test
+    fun malformedAndMaliciousYamlNeverInvokesBuildValidationOrVerification() {
+        val cases = listOf(
+            // Duplicate root product must never be accepted by a superficial
+            // first-match scanner, even if the first product is valid.
+            "Duplicate Product" to """
+                schema: "1.1"
+                product: [fabric/mod, neoforge/mod]
+                product: fabric/mod
+            """.trimIndent(),
+            // A malformed flow sequence looks like an intended dual product,
+            // but must not be treated as a single loader or raw Gradle syntax.
+            "Broken Product Array" to """
+                schema: "1.1"
+                product: [fabric/mod, neoforge/mod
+            """.trimIndent(),
+            // YAML floating-point 1.1 is not the quoted schema string.
+            "Unquoted Schema" to """
+                schema: 1.1
+                product: [fabric/mod, neoforge/mod]
+            """.trimIndent(),
+            "Unknown Product" to """
+                schema: "1.1"
+                product: [fabric/mod, evil/mod]
+            """.trimIndent(),
+        )
+        for ((name, yaml) in cases) {
+            val root = consumer(name, yaml)
+            for (command in listOf("validate", "verify", "build")) {
+                reject(root, command)
+            }
+        }
+
+        val invalidUtf8 = consumer("Invalid UTF8", "schema: \"1.1\"\nproduct: fabric/mod")
+        Files.write(invalidUtf8.resolve("mod.yaml"), byteArrayOf(
+            0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x3a, 0x20,
+            0x22, 0x31, 0x2e, 0x31, 0x22, 0x0a,
+            0x70, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x3a,
+            0x20, 0xc3.toByte(), 0x28,
+        ))
+        for (command in listOf("validate", "verify", "build")) {
+            reject(invalidUtf8, command)
+        }
+    }
+
+    @Test
+    fun buildCommandsRejectUntrustedExtraGradleArgumentsBeforeInvokingAnyTask() {
+        val dual = consumer("Dual Untrusted Build Args", """
+            schema: "1.1"
+            product: [fabric/mod, neoforge/mod]
+        """.trimIndent())
+        val single = consumer("Single Untrusted Build Args", "schema: 1\nproduct: fabric/mod")
+        for (root in listOf(dual, single)) {
+            for (command in listOf("validate", "verify", "build")) {
+                reject(root, command, "--offline")
+                reject(root, command, "--init-script", "untrusted.gradle")
+                reject(root, command, "unexpected")
+            }
+        }
+    }
+
     private fun consumer(name: String, yaml: String): Path {
         val root = Files.createDirectories(workspace.resolve(name))
         Files.writeString(root.resolve("settings.gradle.kts"),
-            """plugins { id("dev.fabric-amper.settings") version "0.1.3" }""" + "\n")
+            """plugins { id("dev.fabric-amper.settings") version "0.3.0" }""" + "\n")
         Files.writeString(root.resolve("mod.yaml"), yaml + "\n", StandardCharsets.UTF_8)
         Files.writeString(root.resolve("gradlew.bat"), """
             @echo off
@@ -116,6 +211,18 @@ class FabricAmperMultiLoaderRunSelectionTest {
         assertEquals(0, result.code, result.output)
         val invocations = invocationLines(root)
         assertEquals(listOf(expected), invocations, result.output)
+        Files.delete(root.resolve("gradle-invocations.txt"))
+    }
+
+    private fun assertTasks(root: Path, result: Result, vararg expected: String) {
+        assertEquals(0, result.code, result.output)
+        val invocations = invocationLines(root)
+        assertTrue(invocations.isNotEmpty(), "No fake Gradle invocation: ${result.output}")
+        val tasks = invocations.flatMap { line -> line.split(Regex("\\s+")) }
+        // Gradle accepts a single invocation with many tasks or multiple
+        // sequential invocations. The exact dispatched task multiset matters;
+        // order is not specified by the wrapper's public command contract.
+        assertEquals(expected.toList().sorted(), tasks.sorted(), result.output)
         Files.delete(root.resolve("gradle-invocations.txt"))
     }
 

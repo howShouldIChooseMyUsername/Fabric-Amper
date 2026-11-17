@@ -24,7 +24,7 @@ class FabricAmperVersionBatTest {
         for (arguments in listOf("", "-V", "-v", "--version", "version", "-C \"$temporary\" -V")) {
             val result = run(arguments)
             assertEquals(0, result.exit, "Unexpected exit for '$arguments': ${result.output}")
-            assertEquals("v0.1.3", result.output.trim(), "Unexpected output for '$arguments'")
+            assertEquals("v0.3.0", result.output.trim(), "Unexpected output for '$arguments'")
         }
         assertFalse(Files.exists(temporary.resolve("mod.yaml")))
         assertFalse(Files.exists(temporary.resolve("settings.gradle.kts")))
@@ -49,14 +49,23 @@ class FabricAmperVersionBatTest {
             .toAbsolutePath().normalize().resolve("fabric-amper.bat")
         assertTrue(Files.isRegularFile(batch), "Missing wrapper: $batch")
         val command = "\"\"$batch\" $arguments\""
-        val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
-            .directory(temporary.toFile())
-            .redirectErrorStream(true)
-            .start()
-        if (!process.waitFor(15, TimeUnit.SECONDS)) {
-            process.destroyForcibly()
-            throw AssertionError("Batch version command did not finish: '$arguments'")
+        // BAT help output can exceed the Windows anonymous pipe buffer.
+        // Redirect before waiting, otherwise cmd.exe blocks writing output.
+        val outputFile = temporary.resolve("version-output-${System.nanoTime()}.txt")
+        try {
+            val process = ProcessBuilder("cmd.exe", "/d", "/s", "/c", command)
+                .directory(temporary.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(outputFile.toFile())
+                .start()
+            if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                throw AssertionError("Batch version command did not finish: '$arguments'; output: " +
+                    Files.readString(outputFile, StandardCharsets.UTF_8).take(4000))
+            }
+            return Result(process.exitValue(), Files.readString(outputFile, StandardCharsets.UTF_8))
+        } finally {
+            Files.deleteIfExists(outputFile)
         }
-        return Result(process.exitValue(), process.inputStream.bufferedReader(StandardCharsets.UTF_8).readText())
     }
 }

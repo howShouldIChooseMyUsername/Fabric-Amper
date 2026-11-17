@@ -50,6 +50,8 @@ class FabricAmperSchemaContractUnitTest {
         assertEquals(2, supported.size)
         assertTrue(supported.any { it.get("type").asString == "integer" && it.get("const").asInt == 1 })
         assertTrue(supported.any { it.get("type").asString == "string" && it.get("const").asString == "1.1" })
+        assertEquals("1.1", version.get("default").asString,
+            "An omitted schema must select the loader-namespaced 1.1 contract")
     }
 
     @Test
@@ -284,9 +286,9 @@ class FabricAmperSchemaContractUnitTest {
     }
 
     @Test
-    fun schemaCommonExampleParsesWithImplicitV1AndConvertsRelations() {
+    fun schemaCommonExampleParsesWithExplicitV1AndConvertsRelations() {
         val example = schema().getAsJsonArray("examples")[2].asJsonObject
-        assertFalse(example.has("schema"))
+        assertEquals(1, example.get("schema").asInt, "Legacy example must opt in to schema 1")
         val model = ModYamlLoader.load(YamlFixtures.write(project, example.toString()))
         assertEquals(1, model.schema)
         assertEquals("beta", model.publish?.common?.releaseType)

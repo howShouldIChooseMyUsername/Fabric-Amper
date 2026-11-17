@@ -10,7 +10,11 @@ object ModYamlDecoder {
     @JvmStatic
     fun decode(tree: Map<String, Any?>, source: Path): ModYamlModel {
         when (val token = tree["schema"]) {
-            null -> if (tree.containsKey("schema")) error("FA003", "schema", "schema cannot be null", source)
+            null -> if (tree.containsKey("schema")) {
+                error("FA003", "schema", "schema cannot be null", source)
+            } else {
+                return decodeV11(tree, source)
+            }
             1, 1L -> Unit
             "1.1" -> return decodeV11(tree, source)
             else -> error("FA003", "schema",

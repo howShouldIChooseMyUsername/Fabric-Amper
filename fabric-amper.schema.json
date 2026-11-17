@@ -1,15 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Fabric Amper mod.yaml (schema 1 and 1.1)",
-  "description": "Legacy schema 1 (also used when schema is omitted) preserves Fabric fields. Explicit quoted schema \"1.1\" selects loader-namespaced Fabric/NeoForge and string/array product targets. The build still uses only settings.gradle.kts and mod.yaml/mod.yml. Schema defaults are documentation only; the plugin validates runtime semantics.",
+  "description": "Omitting schema selects the latest loader-namespaced schema 1.1, supporting Fabric and NeoForge targets. Explicit integer schema: 1 retains legacy Fabric-only fields. A quoted string schema: \"1.1\" also selects schema 1.1; unquoted 1.1 is invalid. Only settings.gradle.kts and mod.yaml/mod.yml are required. The plugin validates runtime semantics.",
   "type": "object",
   "required": ["product", "mod", "minecraft"],
   "additionalProperties": false,
   "properties": {
     "schema": {
       "oneOf": [{ "type": "integer", "const": 1 }, { "type": "string", "const": "1.1" }],
-      "description": "Omitted or integer 1 uses legacy Fabric v1. NeoForge/target arrays require explicit quoted \"1.1\"; unquoted numeric 1.1 is invalid.",
-      "default": 1
+      "description": "Omission defaults to schema 1.1. Explicit integer 1 uses legacy Fabric v1; quoted \"1.1\" explicitly selects loader-namespaced syntax. Unquoted numeric 1.1 is invalid.",
+      "default": "1.1"
     },
     "product": {
       "oneOf": [
@@ -133,14 +133,15 @@
         }
       },
       "else": {
-        "if": { "properties": { "schema": { "not": { "const": "1.1" } } } },
+        "if": { "required": ["schema"], "properties": { "schema": { "not": { "const": "1.1" } } } },
         "then": { "not": { "required": ["publishing"] } }
       }
     },
     {
       "if": {
-        "not": { "required": ["schema"], "properties": { "schema": { "const": "1.1" } } },
+        "required": ["schema", "dependencies"],
         "properties": {
+          "schema": { "const": 1 },
           "dependencies": {
             "contains": {
               "type": "object",
@@ -148,8 +149,7 @@
               "required": ["target"]
             }
           }
-        },
-        "required": ["dependencies"]
+        }
       },
       "then": {
         "properties": {
@@ -171,9 +171,9 @@
     {
       "description": "In schema 1.1, client-targeted Gradle dependencies need a Fabric-only split client source set.",
       "if": {
-        "required": ["schema", "dependencies"],
+        "required": ["dependencies"],
+        "not": { "required": ["schema"], "properties": { "schema": { "const": 1 } } },
         "properties": {
-          "schema": { "const": "1.1" },
           "dependencies": {
             "contains": {
               "type": "object",
@@ -226,8 +226,8 @@
       }
     },
     {
-      "description": "Schema 1 retains its original Fabric-only root; omission selects schema 1.",
-      "if": { "required": ["schema"], "properties": { "schema": { "const": "1.1" } } },
+      "description": "An omitted schema or quoted 1.1 uses loader-namespaced fields; only explicit integer 1 selects legacy Fabric fields.",
+      "if": { "not": { "required": ["schema"], "properties": { "schema": { "const": 1 } } } },
       "then": {
         "properties": {
           "minecraft": { "$ref": "#/definitions/minecraftV11" },
@@ -1195,6 +1195,7 @@
       }
     },
     {
+      "schema": 1,
       "product": "fabric/mod",
       "mod": { "id": "shared-release", "version": "1.0.0+26.3", "name": "Shared Release" },
       "minecraft": { "version": "26.3", "loader": "0.20.1" },
