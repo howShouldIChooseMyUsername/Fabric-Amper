@@ -619,9 +619,9 @@ fabric-amper-plugin/
 
 1. 기존의 가장 중요한 조건인 **소비자 `settings.gradle.kts` + `mod.yaml`/`mod.yml`만으로 개발·빌드·실행**을 NeoForge 단독 모드에도 적용한다. 소비자가 `build.gradle(.kts)`, 수동 `fabric.mod.json`, 수동 `META-INF/neoforge.mods.toml`, 추가 로더 Gradle 속성을 작성하도록 요구하지 않는다. Java/Kotlin 소스와 실제 에셋은 개발자가 작성한다.
 2. **명시적 스키마 버전은 `schema: "1.1"`**로 표현한다. `1.1`을 YAML 부동소수점으로 해석하거나 `schema: 1`과 숫자 비교하지 않는다. 차기 파서는 버전 토큰을 별도 타입/문자열로 검사해야 한다. **기존 `schema: 1` 및 스키마를 생략한 기존 Fabric 프로젝트는 v1 의미를 계속 유지**한다. v1.1은 명시적으로 선택하는 방식으로 시작하고, 생략 시 기본 버전 변경은 호환성 검증 뒤 별도 결정한다.
-3. 단일 모드 소비자는 `product: fabric/mod` 또는 **새 `product: neoforge/mod`** 중 하나만 선택한다. `fabric/api`, `fabric/library`의 v1 동작은 보존한다. `neoforge/api`·`neoforge/library`의 Maven API 게시 계약과 두 로더를 동시에 빌드하는 제품 타입은 **별도 설계/수락 전에는 허용하지 않는다**.
-4. **공통 필드는 계속 루트에, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`에 둔다.** 선택하지 않은 로더 블록과 선택 로더 고유의 루트 레거시 키를 혼합하면 조용히 무시하지 않고 위치가 있는 진단으로 거부한다. `architectury:`는 **공통 의도 선언**으로 남기되 각 로더에 다른 실제 아티팩트를 연결한다.
-5. v1.1에선 우선 **하나의 YAML → 하나의 로더 → 하나의 최종 모드 JAR**만 다룬다. 하나의 프로젝트에서 Fabric과 NeoForge JAR을 동시에 만드는 `common/fabric/neoforge` 멀티프로젝트, Architectury Loom 자동 전환 및 공통 API 소스 공유는 **미래 기능**으로 분리한다. Architectury API를 의존성으로 추가하는 것만으로 멀티로더 프로젝트가 완성되지는 않는다.
+3. **v1.1 `product` 타입은 `string | string[]`이다.** 단일 대상은 `product: fabric/mod`, `product: neoforge/mod`처럼 기존 문자열 문법을 유지하고, 여러 대상은 `product: [fabric/mod, neoforge/mod]`처럼 **배열을 하나의 YAML에서 선언**한다. `product: [fabric/api, neoforge/api]`와 **서로 다른 로더의 `api`/`mod` 혼용**(`[fabric/api, neoforge/mod]`, 반대 조합 포함)도 설계상 지원한다. 기존 `fabric/api`·`fabric/library`(동의어) v1 계약은 유지하고, `neoforge/api`는 **새로 구현·검증해야 할 v1.1 대상 종류**로 추가한다. 세부 정규화·출력·API 게시 제약은 **12.11절**의 계약을 따른다. 현재 배포된 플러그인이 이를 이미 지원한다고 주장하지 않는다.
+4. **공통 필드는 계속 루트에, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`에 둔다.** 단일/배열 모두 동일한 이름공간을 사용한다. 단일 대상에서 선택하지 않은 로더 블록은 거부하되, **배열이 두 로더를 모두 선택했다면 두 블록을 모두 사용할 수 있다**. 선택 로더 고유의 루트 레거시 키를 혼합하면 조용히 무시하지 않고 위치가 있는 진단으로 거부한다. `architectury:`는 **공통 의도 선언**으로 남기되 각 타깃에 다른 실제 아티팩트를 연결한다.
+5. **하나의 YAML → 정규화된 하나 이상의 로더별 타깃 → 타깃별 독립 최종 JAR**로 확장한다. 단일 문자열과 1개짜리 배열은 한 로더 JAR을 만드는 동일 의미다. 다중 타깃은 `common/fabric/neoforge` Gradle 하위 프로젝트 또는 그에 동등한 격리 구조를 Settings 플러그인이 관리한다. 개발자가 각 하위 프로젝트의 `build.gradle(.kts)`를 작성하지 않는 원칙은 그대로다. 다만 Architectury API 의존성만 자동 추가하는 것은 **소스 공유·멀티로더 빌드 구성**과 다른 기능이므로, 해당 구성·실제 패키징은 NF 게이트 통과를 요구한다.
 
 ### 12.2. 공식 자료에서 확인한 전제와 버전 후보
 
@@ -642,7 +642,7 @@ fabric-amper-plugin/
 
 | 영역 | 스키마 1.1에서의 위치/의미 | 기존 스키마 1과의 관계 |
 | --- | --- | --- |
-| `schema`, `product` | 공통 루트: 스키마 식별·단일 대상 로더 결정 | `schema: 1` 그대로 유효. `schema: "1.1"`만 새 이름공간 사용 |
+| `schema`, `product` | 공통 루트: 스키마 식별·문자열 또는 문자열 배열로 대상 로더/종류 선택. 1개 또는 복수 로더 각각의 artifact/프로젝트를 결정 | `schema: 1`은 문자열만 허용해 그대로 유효. `schema: "1.1"`에서 배열·새 이름공간 지원 |
 | `mod.id/version/group/archivesName/name/description/license/authors/contributors` | 공통 모드 신원·배포명. 각 로더가 표현 가능한 범위만 출력하며 로더별 제약 검사 | v1 모드 정보 보존. NeoForge mod ID는 영문 소문자로 시작하고 이후 소문자·숫자·`_`만 허용(2–64자), license 문자열 필수 |
 | `mod.contact` | 공통 원본 정보. 로더별 동일 의미가 확인된 키만 출력, 변환 불가 키는 진단 또는 명시적 전용 필드로 처리 | Fabric의 자유로운 contact 맵을 NeoForge TOML로 무손실 자동 변환한다고 가정하지 않음 |
 | `minecraft.version` | 공통 대상 게임 버전(초기 `26.3`) | `minecraft.loader`, `minecraft.fabricApi`, `minecraft.mappings`는 v1.1에서 금지·이동 |
@@ -743,11 +743,11 @@ repositories:
 dependencies: []
 ```
 
-위 두 예제는 **독립적인 두 소비자 프로젝트**이며 한 YAML 안에 두 `product`를 동시에 지정하는 구문이 아니다. NeoForge 예시의 `example_dependency`는 **자리표시 모드 ID**여서 실제 실행 시 설치된 모드와 호환성이 필요하다. Fabric 예시의 의존성 메타데이터는 현재 v1의 Fabric Loader 규칙을 1.1 이름공간에 투영한 것이다.
+위의 두 예제는 **각각 한 대상만 빌드하는 문자열 `product` 소비자 예시**다. **둘을 하나의 YAML에 합친 배열 문법도 v1.1 목표로 허용**하며, 공통 `mod`/ `minecraft`를 공유하고 `fabric:` 및 `neoforge:` 블록을 각각 작성한다(12.11절). NeoForge 예시의 `example_dependency`는 **자리표시 모드 ID**여서 실제 실행 시 설치된 모드와 호환성이 필요하다. Fabric 예시의 의존성 메타데이터는 현재 v1의 Fabric Loader 규칙을 1.1 이름공간에 투영한 것이다.
 
 ### 12.5. NeoForge Gradle 백엔드·API 접합 계약
 
-1. Settings 플러그인 하나가 YAML의 `schema/product`를 **Gradle 프로젝트 구성 전에** 확인하고, `fabric/mod`이면 기존 Loom 구성기를, `neoforge/mod`이면 독립 `NeoForgeConfigurer`(가칭)를 택한다. 소비자 `build.gradle(.kts)` 추가, 수동 `plugins { id("net.neoforged.moddev") }` 추가, 임의 `gradle.properties` 속성 작성은 해결책으로 허용하지 않는다.
+1. Settings 플러그인 하나가 YAML의 `schema/product`를 **Gradle 프로젝트 구성 전에** 확인한다. 단일 문자열이면 기존 한 프로젝트 경로를 보존하고, 배열은 로더별 프로젝트를 `Settings.include` 등으로 구성한 뒤 해당 대상의 `fabric/*`에는 Loom 구성기를, `neoforge/*`에는 독립 `NeoForgeConfigurer`(가칭)를 적용한다. **루트에는 서로 다른 두 로더 플러그인을 동시에 적용하지 않는다.** 소비자 `build.gradle(.kts)` 추가, 수동 `plugins { id("net.neoforged.moddev") }` 추가, 임의 `gradle.properties` 속성 작성은 해결책으로 허용하지 않는다. 정확한 다중 프로젝트 경계·클래스패스 격리는 12.11절 수락 게이트로 둔다.
 2. NeoForge 후보는 공식 26.3 MDK와 같은 **ModDevGradle `net.neoforged.moddev` 2.0.148** 및 `neoForge.version = <validated pin>`이다. 저장소 `https://maven.neoforged.net/releases` 등을 플러그인 해석/의존성 용도에 맞춰 구분한다. 26.3에서는 Java25 toolchain/Gradle JVM 검사, `neoForge.mods { <mod.id> { sourceSet(sourceSets.main) } }` 구성, `runClient`/`runServer`/datagen 독립 시험이 필요하다.
 3. 현재 Fabric Amper의 **Settings 플러그인 전이 클래스패스에서 Loom을 제공하는 방식**에 ModDevGradle을 무조건 병합하면 불필요한 다운로드·서로 다른 Gradle 플러그인 버전·클래스 충돌 가능성이 있다. **선택 로더 백엔드만 로딩**하는 경로를 설계하고 실제 Gradle plugin classloader/variant/IsolatedAction/configuration cache에서 검증해야 한다. 구현 전에는 MDG 플러그인 ID를 Project에서 문자열로 적용하기만 하면 자동 다운로드될 것이라고 가정하지 않는다.
 4. NeoForge `@Mod("examplemod")` Java 초기화 클래스는 **사용자 소스**이며 Fabric `ModInitializer`/metadata `entrypoints`로 대체되지 않는다. 공식 26.3 MDK의 `IEventBus`/ `ModContainer` 주입, mod-specific event bus 및 `NeoForge.EVENT_BUS` 구분, `DeferredRegister` 등록 시점을 보존한다. 별도 `@Mod(dist=Dist.CLIENT)`·client 전용 클래스를 공통 서버 클래스에서 직접 참조하지 않는다. `init` 템플릿을 추가한다면 실제 NeoForge `@Mod` 소스를 생성하고 client/server로 빌드 검증한다.
@@ -778,15 +778,15 @@ NeoForge에서는 `modImplementation` 등 **Fabric Loom 구성 이름을 사용�
 
 ### 12.7. Architectury API와 두 로더의 관계
 
-- `architectury.enable: true`는 **Architectury API를 해당 단일 로더에 추가**한다는 뜻이다. Fabric에서는 검증된 기존 `dev.architectury:architectury-fabric:22.0.5`; NeoForge에서는 공식 26.3 문서·Maven에 게시된 `dev.architectury:architectury-neoforge:22.0.5`를 선택한다. 공통 `dev.architectury:architectury` 모듈은 별도의 `common` 소스 프로젝트를 위한 것으로, 1.1 단독 모드의 모든 의존성을 이 좌표로 대체하지 않는다.
+- `architectury.enable: true`는 **선택한 각 로더에 해당 플랫폼의 Architectury API를 추가**한다는 뜻이다. Fabric에서는 검증된 기존 `dev.architectury:architectury-fabric:22.0.5`; NeoForge에서는 공식 26.3 문서·Maven에 게시된 `dev.architectury:architectury-neoforge:22.0.5`를 선택한다. **다중 타깃에서 공통 Minecraft/Architectury 소스를 작성하는 경우** `dev.architectury:architectury:22.0.5`를 `:common` 컴파일에 쓰는 독립 구성을 검증한다. 일반 단일 대상의 모든 의존성을 공통 좌표로 대체하지 않는다.
 - 현재 확인된 API 22.0.5와 Minecraft 26.3을 초기 버전 후보로 삼되 **NeoForge용 실물 컴파일/Loader 실행에서 버전 적합성**을 확인한다. `architectury.version`은 고정값만 허용하며 Fabric/NeoForge의 Loader 관계를 각 메타데이터 형식으로 생성한다. Architectury 런타임 모드를 그냥 Jar-in-Jar로 숨겨 번들하지 않는다.
-- 공식 Architectury 멀티플랫폼 예제의 `common/fabric/neoforge` 모듈과 `dev.architectury.loom-no-remap`은 **별도의 멀티로더 빌드 시스템**이다. Fabric Amper의 `architectury` 옵션과 혼동하지 않는다. 이 부분을 자동화하려면 multi-project Settings 적용/소스셋·플랫폼별 출력을 새 수락 범위로 정의해야 한다.
+- 공식 Architectury 멀티플랫폼 예제의 `common/fabric/neoforge` 모듈과 `dev.architectury.loom-no-remap`은 **단일 플랫폼 API opt-in보다 넓은 빌드 시스템**이다. v1.1 배열 `product`에서는 Fabric Amper가 이와 동등한 **Settings가 관리하는 다중 타깃 빌드**를 구성하는 것이 목표다. 공식 Architectury Loom 기반 통합 백엔드와 기존 Fabric Loom + NeoForge ModDevGradle 분리 백엔드를 **모두 조사·TestKit 비교**해 적합한 방식을 선택해야 하며, `architectury.enable` 자체가 플러그인/소스셋 전환을 해결한다고 가정하지 않는다.
 
 ### 12.8. 이전 프로젝트와 입력 검증·진단
 
 1. `schema: 1` 또는 생략 v1의 `minecraft.loader`, `mod.entrypoints`, `settings.loom`, 최상위 `architectury`를 **변경 없이 계속 파싱**한다. v1을 NeoForge로 자동 판단/변환하지 않는다. 기존 v0.2.0 Fabric 릴리즈의 동작이 기본 회귀 기준이다.
 2. **v1 → v1.1 선택적 이동**은 키 위치를 명시적으로 바꾸며 기존 입력을 덮어쓰지 않는다. 예: `minecraft.loader → fabric.loader`, `minecraft.fabricApi → fabric.api`, `minecraft.mappings → fabric.mappings`, `mod.entrypoints → fabric.entrypoints`, `mod.depends → fabric.depends`, `settings.loom → fabric.loom`, `settings.kotlin.fabricLanguageKotlin → fabric.kotlin.fabricLanguageKotlin`. Fabric `mod.icon`은 `fabric.icon`으로, NeoForge에서는 별도 `neoforge.logoFile`로 취급한다.
-3. `schema: "1.1"`에서 `product: fabric/mod`에 `neoforge`가 있거나 `product: neoforge/mod`에 `fabric`이 있으면 **실패**한다. 두 블록이 동시에 있거나 필드를 구/신 위치에 동시에 작성한 경우, 어느 쪽이 우선인지 추측하지 않는다. `minecraft.loader`를 NeoForge 버전으로 읽거나 Fabric의 `mod.accessWidener`를 NeoForge AT로 변환하는 자동 마이그레이션도 금지한다.
+3. `schema: "1.1"`에서 **선택 대상 목록에 없는 로더의 블록**이 있으면 **실패**한다. `product: [fabric/mod, neoforge/mod]`처럼 두 로더를 선택한 경우에만 **`fabric:`와 `neoforge:`를 함께 허용**하며 서로 다른 메타데이터·의존성으로 해석한다. 필드를 구/신 위치에 동시에 작성한 경우는 값이 같아도 실패한다. `minecraft.loader`를 NeoForge 버전으로 읽거나 Fabric의 `mod.accessWidener`를 NeoForge AT로 변환하는 자동 마이그레이션도 금지한다.
 4. `schema: 1.1`(미인용 float), 알 수 없는 스키마, 알 수 없는 플랫폼/필드, 다른 loader용 JAR 또는 원본 메타데이터, 잘못된 YAML, 유효하지 않은 버전·경로·TOML, 잘못된 `@Mod` ID, 중복/모순 Gradle·Loader 관계는 **명시적 경로/줄·열을 갖는 진단**이 필요하다. 기존 FA001–FA015 의미를 훼손하지 않고, 새 플랫폼 전용 코드(예: `FA016` 이상)는 구현 때 충돌 없이 확정한다.
 5. JSON Schema는 **Draft-07 유지**, 향후 `fabric-amper.schema.json`에서 v1/v1.1 분기(버전별 `oneOf`/조건부 `required`/additionalProperties), `product`별 독립 필드 자동완성, 출처가 있는 설명과 유효한 샘플을 제공한다. **이 단계에서는 스키마 파일을 변경하지 않는다.** `fabric-amper.bat init`의 서명된 스키마 다운로드는 schema bytes가 바뀌는 구현 릴리즈에서 BAT 핀도 동시에 갱신해야 한다.
 6. GitHub/Modrinth/CurseForge 게시와 로더 변경은 별개다. NeoForge 제품을 위한 release artifact, Modrinth `loaders: ["neoforge"]`, CurseForge 게임 버전/로더와 실제 소비자 JAR을 검사하고 수동 승인 없는 원격 게시를 하지 않는다.
@@ -811,8 +811,18 @@ NeoForge에서는 `modImplementation` 등 **Fabric Loom 구성 이름을 사용�
 | NF14 | Modrinth/NeoForge Maven 저장소 필터·고정 좌표/전이성, API 게시 시 실제 POM/.module, 로더별 publish 대상 및 원격 업로드 안전성 |
 | NF15 | 명시 `schema: 1.1` float 거부, v1/v1.1 Draft-07 자동완성, 단계적 `migrate` dry-run/백업/옵션 누락·충돌 검증 |
 | NF16 | 사용자에게 제공되는 `init` Java NeoForge 예제가 실제로 빌드·실행되고 생성 Settings/YAML/소스 외 작성 Gradle 빌드 파일·Loader TOML이 없음 |
+| NF17 | `schema: "1.1"`의 문자열 또는 문자열 배열 `product` 정규화: 단일 문자열/1개 배열/여러 배열, 빈 배열·중복·별칭 중복·알 수 없는 loader/kind·같은 로더 두 종류 거부. `schema: 1`의 기존 문자열 동작 보존 |
+| NF18 | `[fabric/mod, neoforge/mod]`, `[fabric/api, neoforge/api]`, `[fabric/api, neoforge/mod]`, `[fabric/mod, neoforge/api]` 각각 `help`/실제 소비자 빌드; `api`와 `mod` 혼용으로 다른 로더의 Gradle/metadata 계약을 변경하지 않음 |
+| NF19 | **Settings 플러그인 하나만** 적용해 공통/대상별 Gradle 프로젝트 생성, Gradle 9의 필수 프로젝트 디렉터리 존재·외부 build.gradle 불필요·각 플랫폼 Plugin classpath 격리; Gradle 9.2.1/9.7.1/9.9.x 개별 검증 |
+| NF20 | 공통 코드가 실제로 각 대상에서 컴파일되고 양쪽 최종 JAR에 적절히 포함됨. 공통 클래스 중복/누락·서로 다른 로더 Java 패키지 유입·공통 리소스 충돌·Kotlin·런타임 로딩 검증 |
+| NF21 | 대상별 최종 `fabric.mod.json` 정확히 하나 또는 `META-INF/neoforge.mods.toml` 정확히 하나, **상대편 메타데이터 0개**; JAR 명명/GAV/게시 provenance와 플랫폼별 dependency graph 분리 |
+| NF22 | 같은 YAML에서 `fabric/api`와 `neoforge/api`의 Maven API variants 및 loader-specific `api`/runtime scope, `api`+`mod` 혼용 때 선택한 API 대상만 자동 Maven publication; 다운로드한 POM·module·sources 실 소비자 검증 |
+| NF23 | `build`의 타깃별 집계와 `:fabric:runClient`/`:neoforge:runClient`/전용 서버 동작, root `runClient`/원격 `publish` 무선택 호출은 자동 다중 실행·업로드 대신 명시적 에러 |
+| NF24 | `architectury.enable=true`에서 common API + 각각 `architectury-fabric`/`architectury-neoforge` 의존성 및 Loader 관계·실행 확인. `enable=false` 다중 타깃도 별도 platform source만으로 동작하고 Architectury 런타임을 불필요하게 요구하지 않음 |
+| NF25 | `product` 배열의 순서를 뒤집어도 동일 타깃 JAR·Gradle 프로젝트 경로·POM 산출. 타깃 1개 추가/제거·YAML/리소스 갱신 뒤 CC/IDE Sync/병렬 구성/미러 복구를 타깃별로 검증 |
+| NF26 | `fabric:`·`neoforge:` 동시 블록의 허용 조건, 비선택 로더 블록 거부, 플랫폼별 저장소·Gradle 의존성·Loader 메타데이터·게시 대상 오염 차단. 새 로더를 등록할 때 기존 타깃 결과 바이트 불변 |
 
-**출하 차단:** NF2·NF4·NF5·NF6·NF8·NF9·NF12 등의 런타임/IDE/패키징 검증 없이 NeoForge 지원을 공개 기능으로 광고하지 않는다. NeoForge 백엔드 하나를 추가하더라도 **기존 G1–G30의 Fabric 수락 게이트를 없애지 않는다**. 지금 단계에는 변경된 실행 코드나 통과한 NF 시험이 **없다**.
+**출하 차단:** NF2·NF4·NF5·NF6·NF8·NF9·NF12 등의 런타임/IDE/패키징 검증 없이 NeoForge 지원을 공개 기능으로 광고하지 않는다. **다중 `product` 배열은 NF17–NF26 검증을 추가로 통과해야만 지원된다고 표시**한다. NeoForge 백엔드 하나를 추가하더라도 **기존 G1–G30의 Fabric 수락 게이트를 없애지 않는다**. 지금 단계에는 변경된 실행 코드나 통과한 NF 시험이 **없다**.
 
 ### 12.10. 조사 트랙과 공식 참고자료
 
@@ -824,3 +834,131 @@ NeoForge에서는 `modImplementation` 등 **Fabric Loom 구성 이름을 사용�
 - [ModDevGradle 공식](https://docs.neoforged.net/toolchain/docs/plugins/mdg/), [NeoGradle 공식](https://docs.neoforged.net/toolchain/docs/plugins/ng/), [비마인크래프트 라이브러리](https://docs.neoforged.net/toolchain/docs/dependencies/nonmclibs/), [Jar-in-Jar](https://docs.neoforged.net/toolchain/docs/dependencies/jarinjar/)
 - [Architectury API 26.3 Setup](https://docs.architectury.dev/api/getting-started/setup/), [Architectury 프로젝트 구조](https://docs.architectury.dev/api/getting-started/project-structure/), [Architectury NeoForge Maven](https://maven.architectury.dev/dev/architectury/architectury-neoforge/22.0.5/)
 - [Modrinth Maven 공식 안내](https://support.modrinth.com/en/articles/8801191-modrinth-maven), [NeoForge Maven](https://maven.neoforged.net/releases/)
+
+### 12.11. 확장된 `product` 배열과 다중 모드로더 빌드 (2026-11-17 추가)
+
+#### 12.11.1. 결정: 단일 문자열 + 여러 타깃 배열을 **둘 다 지원**
+
+차기 **스키마 1.1**은 `product`를 **`string | array[string]`**으로 정의한다. 예를 들어 다음은 **모두 정식 지원을 목표로 하는 문법**이다. 이는 사용자의 새로운 요구로 12.1절의 기존 **한 YAML당 한 로더** 제한을 변경한 것이다.
+
+```yaml
+product: fabric/mod
+product: neoforge/mod
+product: [fabric/mod, neoforge/mod]
+product: [fabric/api, neoforge/api]
+product: [fabric/api, neoforge/mod]
+product: [fabric/mod, neoforge/api]
+```
+
+위 여섯 줄은 **같은 YAML에서 동시에 작성하는 예제가 아니라 각각 독립적인 `product` 값의 예시**다. 동일한 파일에서 `product` 키가 중복되면 기존 strict YAML 규칙대로 실패한다. **`mod`와 `api`를 혼합했다는 이유만으로 금지하지 않는다.** `product: [fabric/api, neoforge/mod]`의 의미는 같은 코드베이스의 Fabric 산출물은 API 배포용, NeoForge 산출물은 일반 모드라는 뜻이지, 하나의 JAR에 두 로더를 섞는다는 뜻이 아니다. 반대 조합도 같다.
+
+- **1개짜리 배열도 유효:** `[fabric/mod]` ≡ `fabric/mod`로 정규화한다. 이 경우 기존 **단일** 소스 경로·태스크·아카이브 이름을 사용해 불필요한 멀티프로젝트 전환을 피한다. `schema: 1` 및 생략형 레거시 YAML에서는 **여전히 문자열만 허용**하며 새 문법에는 `schema: "1.1"` 명시가 필요하다.
+- **배열은 비어 있을 수 없다**(`minItems: 1`). 모든 항목은 공백 없는 고정 `loader/kind` 문자열이며 객체·null·숫자·중첩 배열을 허용하지 않는다. 대소문자와 철자가 정확히 일치해야 한다. 현재 제안된 이름은 `fabric/mod`, `fabric/api`, `neoforge/mod`, `neoforge/api`이다. 기존 `fabric/library`는 `fabric/api`의 별칭으로 유지한다. 다른 로더는 해당 어댑터와 검증 매트릭스를 구현한 뒤 허용 목록에 추가한다.
+- **동일한 로더는 목록당 최대 한 번:** `[fabric/mod, fabric/mod]`, `[fabric/api, fabric/library]`, `[fabric/mod, fabric/api]`는 각각 중복·별칭 중복·동일 로더의 서로 다른 종류 충돌로 **명확히 거부**한다. 이것은 `[fabric/api, neoforge/mod]` 같은 **서로 다른 로더 사이의 종류 혼용과 별개**다. 한 로더에서 API/모드 JAR을 동시에 두 개 만들려면 나중에 별도의 타깃 식별자/아카이브 충돌 해결 계약이 필요하다.
+- **내부 정규화:** 문자열도 배열로 읽어 `Target(loader, kind)`의 **중복 없는 목록**으로 취급한다. `fabric/library → fabric/api` 정규화 뒤 중복을 다시 검사한다. 사용자 작성 순서는 의미·출력에 영향을 주지 않고, 내부 작업/메타데이터/게시 순서는 안정적인 로더 ID로 결정한다. 배열에서 항목 위치가 바뀌어도 결과 파일 이름·바이트는 같아야 한다.
+- **Architectury는 배열의 필수 조건이 아니다.** 배열은 **출력 대상 로더 선택**, `architectury.enable`은 **공통 API 의존성 활성화**다. 둘 다 사용할 수 있지만 별개다. `architectury.enable=false`라면 공통 코드를 Loader 독립 Java 코드로 제한하거나 플랫폼별 코드를 직접 작성해야 하며, 플러그인이 Fabric 코드를 NeoForge로 자동 번역하지 않는다.
+
+#### 12.11.2. `mod`/`api` 대상 의미 및 출력의 독립성
+
+| 선택 항목 | 빌드·배포 의미 | 생성되는 Loader 메타데이터 |
+| --- | --- | --- |
+| `fabric/mod` | Fabric Loader용 모드 JAR, 명시적 배포만 | 그 JAR의 루트 `fabric.mod.json` |
+| `fabric/api` | Fabric에서 사용 가능한 API/라이브러리 모드 JAR + 기존 `java-library`/Maven API publication 계약 | **같은** Fabric 메타데이터; 라이브러리라고 Loader 인식 JSON을 생략하지 않음 |
+| `neoforge/mod` | NeoForge 모드 JAR; ModDevGradle 기준 | `META-INF/neoforge.mods.toml` |
+| `neoforge/api` | NeoForge에서 사용 가능한 API/라이브러리 모드 JAR + 독립 `java-library`/Maven API publication. **새 v1.1 구현/검증 대상** | **같은** NeoForge TOML; API니까 TOML을 제거하거나 Fabric JSON으로 대체하지 않음 |
+
+`api`는 **자동 Maven API 산출물/전이적 API 공개 계약의 선택**이지 Architectury API 활성화를 뜻하지 않는다. `mod`는 공개 `apiElements` 게시의 자동 등록을 요구하지 않지만 명시적 모드 플랫폼 업로드는 가능하다. 같은 프로젝트에서 두 로더를 골라도 **둘 다 독립적인 Loader 호환 모드 JAR**이어야 한다. 공통 `mod.id/version`을 공유해도 로더별 산출물은 다른 바이너리다.
+
+#### 12.11.3. 실제 여러 로더를 선택하는 하나의 YAML 예시
+
+```yaml
+schema: "1.1"
+product: [fabric/api, neoforge/mod]
+mod:
+  id: examplemod
+  version: "1.0.0+26.3"
+  group: org.example
+  archivesName: examplemod
+  name: Example Mod
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+architectury:
+  enable: true
+  version: "22.0.5"
+fabric:
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  mappings: mojang
+  entrypoints:
+    main: ["org.example.ExampleFabric"]
+neoforge:
+  version: "26.3.0.101"
+  modLoader: javafml
+  # @Mod("examplemod")를 가진 NeoForge 소스는 해당 로더 소스 디렉터리에 작성
+repositories:
+  - mavenCentral
+  - fabric
+  - neoforge
+dependencies: []         # 양쪽에서 사용할 수 있는 중립 Gradle 라이브러리만
+```
+
+**이 예시는 구현 전 YAML 설계안**이며 아직 실행 가능한 소비자 설정이 아니다. `product`가 두 로더를 모두 선택했으므로 `fabric:`와 `neoforge:`를 동시에 허용한다. `fabric/api`에만 기존 API Maven publication 정책을 적용하고 `neoforge/mod`는 일반 모드 산출물로 만든다. `[fabric/mod, neoforge/mod]`, `[fabric/api, neoforge/api]`도 같은 경계/검증을 따른다. 기존 공개 v0.2.0 바이너리는 이 문법을 파싱할 수 없으므로 현재 실행하려면 안 된다.
+
+#### 12.11.4. 공통 코드·플랫폼 소스 경계와 Gradle 프로젝트
+
+**다중 대상용 목표 디렉터리** (개발자 작성 `build.gradle(.kts)` 없음):
+
+```text
+examplemod/
+├── settings.gradle.kts       # dev.fabric-amper.settings 단독 적용
+├── mod.yaml                  # schema: "1.1"; product 배열
+├── common/src/main/java|kotlin/...        # 선택: 로더 공통 코드
+├── common/src/main/resources/...          # 양쪽에서 안전하게 쓰는 자원
+├── fabric/src/main/java|kotlin/...        # ModInitializer 등 Fabric 전용
+├── fabric/src/main/resources/...          # Fabric 전용 리소스
+├── fabric/src/client/java|kotlin/...      # split 설정 시 Fabric 클라이언트
+├── neoforge/src/main/java|kotlin/...      # @Mod 등 NeoForge 전용
+└── neoforge/src/main/resources/...        # NeoForge 전용 리소스
+```
+
+1. 다중 대상 선택 시 **Settings 플러그인이** `:common` 및 `:fabric`, `:neoforge` 중 선택된 로더의 Gradle 프로젝트를 구성한다. 루트 프로젝트는 집계/보고용이며 Loader/Loom/MDG 플러그인을 중복 적용하지 않는다. Gradle `Settings.include(...)`와 각 Project의 isolated `beforeProject` 구성으로 각자 플러그인·의존성·태스크를 공급한다. 사용자의 `settings.gradle.kts`에 수동 `include`나 하위 빌드 스크립트를 요구하지 않는다.
+2. **Gradle 9 이상은 포함된 Project의 디렉터리가 존재해야 한다.** 초기화 도구는 필요한 소스 디렉터리만 안전하게 생성하고, 손으로 작성한 YAML 소비자는 기존 소스 경로를 사용할 수 있도록 관리형(충돌 없는) Project 디렉터리 매핑을 지원해야 한다. 사용자 파일을 `help` 과정에서 무단 이동·삭제하지 않으며, 관리형 `.gradle/fabric-amper/` 내부 디렉터리 생성/캐시 복구는 독립 시험한다. 정확한 projectDir 배치는 실제 Gradle·Tooling API 검증 뒤 확정한다.
+3. `:common`의 공통 **로더 독립 Java/Kotlin 로직·리소스**는 각 대상의 컴파일 클래스패스와 배포 JAR에 연결한다. `architectury.enable=true`에서 Minecraft/Architectury 공통 코드는 공통 API 아티팩트와 필요한 게임 개발 클래스패스로 컴파일하고, 각 플랫폼의 별도 진입점(Fabric `ModInitializer`, NeoForge `@Mod`)이 공통 초기화를 호출한다. `:common` 출력이 개발에서는 보이지만 배포 JAR에는 누락되는 상황이나 Loader가 공통 JAR을 별도 외부 설치하라고 요구하는 상황은 실패다.
+4. 기존 `src/main`·`src/client` 경로는 **단일 타깃에서 그대로 유지**한다. 다중 타깃에서 이 레거시 경로와 `common`/플랫폼 경로를 조용히 섞거나 동일 클래스를 두 번 컴파일하지 않는다. 기존 Fabric 모드를 배열로 이전할 때는 `src/main`의 Fabric 진입점·Mixin·리소스를 `fabric/src/main`으로, 공통 코드만 `common`으로 **명시적으로 이동**해야 한다. `migrate --dry-run`(향후 기능)은 원본을 보존하면서 경로/충돌을 안내해야 한다.
+5. 공통 코드는 로더 종속 패키지(`net.fabricmc.*`, NeoForge 전용 `net.neoforged.*` 등)를 직접 참조하지 않도록 검증하고, 플랫폼별 자원 충돌은 명시적 정책 없이 덮어쓰지 않는다. `architectury.enable=false` 상태에서도 플랫폼별 코드만 가진 다중 타깃은 허용하며 무조건 공통 모듈의 Minecraft 코드가 빌드된다고 주장하지 않는다.
+6. **빌드 백엔드 선택은 별도 기술 게이트다.** (A) 공식 Architectury `dev.architectury.loom-no-remap` + Architectury 플러그인의 멀티프로젝트 방식, (B) 현재 Fabric Loom과 NeoForge ModDevGradle을 서로 다른 하위 프로젝트에서 사용하는 방식 모두 후보로 두고 **Gradle 플러그인 classloader/version variant, 격리 프로젝트, Mojang 매핑·Java25, IntelliJ Sync, 구성 캐시**를 비교한다. 두 가지를 아무 시험 없이 혼합하거나 `architectury.enable` 플래그로 툴체인을 무조건 전환하지 않는다. 선택 백엔드가 실증되지 않으면 배열 `product`를 릴리즈 지원 기능으로 표시하지 않는다.
+
+#### 12.11.5. 의존성·메타데이터·게시 대상 분기
+
+- 공통 `minecraft.version`, `mod.id/version/group`, Java/Kotlin 기본값은 모든 선택 타깃에 적용한다. 다중 대상에 적용되는 루트 `dependencies`/ `test-dependencies`는 **모든 대상에서 유효한 중립 라이브러리**만 기본 공유한다. Fabric/NeoForge 전용 Gradle 의존성은 충돌 없는 새 키(목표 후보 `fabric.gradleDependencies`, `neoforge.gradleDependencies`)로 명시할 수 있게 설계한다. 이는 기존 **Loader 관계** `fabric.depends`와 `neoforge.dependencies`와는 다른 정보다. 단일 타깃의 v1 형식과 자동 섞지 않는다.
+- `fabric.repositories`, `neoforge.repositories` 등 로더별 저장소 확장 키도 후보로 두고, 루트 저장소만 적용하면 관계없는 Loader 모드 아티팩트를 다른 플랫폼에서 해석하는 일을 막는다. 공통 `architectury.enable: true`는 공통 `architectury`, Fabric `architectury-fabric`, NeoForge `architectury-neoforge` 의존성을 각각 해당 프로젝트에 공급한다. 런타임 Loader 종속성·포함 정책은 각 플랫폼 전용 형식을 따른다.
+- 각 최종 JAR에 해당 플랫폼의 Loader 메타데이터 **정확히 하나만** 포함하고 상대 플랫폼 메타데이터는 **0개**다. `:fabric`이 `neoforge.mods.toml`을 갖거나 `:neoforge`가 `fabric.mod.json`을 갖는 결과는 실패한다. 공통 자원에 작성된 어느 로더 메타데이터든 빌드 전에 명시적으로 거부한다.
+- 다중 타깃의 기본 파일 이름 및 Maven `artifactId`는 플랫폼 접미어를 포함해 충돌을 피한다. 예: `examplemod-fabric-1.0.0+26.3.jar`, `examplemod-neoforge-1.0.0+26.3.jar`; Maven은 `org.example:examplemod-fabric:<version>`, `org.example:examplemod-neoforge:<version>`의 서로 다른 모듈로 게시한다. 소스 JAR·POM·Gradle `.module`·Loader 메타데이터도 **해당 대상에서 생성**한다. 단일 문자열/1개 배열은 기존 아카이브 이름과 Maven 좌표를 보존한다.
+- `[fabric/api, neoforge/api]`는 **두 독립 API Maven publication**, `[fabric/api, neoforge/mod]`는 **Fabric API publication만 자동 활성화**한다. 반대 혼용은 NeoForge API publication만 활성화한다. 한 타깃의 `exported` 의존성이나 API public type이 다른 타깃의 POM/`.module`에 유입되면 실패한다. `publish.maven`/Modrinth/CurseForge 업로드는 로더별 실제 JAR·사이트별 loader tag를 정확히 선택하고, 하나의 플랫폼 업로드 실패를 다른 플랫폼 게시 성공으로 기록하지 않는다. **원격 배포는 사용자의 명시적 실행이 있을 때만** 이루어진다.
+
+#### 12.11.6. 태스크, 결정성, 오류 및 스키마 검증
+
+- **단일 대상:** 현재의 `gradle build`, `gradle runClient`, `gradle runServer`, `generateFabricModJson` 및 모드 JAR 이름을 유지한다. **다중 대상:** `gradle build`는 선택된 모든 최종 JAR을 빌드하고, 실행/검증/게시 선택은 `gradle :fabric:runClient`, `gradle :neoforge:runClient`, `gradle :fabric:verifyFabricAmperJar` 같은 **명확한 Project 경로**로 수행한다. `gradle runClient`나 대상 없는 원격 `publish`가 모든 Loader를 동시에 실행/업로드하거나 임의 한 로더를 고르지 않도록 루트 task 충돌·이름 매칭을 검증하고 **명시적 타깃 안내로 실패**시킨다.
+- Gradle 구성 캐시는 루트 YAML에서 도출된 **정규화 타깃 목록**과 대상별 YAML/소스/리소스를 추적한다. 배열 순서만 바꾸면 유효 타깃·JAR 내용은 변하지 않아야 하고, 하나의 로더만 수정했을 때 다른 로더의 metadata/JAR·POM이 구식 값으로 섞이거나 불필요하게 파괴되어서는 안 된다. 병렬 구성, 빌드 캐시, IDE Reload, 단일 타깃 제거 후 관리형 출력 정리도 검증한다.
+- 차기 Draft-07 JSON Schema `product`는 **개념적으로** 다음 `oneOf`를 사용한다(스키마 파일은 아직 수정하지 않는다):
+
+```json
+"product": {
+  "oneOf": [
+    {"type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library", "neoforge/mod", "neoforge/api"]},
+    {"type": "array", "items": {"type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library", "neoforge/mod", "neoforge/api"]}, "minItems": 1, "uniqueItems": true}
+  ]
+}
+```
+
+  실제 JSON Schema는 `schema: 1` / `schema: "1.1"`에 따라 분기해야 한다. `uniqueItems`는 철자가 정확히 같은 문자열만 잡으므로, `fabric/library` + `fabric/api`처럼 **별칭 정규화 뒤 중복**, `fabric/mod` + `fabric/api`처럼 **동일 로더 중복**, `fabric:`/ `neoforge:` 존재와 선택 타깃의 일치, 플랫폼별 게시 출력의 의미 검증은 **Kotlin 파서/검증기에서도 반드시** 수행한다. JSON Schema 자동완성만으로 실제 빌드 안전성이 보장되는 것은 아니다.
+- 잘못된 `product` 타입, 빈/중복 배열, 미등록 로더·종류, 플랫폼 불일치, 공유 코드의 전용 Loader 의존성, 중복 아카이브명/GAV, 미구현 `neoforge/api` 타깃, plugin classpath 분리 실패는 **사전검증 시 파일 경로·줄/열·대상 이름을 포함한 명확한 진단**으로 거부한다. 이미 만들어진 사용자 파일·기존 정상 JAR은 보존한다. 다중 타깃이 선언됐다고 모든 출력이 자동 검증됐다고 보고하지 않는다.
+
+**확인한 공식 근거:** [Architectury 26.3 멀티프로젝트 구조](https://docs.architectury.dev/api/getting-started/project-structure/)는 `common/fabric/neoforge` 각 프로젝트와 Loader별 `build`/`runClient` 명령을 직접 예시한다. [Architectury 26.3 Setup](https://docs.architectury.dev/api/getting-started/setup/)은 공통 `architectury`, Fabric `architectury-fabric`, NeoForge `architectury-neoforge`의 **분리된 의존성**과 각 하위 프로젝트의 빌드 플러그인을 설명한다. [Gradle Settings API](https://docs.gradle.org/current/javadoc/org/gradle/api/initialization/Settings.html), [Multi-Project Builds](https://docs.gradle.org/current/userguide/multi_project_builds.html) 및 [Isolated Projects](https://docs.gradle.org/current/userguide/isolated_projects.html)는 Settings의 `include`, Gradle 9의 프로젝트 디렉터리 요건, lifecycle callback과 **미리 해석된 플러그인 클래스패스** 제약을 문서화한다. [NeoForge ModDevGradle](https://docs.neoforged.net/toolchain/docs/plugins/mdg/)은 독립 source sets·JarJar·구성 캐시 계약을 제공한다. [JSON Schema 배열](https://json-schema.org/understanding-json-schema/reference/array)은 `minItems`/`uniqueItems`의 검증 범위를 정의한다. **어느 조합도 아직 Fabric Amper의 실제 멀티로더 소비자 빌드로 실행해 확인한 것은 아니다.**
