@@ -608,3 +608,219 @@ fabric-amper-plugin/
 26. Gradle Configuration Cache lifecycle: https://docs.gradle.org/current/userguide/configuration_cache.html
 
 **증거 수준:** 위 문서는 공식 문서에 존재하는 API/구성 의미를 기반으로 **구현을 위한 설계 선택**을 포함한다. 자체 Gradle plugin의 컴파일, 최신 Loom Extension binary API, 배포 클래스패스, IntelliJ Sync, Kotlin 호환, 실제 모드 실행은 아직 확인되지 않았다.
+
+---
+
+## 12. NeoForge 확장 설계 — YAML 스키마 **1.1** (2026-11-17, 조사 단계)
+
+> **상태: 제안된 차기 설계, 미구현·미검증.** 이 절은 NeoForge 지원 도입을 위한 **새 스키마 계약의 초안**이다. 기존 1–11절의 Fabric 중심 설명과 `schema: 1` 예시는 이미 정의된 **v1 계약·과거 설계 기록**으로 보존한다. 현재 공개 v0.2.0의 NeoForge 빌드·실행을 주장하지 않으며, `fabric-amper.schema.json`, YAML 파서/생성기, BAT, Gradle 플러그인 및 JAR은 **이 절을 기록한다고 바뀌지 않는다**. 사용자가 추가로 제시할 구역 분리 규칙이 있으면 이 설계를 그에 맞게 조정한다.
+
+### 12.1. 제품 목표와 스키마 버전 정책
+
+1. 기존의 가장 중요한 조건인 **소비자 `settings.gradle.kts` + `mod.yaml`/`mod.yml`만으로 개발·빌드·실행**을 NeoForge 단독 모드에도 적용한다. 소비자가 `build.gradle(.kts)`, 수동 `fabric.mod.json`, 수동 `META-INF/neoforge.mods.toml`, 추가 로더 Gradle 속성을 작성하도록 요구하지 않는다. Java/Kotlin 소스와 실제 에셋은 개발자가 작성한다.
+2. **명시적 스키마 버전은 `schema: "1.1"`**로 표현한다. `1.1`을 YAML 부동소수점으로 해석하거나 `schema: 1`과 숫자 비교하지 않는다. 차기 파서는 버전 토큰을 별도 타입/문자열로 검사해야 한다. **기존 `schema: 1` 및 스키마를 생략한 기존 Fabric 프로젝트는 v1 의미를 계속 유지**한다. v1.1은 명시적으로 선택하는 방식으로 시작하고, 생략 시 기본 버전 변경은 호환성 검증 뒤 별도 결정한다.
+3. 단일 모드 소비자는 `product: fabric/mod` 또는 **새 `product: neoforge/mod`** 중 하나만 선택한다. `fabric/api`, `fabric/library`의 v1 동작은 보존한다. `neoforge/api`·`neoforge/library`의 Maven API 게시 계약과 두 로더를 동시에 빌드하는 제품 타입은 **별도 설계/수락 전에는 허용하지 않는다**.
+4. **공통 필드는 계속 루트에, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`에 둔다.** 선택하지 않은 로더 블록과 선택 로더 고유의 루트 레거시 키를 혼합하면 조용히 무시하지 않고 위치가 있는 진단으로 거부한다. `architectury:`는 **공통 의도 선언**으로 남기되 각 로더에 다른 실제 아티팩트를 연결한다.
+5. v1.1에선 우선 **하나의 YAML → 하나의 로더 → 하나의 최종 모드 JAR**만 다룬다. 하나의 프로젝트에서 Fabric과 NeoForge JAR을 동시에 만드는 `common/fabric/neoforge` 멀티프로젝트, Architectury Loom 자동 전환 및 공통 API 소스 공유는 **미래 기능**으로 분리한다. Architectury API를 의존성으로 추가하는 것만으로 멀티로더 프로젝트가 완성되지는 않는다.
+
+### 12.2. 공식 자료에서 확인한 전제와 버전 후보
+
+| 항목 | 2026-11-17 공식 자료로 확인한 사항 | v1.1 설계 판정 |
+| --- | --- | --- |
+| Minecraft/Java | NeoForge `26.3.x` 및 공식 26.3 MDK 존재; Minecraft `26.3`, Java **25** | 1차 NeoForge 프로파일은 **26.3 전용**. Java 25 사용, 다른 MC 버전은 추후 검증 |
+| NeoForge 런타임 | 공식 26.3 MDK의 `neo_version=26.3.0.101`; 공식 프로젝트 목록에는 조회 당시 더 새로운 `26.3.0.103`도 존재 | **재현 가능한 초기 핀 후보는 `26.3.0.101`**. 최신이라는 이유로 자동 업데이트하지 않음. 어느 조합이 실제 통과하는지는 TestKit/런타임으로 결정 |
+| Gradle 개발 백엔드 | 공식 26.3 ModDevGradle MDK는 `net.neoforged.moddev` **2.0.148**, `neoForge.version`, Java25, client/server/data/gameTestServer, `mods { sourceSet(main) }` 사용 | **ModDevGradle을 1차 후보**, NeoGradle은 검토한 대안. 소비자에게 별도 plugin 적용을 요구하지 않음 |
+| NeoGradle 대안 | 공식 Userdev 플러그인 `net.neoforged.gradle.userdev`; 일반 의존성 `net.neoforged:neoforge:<version>` | ModDevGradle과 플러그인 ID/API가 다름. 1.1 구현에서 자동 혼합하지 않음 |
+| Gradle 조합 | 26.3 MDK Wrapper는 Gradle 9.2.1 사용; MDG 문서는 구성 캐시 지원을 설명 | 기존 Fabric Amper의 Gradle 9.7.1/9.9.x에서 **실제 호환성 미검증**, 조합별 확인 필수 |
+| NeoForge 시작 API | 공식 26.3 MDK는 `@Mod(MODID)`, `IEventBus`/ `ModContainer` 생성자 주입, `DeferredRegister.register(modBus)`, `NeoForge.EVENT_BUS` 사용 | Fabric `ModInitializer`를 NeoForge에 재사용/자동 변환하지 않음 |
+| 로더 메타데이터 | NeoForge는 JAR 내부 `META-INF/neoforge.mods.toml`; Fabric은 JAR 루트 `fabric.mod.json` | 생성기·검증기·리소스 경로를 로더별로 독립 구현 |
+| Architectury API | 공식 26.3 문서는 NeoForge `26.3.0.48-beta+`, Architectury API `22.0.5` 예시 및 `architectury-neoforge` 좌표를 안내 | Fabric용 `architectury-fabric`을 NeoForge에 설치하지 않음. 버전·메타데이터·게임 실행별 별도 검증 |
+
+**근거 수준 주의:** 공식 NeoForge 일반 문서의 이벤트/메타데이터 화면은 조회 당시 **26.1 문서 버전**을 보여 준다. 26.3 MDK와 `26.3.x` 소스에서 확인한 API 예제를 설계 입력으로 쓰되, 나머지 API 시그니처·모드 로딩/구성 캐시/IDE 결과까지 26.3에서 실증됐다고 주장하지 않는다. `26.3.0.101`, MDG `2.0.148`은 **후보**이지 Fabric Amper의 검증 완료 매트릭스가 아니다.
+
+### 12.3. v1.1 키 배치 — 공통과 로더 전용의 경계
+
+| 영역 | 스키마 1.1에서의 위치/의미 | 기존 스키마 1과의 관계 |
+| --- | --- | --- |
+| `schema`, `product` | 공통 루트: 스키마 식별·단일 대상 로더 결정 | `schema: 1` 그대로 유효. `schema: "1.1"`만 새 이름공간 사용 |
+| `mod.id/version/group/archivesName/name/description/license/authors/contributors` | 공통 모드 신원·배포명. 각 로더가 표현 가능한 범위만 출력하며 로더별 제약 검사 | v1 모드 정보 보존. NeoForge mod ID는 영문 소문자로 시작하고 이후 소문자·숫자·`_`만 허용(2–64자), license 문자열 필수 |
+| `mod.contact` | 공통 원본 정보. 로더별 동일 의미가 확인된 키만 출력, 변환 불가 키는 진단 또는 명시적 전용 필드로 처리 | Fabric의 자유로운 contact 맵을 NeoForge TOML로 무손실 자동 변환한다고 가정하지 않음 |
+| `minecraft.version` | 공통 대상 게임 버전(초기 `26.3`) | `minecraft.loader`, `minecraft.fabricApi`, `minecraft.mappings`는 v1.1에서 금지·이동 |
+| `settings.java.release/sourcesJar`, `settings.kotlin.enabled/pluginVersion/languageVersion` | 공통 Java/선택 Kotlin 빌드 설정. NeoForge Kotlin 초기 지원은 클래스패스·언어 로더 실증 후 확정 | Fabric Language Kotlin은 공통이 아니라 Fabric 전용 |
+| `repositories`, `dependencies`, `test-dependencies` | 공통 **의존성 의도**·저장소. 실제 Gradle configuration/패키징은 선택한 백엔드에 따라 별도 매핑 | `fabric`/ `neoforge` 저장소 별칭은 저장소를 뜻할 뿐 로더 활성화가 아님. 의존성 `target/include`의 전 로더 동일 동작 보장 안 함 |
+| `publish`, `publishing` | 공통 **배포 의도**. 실제 artifact/loader 값·게시 가능 제품 타입을 로더별 검증 | `publish.modrinth.loaders` 등은 제품 로더와 충돌하면 거부. 기존 `publishing` API 전용 계약은 우선 Fabric v1만 보장 |
+| `architectury.enable/enabled/version` | 공통 옵션: 선택한 플랫폼에 맞는 Architectury API 아티팩트를 요청 | v1 루트 Architectury Fabric 전용 작동은 보존. v1.1 NeoForge 의미는 새 백엔드 검증 후 제공 |
+| `fabric.loader/api/mappings` | Fabric Loader/Fabric API/매핑 | v1의 `minecraft.loader/fabricApi/mappings`를 **1.1에선 이동** |
+| `fabric.environment/entrypoints/languageAdapters/mixins/accessWidener/provides/depends/recommends/suggests/conflicts/breaks/custom` | `fabric.mod.json`의 로더 고유 메타데이터 | v1의 같은 이름 `mod.*`를 1.1에서 **이동**. Fabric Loader의 AND/OR 버전 조건은 이 영역에만 적용 |
+| `fabric.icon`, `neoforge.logoFile` | 각각 Fabric의 아이콘 경로·크기별 이미지 표현, NeoForge의 단일 TOML 로고 리소스 경로 | v1 `mod.icon`을 NeoForge로 자동 복사하지 않음. 리소스 형식·경로 및 파일 존재 검증은 로더별로 수행 |
+| `fabric.loom.splitEnvironmentSourceSets`, `fabric.kotlin.fabricLanguageKotlin`, `fabric.resources.failOnExistingFabricModJson` | Loom 소스셋, FLK, Fabric 원본 Loader JSON 충돌 정책 | v1 `settings.loom`, `settings.kotlin.fabricLanguageKotlin`, `settings.resources.failOnExistingFabricModJson` 이동 |
+| `neoforge.version`, `neoforge.modLoader/loaderVersion` | NeoForge 실행 플랫폼 버전과 **별도의** 언어 로더 설정 | Fabric Loader version이나 Maven 범위를 재해석해 대체하지 않음; 기본 `modLoader=javafml` |
+| `neoforge.dependencies` | `[[dependencies.<mod.id>]]`로 나갈 로더 관계. `modId/type/versionRange/ordering/side/reason` | Fabric `mod.depends`와 형식·의미가 다름. 공통 Gradle `dependencies`와도 독립 |
+| `neoforge.mixins/accessTransformers` | `[[mixins]]`, `[[accessTransformers]]` 및 실제 리소스 | Fabric classTweaker/AccessWidener를 NeoForge access transformer로 변환하지 않음 |
+| `neoforge.logoFile/displayURL/issueTrackerURL/credits/updateJSONURL/modProperties/features` | NeoForge TOML에서 의미가 다른 표시·부가 메타데이터 | 공통 `mod`에 이름만 같은 JSON 필드를 무리하게 합치지 않음 |
+
+**위 경로 이름은 다음 구현의 목표 API 제안이지 이미 파서가 인식하는 필드가 아니다.** 표에서 이동하지 않은 공통 키까지 강제로 한쪽 블록에 밀어 넣지 않는다. 예를 들어 Maven 배포 주소와 JUnit은 특정 모드 로더에 종속되지 않는다.
+
+### 12.4. 목표 YAML 예시 (실행 예제가 아닌 설계 초안)
+
+**NeoForge 전용 26.3 모드 (`schema: "1.1"`):**
+
+```yaml
+schema: "1.1"                 # 문자열로 명시: 숫자 1.1 사용 금지
+product: neoforge/mod
+mod:
+  id: examplemod
+  version: "1.0.0+26.3"
+  group: org.example
+  archivesName: examplemod
+  name: Example Mod
+  description: NeoForge 모드 예시
+  license: MIT
+  authors: ["Example Developer"]
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+    sourcesJar: true
+  kotlin:
+    enabled: false
+neoforge:
+  version: "26.3.0.101"      # MDK 기준 초기 핀 후보, 런타임 검증 전
+  modLoader: javafml
+  # 기본 네오포지·마인크래프트 required 의존성은 별도 로더 메타데이터로 자동 생성
+  dependencies:
+    - modId: example_dependency
+      type: optional
+      versionRange: "[1.0,)"
+      ordering: NONE
+      side: BOTH
+  mixins: []
+  accessTransformers: []
+architectury:
+  enable: true                # 향후 NeoForge 백엔드: architectury-neoforge
+  version: "22.0.5"
+repositories:
+  - mavenCentral
+  - neoforge
+dependencies: []
+test-dependencies: []
+```
+
+**Fabric 전용 26.3 모드 (`schema: "1.1"`):**
+
+```yaml
+schema: "1.1"
+product: fabric/mod
+mod:
+  id: example_mod
+  version: "1.0.0+26.3"
+  name: Example Mod
+  license: MIT
+minecraft:
+  version: "26.3"
+settings:
+  java:
+    release: 25
+  kotlin:
+    enabled: false
+fabric:
+  loader: "0.20.1"
+  api: "0.165.2+26.3"
+  mappings: mojang
+  environment: "*"
+  entrypoints:
+    main: ["org.example.ExampleMod"]
+  depends:
+    minecraft: "26.3"
+  loom:
+    splitEnvironmentSourceSets: false
+architectury:
+  enable: true                # Fabric에서는 architectury-fabric
+repositories:
+  - fabric
+  - mavenCentral
+dependencies: []
+```
+
+위 두 예제는 **독립적인 두 소비자 프로젝트**이며 한 YAML 안에 두 `product`를 동시에 지정하는 구문이 아니다. NeoForge 예시의 `example_dependency`는 **자리표시 모드 ID**여서 실제 실행 시 설치된 모드와 호환성이 필요하다. Fabric 예시의 의존성 메타데이터는 현재 v1의 Fabric Loader 규칙을 1.1 이름공간에 투영한 것이다.
+
+### 12.5. NeoForge Gradle 백엔드·API 접합 계약
+
+1. Settings 플러그인 하나가 YAML의 `schema/product`를 **Gradle 프로젝트 구성 전에** 확인하고, `fabric/mod`이면 기존 Loom 구성기를, `neoforge/mod`이면 독립 `NeoForgeConfigurer`(가칭)를 택한다. 소비자 `build.gradle(.kts)` 추가, 수동 `plugins { id("net.neoforged.moddev") }` 추가, 임의 `gradle.properties` 속성 작성은 해결책으로 허용하지 않는다.
+2. NeoForge 후보는 공식 26.3 MDK와 같은 **ModDevGradle `net.neoforged.moddev` 2.0.148** 및 `neoForge.version = <validated pin>`이다. 저장소 `https://maven.neoforged.net/releases` 등을 플러그인 해석/의존성 용도에 맞춰 구분한다. 26.3에서는 Java25 toolchain/Gradle JVM 검사, `neoForge.mods { <mod.id> { sourceSet(sourceSets.main) } }` 구성, `runClient`/`runServer`/datagen 독립 시험이 필요하다.
+3. 현재 Fabric Amper의 **Settings 플러그인 전이 클래스패스에서 Loom을 제공하는 방식**에 ModDevGradle을 무조건 병합하면 불필요한 다운로드·서로 다른 Gradle 플러그인 버전·클래스 충돌 가능성이 있다. **선택 로더 백엔드만 로딩**하는 경로를 설계하고 실제 Gradle plugin classloader/variant/IsolatedAction/configuration cache에서 검증해야 한다. 구현 전에는 MDG 플러그인 ID를 Project에서 문자열로 적용하기만 하면 자동 다운로드될 것이라고 가정하지 않는다.
+4. NeoForge `@Mod("examplemod")` Java 초기화 클래스는 **사용자 소스**이며 Fabric `ModInitializer`/metadata `entrypoints`로 대체되지 않는다. 공식 26.3 MDK의 `IEventBus`/ `ModContainer` 주입, mod-specific event bus 및 `NeoForge.EVENT_BUS` 구분, `DeferredRegister` 등록 시점을 보존한다. 별도 `@Mod(dist=Dist.CLIENT)`·client 전용 클래스를 공통 서버 클래스에서 직접 참조하지 않는다. `init` 템플릿을 추가한다면 실제 NeoForge `@Mod` 소스를 생성하고 client/server로 빌드 검증한다.
+5. 새 Generator는 `generateNeoForgeModsToml`(가칭)로 **최종 JAR의 `META-INF/neoforge.mods.toml`을 정확히 한 번** 만든다. `[[mods]]`의 `modId/version/displayName` 및 파일 레벨 `license/modLoader/loaderVersion`, `[[dependencies.<mod.id>]]`, mixins, access transformers 등을 올바른 TOML로 직렬화한다. `modLoader=javafml`의 **`loaderVersion`은 JavaFML 언어 로더 범위**이지 NeoForge API 버전이 아니다. 기본 NeoForge·Minecraft required 버전 조건은 네이티브 **Maven Version Range** 형식으로 생성한다. 사용자가 동일 ID를 수동 지정했다면 범위가 호환되는지 검사하고 충돌/중복을 진단한다.
+6. NeoForge `license`는 필수, `@Mod` 값과 `mod.id`는 일치해야 한다. NeoForge mod ID는 영문 소문자·숫자·밑줄(2–64자)로 제한되므로 Fabric에서 허용하던 `-`를 NeoForge 프로파일에 그대로 허용하지 않는다. TOML 문자열/배열/테이블 이스케이프와 순서를 결정적으로 출력하고 자원·메타데이터 중복/원본 파일(`src/main/resources/META-INF/neoforge.mods.toml` 등)은 **fail-closed** 한다.
+7. NeoForge의 메타데이터 생성이 IDE Gradle Reload에도 반영되도록 공식 MDK의 `neoForge.ideSyncTask(generateModMetadata)` 패턴을 조사한다. 현재 Fabric 전용 `LoomMetadataMirror`를 NeoForge에 무조건 복제하지 않는다. 필요하다면 네이티브 Gradle output/provider를 통해 구성 단계·IDE Sync·빌드·configuration cache의 내용 주소/무결성을 각각 검증한다.
+8. Kotlin은 일반 `settings.kotlin.enabled` 스위치를 재사용하되 **Fabric Language Kotlin 모드를 NeoForge에 삽입하면 안 된다**. NeoForge 언어 로더·KGP 2.4.21 호환, `@Mod` Kotlin 클래스/초기화 시맨틱, runtime reflection은 실물 TestKit과 게임 실행 확인 전 **지원 미확정**으로 표시한다. 미검증 Kotlin 요청을 Java 성공으로 둔갑시키지 않는다.
+
+### 12.6. 의존성·Loader 관계·Jar-in-Jar 분리
+
+**핵심 규칙:** 공통 `dependencies`/ `test-dependencies`는 Gradle 컴파일·실행·게시 클래스패스, `fabric.depends`는 Fabric Loader의 관계, `neoforge.dependencies`는 NeoForge Loader TOML의 관계다. **Gradle 좌표 하나로 Loader 의존성 관계를 자동 추측하지 않는다.** 특히 `maven.modrinth:<project>:<version>`의 project slug·Maven GAV·NeoForge `modId`는 서로 다른 식별자다.
+
+| 공통 의존성 의도 | Fabric 26.3 | NeoForge 26.3 ModDevGradle 후보 |
+| --- | --- | --- |
+| `scope: all` | `implementation` | `implementation` |
+| `scope: compile-only` | `compileOnly` | `compileOnly` |
+| `scope: runtime-only` | `runtimeOnly` | `runtimeOnly` 또는 비전이적 개발 전용 `localRuntime`을 **명시적으로 구별** |
+| `exported: true` | Java-library `api`(지원 프로파일에서) | Java-library `api`; 실제 Maven POM/.module 공개 의존성 검사 |
+| `target: client` | 검증된 Loom client source set 구성 | NeoForge에선 **일단 거부**, MDG 분리 source set과 실제 classpath isolation 확인 후 도입 |
+| `include: true` | Loom `include`, Fabric Loader `jars[].file` | MDG `jarJar` 및 `META-INF/jarjar/metadata.json`; 동일한 task/포맷으로 취급 금지 |
+| 테스트 의존성 | `testImplementation` 등 | `testImplementation` 등 + MDG 테스트/게임 실행 호환성 별도 확인 |
+
+NeoForge에서는 `modImplementation` 등 **Fabric Loom 구성 이름을 사용하지 않는다**(MDG의 레거시 리매핑 경로에 등장하는 같은 이름과 현대 26.3 동작을 혼동하지 않음). NeoForge 자체는 사용자가 일반 `dependencies`에 직접 중복 삽입하는 Fabric API 같은 모드가 아니라 MDG `neoForge.version`에 의해 개발 플랫폼이 구성된다. 외부 모드의 **선택적 개발 실행**은 MDK의 `compileOnly` + `localRuntime` 패턴을 따로 검토한다. MDG 기반 `jarJar`는 버전 **`strictly` 범위와 `prefer`**를 사용할 수 있으며 Fabric `include`를 아무 검증 없이 1:1 복사하지 않는다. v1.1에서 NeoForge용 `include=true`의 지원 범위가 정해질 때까지는 **명시적 오류**로 거부한다. 후속 확장 시 예컨대 `jarJar: { strictly: "[1.0,2.0)", prefer: "1.4.0" }` 같은 별도 하위 구조를 검증하고, 단일 고정 버전 범위 `[1.4.0]`도 공식 도구가 허용하는지 시험한다.
+
+`neoforge.dependencies[]` 각 원소는 최소 `modId`와 `type: required|optional|incompatible|discouraged`, `versionRange`(NeoForge Maven 범위), `ordering: NONE|BEFORE|AFTER`, `side: BOTH|CLIENT|SERVER` 및 선택 `reason`으로 설계한다. 같은 modId의 모순·자기 의존성·순환 ordering·물리적 side 위반을 검사한다. Fabric의 `>=22.0.5` 서술을 NeoForge TOML에 그대로 복사하지 않고 Maven 범위 `[22.0.5,)` 같은 NeoForge 형식으로 생성한다. `side=CLIENT`는 **Loader가 클라이언트에서 의존성을 요구한다는 뜻**이지 Gradle `target=client`와 동일하지 않다.
+
+저장소 `mavenCentral`, `modrinth`, `neoforge`, HTTPS 전용 Maven 객체는 재사용할 수 있지만 각 저장소의 콘텐츠 필터와 취득 대상은 검증한다. NeoForge Maven은 `https://maven.neoforged.net/releases`이고, Modrinth Maven은 `https://api.modrinth.com/maven` / `maven.modrinth:<project>:<version>`으로 **전이 의존성을 자동 제공하지 않는다**. 별도의 CurseMaven(`https://cursemaven.com/`)은 **CurseForge 공식 저장소와 동일시하지 않으며** 지원 여부는 추후 검증한다. 빌드 환경의 인증·동적 버전·네트워크/의존성 누락은 기존 FA 보안/진단 정책에 따라 fail-closed 처리한다.
+
+### 12.7. Architectury API와 두 로더의 관계
+
+- `architectury.enable: true`는 **Architectury API를 해당 단일 로더에 추가**한다는 뜻이다. Fabric에서는 검증된 기존 `dev.architectury:architectury-fabric:22.0.5`; NeoForge에서는 공식 26.3 문서·Maven에 게시된 `dev.architectury:architectury-neoforge:22.0.5`를 선택한다. 공통 `dev.architectury:architectury` 모듈은 별도의 `common` 소스 프로젝트를 위한 것으로, 1.1 단독 모드의 모든 의존성을 이 좌표로 대체하지 않는다.
+- 현재 확인된 API 22.0.5와 Minecraft 26.3을 초기 버전 후보로 삼되 **NeoForge용 실물 컴파일/Loader 실행에서 버전 적합성**을 확인한다. `architectury.version`은 고정값만 허용하며 Fabric/NeoForge의 Loader 관계를 각 메타데이터 형식으로 생성한다. Architectury 런타임 모드를 그냥 Jar-in-Jar로 숨겨 번들하지 않는다.
+- 공식 Architectury 멀티플랫폼 예제의 `common/fabric/neoforge` 모듈과 `dev.architectury.loom-no-remap`은 **별도의 멀티로더 빌드 시스템**이다. Fabric Amper의 `architectury` 옵션과 혼동하지 않는다. 이 부분을 자동화하려면 multi-project Settings 적용/소스셋·플랫폼별 출력을 새 수락 범위로 정의해야 한다.
+
+### 12.8. 이전 프로젝트와 입력 검증·진단
+
+1. `schema: 1` 또는 생략 v1의 `minecraft.loader`, `mod.entrypoints`, `settings.loom`, 최상위 `architectury`를 **변경 없이 계속 파싱**한다. v1을 NeoForge로 자동 판단/변환하지 않는다. 기존 v0.2.0 Fabric 릴리즈의 동작이 기본 회귀 기준이다.
+2. **v1 → v1.1 선택적 이동**은 키 위치를 명시적으로 바꾸며 기존 입력을 덮어쓰지 않는다. 예: `minecraft.loader → fabric.loader`, `minecraft.fabricApi → fabric.api`, `minecraft.mappings → fabric.mappings`, `mod.entrypoints → fabric.entrypoints`, `mod.depends → fabric.depends`, `settings.loom → fabric.loom`, `settings.kotlin.fabricLanguageKotlin → fabric.kotlin.fabricLanguageKotlin`. Fabric `mod.icon`은 `fabric.icon`으로, NeoForge에서는 별도 `neoforge.logoFile`로 취급한다.
+3. `schema: "1.1"`에서 `product: fabric/mod`에 `neoforge`가 있거나 `product: neoforge/mod`에 `fabric`이 있으면 **실패**한다. 두 블록이 동시에 있거나 필드를 구/신 위치에 동시에 작성한 경우, 어느 쪽이 우선인지 추측하지 않는다. `minecraft.loader`를 NeoForge 버전으로 읽거나 Fabric의 `mod.accessWidener`를 NeoForge AT로 변환하는 자동 마이그레이션도 금지한다.
+4. `schema: 1.1`(미인용 float), 알 수 없는 스키마, 알 수 없는 플랫폼/필드, 다른 loader용 JAR 또는 원본 메타데이터, 잘못된 YAML, 유효하지 않은 버전·경로·TOML, 잘못된 `@Mod` ID, 중복/모순 Gradle·Loader 관계는 **명시적 경로/줄·열을 갖는 진단**이 필요하다. 기존 FA001–FA015 의미를 훼손하지 않고, 새 플랫폼 전용 코드(예: `FA016` 이상)는 구현 때 충돌 없이 확정한다.
+5. JSON Schema는 **Draft-07 유지**, 향후 `fabric-amper.schema.json`에서 v1/v1.1 분기(버전별 `oneOf`/조건부 `required`/additionalProperties), `product`별 독립 필드 자동완성, 출처가 있는 설명과 유효한 샘플을 제공한다. **이 단계에서는 스키마 파일을 변경하지 않는다.** `fabric-amper.bat init`의 서명된 스키마 다운로드는 schema bytes가 바뀌는 구현 릴리즈에서 BAT 핀도 동시에 갱신해야 한다.
+6. GitHub/Modrinth/CurseForge 게시와 로더 변경은 별개다. NeoForge 제품을 위한 release artifact, Modrinth `loaders: ["neoforge"]`, CurseForge 게임 버전/로더와 실제 소비자 JAR을 검사하고 수동 승인 없는 원격 게시를 하지 않는다.
+
+### 12.9. 향후 수락 시험 (전부 **NOT RUN**, 구현 시작 조건 아님)
+
+| 게이트 | 필수 검증과 실패 조건 |
+| --- | --- |
+| NF1 | `schema: 1`·생략 기존 Fabric 소비자의 help/build/metadata/CC 바이트·동작 회귀 없음; 새 `schema: "1.1"`은 아직 구현 전이라 지원한다고 주장하지 않음 |
+| NF2 | `schema: "1.1"`과 `neoforge/mod`를 선택한 **독립 settings-only** 소비자의 `help`/`tasks`; 추가 build.gradle, 작성 TOML, 추가 plugin 선언 없이 MDG 적용 |
+| NF3 | NeoForge 26.3/Java25/MDG 고정 조합, Gradle 9.2.1(MDK), 9.7.1 및 사용 가능한 9.9.x를 **각각** 실제 metadata variant/compile로 검증 |
+| NF4 | Java `@Mod` 진입점, ModBus/GameBus, registry와 `runClient`/`runServer` 실제 Loader 로딩; EULA/인증은 자동 동의하지 않음 |
+| NF5 | 생성 `META-INF/neoforge.mods.toml` 정확히 1개·Fabric `fabric.mod.json` 0개가 JAR에 있고, TOML 테이블·순서·UTF-8·리소스 스냅샷과 결정적 JAR, 작성된 원본 TOML/중복 ZIP 진입 거부 |
+| NF6 | `[[dependencies.<modid>]]`의 required/optional/incompatible/discouraged, Maven 범위/ordering/side 동작·오류, `modLoader/loaderVersion` 의미 보존 |
+| NF7 | NeoForge Gradle classpath와 모드 런타임 관계 분리, `compileOnly/runtimeOnly/localRuntime/api` 동작 및 잘못된 Fabric `mod*` 구성 미사용 |
+| NF8 | MDG `jarJar`의 version strict/prefer/배포된 `META-INF/jarjar/metadata.json`과 **실제 게임 로딩**; Fabric JIJ와 독립 |
+| NF9 | `architectury.enable` 26.3 기본/명시 버전, `architectury-neoforge` 실제 컴파일·런타임/자동 NeoForge Loader 의존성. Fabric 기존 기능 회귀 없음 |
+| NF10 | NeoForge Java→Kotlin 활성화/비활성화·언어 로더/KGP 클래스패스, 미검증 Kotlin 프로파일 오작동 거부 |
+| NF11 | Fabric `fabric.loom`과 NeoForge MDG의 소스셋·클라이언트 격리 서로 침범하지 않음. NeoForge client-only는 실증 전 거부 |
+| NF12 | Gradle 구성 캐시 STORE/HIT→YAML 수정 MISS→HIT, IntelliJ 최초 Gradle 인식/수동 Reload, generated TOML 갱신·손상 복구·병렬 구성 |
+| NF13 | 파일 경로 traversal/symlink, 악성 TOML/중복 스키마/비정상 UTF-8, 타 로더 블록·틀린 `@Mod` 및 메타데이터 충돌을 원본 보존과 함께 진단 |
+| NF14 | Modrinth/NeoForge Maven 저장소 필터·고정 좌표/전이성, API 게시 시 실제 POM/.module, 로더별 publish 대상 및 원격 업로드 안전성 |
+| NF15 | 명시 `schema: 1.1` float 거부, v1/v1.1 Draft-07 자동완성, 단계적 `migrate` dry-run/백업/옵션 누락·충돌 검증 |
+| NF16 | 사용자에게 제공되는 `init` Java NeoForge 예제가 실제로 빌드·실행되고 생성 Settings/YAML/소스 외 작성 Gradle 빌드 파일·Loader TOML이 없음 |
+
+**출하 차단:** NF2·NF4·NF5·NF6·NF8·NF9·NF12 등의 런타임/IDE/패키징 검증 없이 NeoForge 지원을 공개 기능으로 광고하지 않는다. NeoForge 백엔드 하나를 추가하더라도 **기존 G1–G30의 Fabric 수락 게이트를 없애지 않는다**. 지금 단계에는 변경된 실행 코드나 통과한 NF 시험이 **없다**.
+
+### 12.10. 조사 트랙과 공식 참고자료
+
+이번 설계의 **6개 독립 읽기 전용 트랙**: (1) NeoForge 26.3 실제 MDK API·등록·버전, (2) 이벤트/측면·metadata/AT/Mixin/Architectury API, (3) ModDevGradle/NeoGradle 구성·기본 의존성, (4) Maven/Modrinth/JarJar·Loader 관계, (5) 현재 Fabric Amper YAML/DTO/Generator와 NeoForge 접합, (6) 공통/`fabric`/`neoforge` 구획 및 v1 호환·v1.1 마이그레이션. Prime은 각 트랙을 26.3 MDK, NeoForge 공식 문서, 현재 `specs.md`·DTO·스키마 구조와 교차 검토한다. **이 절은 설계 기록이며 빌드·테스트 수행 기록이 아니다.**
+
+- NeoForge 26.3 공식 MDK [Gradle](https://github.com/NeoForgeMDKs/MDK-26.3-ModDevGradle/blob/main/build.gradle), [버전](https://github.com/NeoForgeMDKs/MDK-26.3-ModDevGradle/blob/main/gradle.properties), [Java @Mod 예제](https://github.com/NeoForgeMDKs/MDK-26.3-ModDevGradle/blob/main/src/main/java/com/example/examplemod/ExampleMod.java)
+- [NeoForge 26.3.x 프로젝트 소스](https://github.com/neoforged/NeoForge/blob/26.3.x/gradle.properties), [NeoForge 버전 목록](https://projects.neoforged.net/neoforged/neoforge), [ModDevGradle 버전 목록](https://projects.neoforged.net/neoforged/moddevgradle)
+- [NeoForge 모드 메타데이터](https://docs.neoforged.net/docs/gettingstarted/modfiles/), [이벤트](https://docs.neoforged.net/docs/concepts/events/), [레지스트리](https://docs.neoforged.net/docs/concepts/registries/), [물리/논리 측면](https://docs.neoforged.net/docs/concepts/sides/) (**일반 문서 UI는 26.1 기준**, 26.3 MDK/실행 별도 확인)
+- [ModDevGradle 공식](https://docs.neoforged.net/toolchain/docs/plugins/mdg/), [NeoGradle 공식](https://docs.neoforged.net/toolchain/docs/plugins/ng/), [비마인크래프트 라이브러리](https://docs.neoforged.net/toolchain/docs/dependencies/nonmclibs/), [Jar-in-Jar](https://docs.neoforged.net/toolchain/docs/dependencies/jarinjar/)
+- [Architectury API 26.3 Setup](https://docs.architectury.dev/api/getting-started/setup/), [Architectury 프로젝트 구조](https://docs.architectury.dev/api/getting-started/project-structure/), [Architectury NeoForge Maven](https://maven.architectury.dev/dev/architectury/architectury-neoforge/22.0.5/)
+- [Modrinth Maven 공식 안내](https://support.modrinth.com/en/articles/8801191-modrinth-maven), [NeoForge Maven](https://maven.neoforged.net/releases/)
