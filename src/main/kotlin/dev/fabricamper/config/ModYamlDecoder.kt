@@ -9,6 +9,13 @@ import java.nio.file.Path
 object ModYamlDecoder {
     @JvmStatic
     fun decode(tree: Map<String, Any?>, source: Path): ModYamlModel {
+        when (val token = tree["schema"]) {
+            null -> if (tree.containsKey("schema")) error("FA003", "schema", "schema cannot be null", source)
+            1, 1L -> Unit
+            "1.1" -> return decodeV11(tree, source)
+            else -> error("FA003", "schema",
+                "supported schema is integer 1 or quoted string \"1.1\"; unquoted 1.1 is a YAML number", source)
+        }
         keys(tree, setOf("schema", "product", "mod", "minecraft", "settings", "repositories",
             "dependencies", "test-dependencies", "publishing", "publish", "architectury"), "", source)
         val schema = integer(tree, "schema", "", source) ?: FabricAmperSchemaVersion.LATEST
@@ -31,6 +38,202 @@ object ModYamlDecoder {
         return ModYamlModel(source, schema, product, mod, minecraft, settings, repositories,
             dependencies, testDependencies, publishing = publishing, publish = publish,
             architectury = architectury)
+    }
+
+    /** v1.1 namespaced document: normalize all selected backends before Gradle sees the model. */
+    private fun decodeV11(tree: Map<String, Any?>, source: Path): ModYamlModel {
+        keys(tree, setOf("schema", "product", "mod", "minecraft", "settings", "fabric",
+            "neoforge", "repositories", "dependencies", "test-dependencies", "publishing",
+            "publish", "architectury"), "", source)
+
+        val rawProducts = when (val value = tree["product"]) {
+            is String -> listOf(value)
+            is List<*> -> {
+                if (value.isEmpty()) error("FA003", "product", "product array cannot be empty", source)
+                value.mapIndexed { index, item ->
+                    item as? String ?: error("FA003", "product[$index]", "expected loader/kind string", source)
+                }
+            }
+            else -> error("FA003", "product", "expected product string or nonempty array of strings", source)
+        }
+        val seenLoaders = linkedMapOf<String, LoaderTargetSpec>()
+        rawProducts.forEachIndexed { index, product ->
+            val normalized = if (product == "fabric/library") "fabric/api" else product
+            if (normalized !in setOf("fabric/mod", "fabric/api", "neoforge/mod", "neoforge/api")) {
+                error("FA003", "product" + if (tree["product"] is List<*>) "[$index]" else "",
+                    "unsupported loader/kind '$product'", source)
+            }
+            val loader = normalized.substringBefore('/')
+            val target = LoaderTargetSpec(loader, normalized.substringAfter('/'))
+            if (seenLoaders.putIfAbsent(loader, target) != null) {
+                error("FA003", "product" + if (tree["product"] is List<*>) "[$index]" else "",
+                    "duplicate or conflicting '$loader' target (one kind per loader)", source)
+            }
+        }
+        val targets = seenLoaders.values.sortedBy { if (it.loader == "fabric") 0 else 1 }
+        val fabricSelected = targets.any { it.loader == "fabric" }
+        val neoSelected = targets.any { it.loader == "neoforge" }
+        if (fabricSelected != tree.containsKey("fabric")) {
+            error("FA003", "fabric", if (fabricSelected) "selected Fabric target requires fabric block"
+                else "fabric block requires a selected Fabric target", source)
+        }
+        if (neoSelected != tree.containsKey("neoforge")) {
+            error("FA003", "neoforge", if (neoSelected) "selected NeoForge target requires neoforge block"
+                else "neoforge block requires a selected NeoForge target", source)
+        }
+
+        val modNode = requiredMap(tree, "mod", "", source)
+        val commonModKeys = setOf("id", "version", "group", "archivesName", "name",
+            "description", "license", "authors", "contributors", "contact")
+        keys(modNode, commonModKeys, "mod", source)
+        val mcNode = requiredMap(tree, "minecraft", "", source)
+        keys(mcNode, setOf("version"), "minecraft", source)
+        val mcVersion = string(mcNode, "version", "minecraft", source, required = true)!!
+        val settingsNode = optionalMap(tree, "settings", "", source)
+        keys(settingsNode, setOf("java", "kotlin"), "settings", source)
+        val kotlinNode = optionalMap(settingsNode, "kotlin", "settings", source)
+        keys(kotlinNode, setOf("enabled", "pluginVersion", "languageVersion"), "settings.kotlin", source)
+
+        val fabricNode = if (fabricSelected) requiredMap(tree, "fabric", "", source) else emptyMap()
+        val fabricMetadata = setOf("environment", "entrypoints", "languageAdapters",
+            "mixins", "accessWidener", "provides", "depends", "recommends", "suggests",
+            "conflicts", "breaks", "custom", "icon")
+        keys(fabricNode, fabricMetadata + setOf("loader", "api", "mappings", "loom",
+            "kotlin", "resources", "gradleDependencies", "repositories"), "fabric", source)
+
+        val projectedMod = try {
+            parseMod(modNode + fabricNode.filterKeys { it in fabricMetadata }, source)
+        } catch (error: FabricAmperConfigException) {
+            val suffix = error.yamlPath.removePrefix("mod.")
+            if (error.yamlPath.startsWith("mod.") && suffix.substringBefore('.') in fabricMetadata) {
+                throw FabricAmperConfigException(error.code, "fabric.$suffix", error.reason, source, cause = error)
+            }
+            throw error
+        }
+
+        val fabricKotlin = optionalMap(fabricNode, "kotlin", "fabric", source)
+        keys(fabricKotlin, setOf("fabricLanguageKotlin"), "fabric.kotlin", source)
+        val loomNode = optionalMap(fabricNode, "loom", "fabric", source)
+        val resourceNode = optionalMap(fabricNode, "resources", "fabric", source)
+        // Reuse the v1 type readers for shared Java/Kotlin and Fabric's moved options.
+        val resolvedSettings = parseSettings(
+            settingsNode + mapOf(
+                "kotlin" to (kotlinNode + fabricKotlin),
+                "loom" to loomNode,
+                "resources" to resourceNode,
+            ), source,
+        )
+        val fabricLoader = if (fabricSelected) string(fabricNode, "loader", "fabric", source, required = true)!! else ""
+        val selectedMinecraft = if (fabricSelected) {
+            val fabricMc = linkedMapOf<String, Any?>("version" to mcVersion, "loader" to fabricLoader)
+            for (key in listOf("mappings", "api")) {
+                if (key in fabricNode) fabricMc[if (key == "api") "fabricApi" else key] = fabricNode.getValue(key)
+            }
+            try {
+                parseMinecraft(fabricMc, source)
+            } catch (error: FabricAmperConfigException) {
+                val suffix = error.yamlPath.removePrefix("minecraft.")
+                if (error.yamlPath.startsWith("minecraft.") && suffix.substringBefore('.') in
+                    setOf("loader", "mappings", "fabricApi")
+                ) {
+                    val target = if (suffix.startsWith("fabricApi")) "api" else suffix
+                    throw FabricAmperConfigException(error.code, "fabric.$target", error.reason, source, cause = error)
+                }
+                throw error
+            }
+        } else MinecraftSpec(version = mcVersion, loader = "")
+
+        val fabricSpec = if (fabricSelected) FabricSpec(
+            loader = fabricLoader,
+            api = selectedMinecraft.fabricApi,
+            mappings = selectedMinecraft.mappings,
+            environment = projectedMod.environment,
+            entrypoints = projectedMod.entrypoints,
+            languageAdapters = projectedMod.languageAdapters,
+            mixins = projectedMod.mixins,
+            accessWidener = projectedMod.accessWidener,
+            provides = projectedMod.provides,
+            depends = projectedMod.depends,
+            recommends = projectedMod.recommends,
+            suggests = projectedMod.suggests,
+            conflicts = projectedMod.conflicts,
+            breaks = projectedMod.breaks,
+            custom = projectedMod.custom,
+            icon = projectedMod.icon,
+            loom = resolvedSettings.loom,
+            kotlin = FabricKotlinSpec(resolvedSettings.kotlin.fabricLanguageKotlin),
+            resources = resolvedSettings.resources,
+            gradleDependencies = parseDependencies(
+                optionalNode(fabricNode, "gradleDependencies", "fabric", source),
+                "fabric.gradleDependencies", source, false),
+            repositories = parseRepositories(
+                optionalNode(fabricNode, "repositories", "fabric", source), source,
+                allowNeoForge = true, path = "fabric.repositories"),
+        ) else null
+        val neoSpec = if (neoSelected) parseNeoForge(requiredMap(tree, "neoforge", "", source), source) else null
+
+        if (tree.containsKey("architectury") && tree["architectury"] == null) {
+            error("FA003", "architectury", "expected an object", source)
+        }
+        val architectury = parseArchitectury(optionalMap(tree, "architectury", "", source), source)
+        return ModYamlModel(
+            source = source, schema = 1, schemaVersion = "1.1",
+            product = targets.first().product, targets = targets,
+            mod = projectedMod, minecraft = selectedMinecraft, settings = resolvedSettings,
+            repositories = parseRepositories(optionalNode(tree, "repositories", "", source), source,
+                allowNeoForge = true),
+            dependencies = parseDependencies(optionalNode(tree, "dependencies", "", source),
+                "dependencies", source, false),
+            testDependencies = parseDependencies(optionalNode(tree, "test-dependencies", "", source),
+                "test-dependencies", source, true),
+            publishing = parsePublishing(optionalNode(tree, "publishing", "", source), source),
+            publish = parsePublish(optionalNode(tree, "publish", "", source), source),
+            architectury = architectury, fabric = fabricSpec, neoforge = neoSpec,
+            authoredDependsKeys = projectedMod.depends.keys.toSet(),
+        )
+    }
+
+    private fun parseNeoForge(m: Map<String, Any?>, source: Path): NeoForgeSpec {
+        val p = "neoforge"
+        keys(m, setOf("version", "modLoader", "loaderVersion", "dependencies", "mixins",
+            "accessTransformers", "logoFile", "displayURL", "issueTrackerURL", "credits",
+            "updateJSONURL", "modProperties", "features", "gradleDependencies", "repositories"),
+            p, source)
+        val dependencies = optionalNode(m, "dependencies", p, source)?.let { entries ->
+            list(entries, "$p.dependencies", source).mapIndexed { index, entry ->
+                val at = "$p.dependencies[$index]"
+                val fields = map(entry, at, source)
+                keys(fields, setOf("modId", "type", "versionRange", "ordering", "side", "reason"), at, source)
+                NeoForgeDependencySpec(
+                    modId = string(fields, "modId", at, source, required = true)!!,
+                    type = string(fields, "type", at, source) ?: "required",
+                    versionRange = string(fields, "versionRange", at, source) ?: "",
+                    ordering = string(fields, "ordering", at, source) ?: "NONE",
+                    side = string(fields, "side", at, source) ?: "BOTH",
+                    reason = string(fields, "reason", at, source),
+                )
+            }
+        }.orEmpty()
+        return NeoForgeSpec(
+            version = string(m, "version", p, source, required = true)!!,
+            modLoader = string(m, "modLoader", p, source) ?: "javafml",
+            loaderVersion = string(m, "loaderVersion", p, source) ?: "[1,)",
+            dependencies = dependencies,
+            mixins = listOfStrings(optionalNode(m, "mixins", p, source), "$p.mixins", source),
+            accessTransformers = listOfStrings(
+                optionalNode(m, "accessTransformers", p, source), "$p.accessTransformers", source),
+            logoFile = string(m, "logoFile", p, source),
+            displayURL = string(m, "displayURL", p, source),
+            issueTrackerURL = string(m, "issueTrackerURL", p, source),
+            credits = string(m, "credits", p, source),
+            updateJSONURL = string(m, "updateJSONURL", p, source),
+            modProperties = stringMap(optionalNode(m, "modProperties", p, source), "$p.modProperties", source),
+            features = stringMap(optionalNode(m, "features", p, source), "$p.features", source),
+            gradleDependencies = parseDependencies(optionalNode(m, "gradleDependencies", p, source),
+                "$p.gradleDependencies", source, false),
+            repositories = parseRepositories(optionalNode(m, "repositories", p, source), source,
+                allowNeoForge = true, path = "neoforge.repositories"),
+        )
     }
 
     private fun parseArchitectury(m: Map<String, Any?>, file: Path): ArchitecturySpec {
@@ -326,13 +529,16 @@ object ModYamlDecoder {
         )
     }
 
-    private fun parseRepositories(node: Any?, file: Path): List<RepositorySpec> {
+    private fun parseRepositories(
+        node: Any?, file: Path, allowNeoForge: Boolean = false, path: String = "repositories",
+    ): List<RepositorySpec> {
         if (node == null) return emptyList()
-        return list(node, "repositories", file).mapIndexed { i, item ->
-            val p = "repositories[$i]"
+        return list(node, path, file).mapIndexed { i, item ->
+            val p = "$path[$i]"
             when (item) {
                 is String -> {
-                    if (item !in setOf("fabric", "mavenCentral", "modrinth")) {
+                    if (item !in setOf("fabric", "mavenCentral", "modrinth") &&
+                        !(allowNeoForge && item == "neoforge")) {
                         error("FA003", p, "unknown repository '$item'", file)
                     }
                     RepositorySpec(item)

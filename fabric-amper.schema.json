@@ -1,27 +1,34 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Fabric Amper mod.yaml",
-  "description": "Schema v1 for Fabric Amper projects configured solely by settings.gradle.kts and mod.yaml or mod.yml. schema is optional: when omitted the plugin uses its latest supported version (currently 1). publish.common provides shared values for explicit Modrinth and CurseForge targets. Legacy publishing.repository applies to API/library only. fabricAmperDoctor, fabricAmperExplain, fabricAmperReleasePlan and fabricAmperPortingReport are Gradle TASKS, never YAML keys. Schema annotations do not apply defaults; Fabric Amper validates final semantics, resources and Loader predicates.",
+  "title": "Fabric Amper mod.yaml (schema 1 and 1.1)",
+  "description": "Legacy schema 1 (also used when schema is omitted) preserves Fabric fields. Explicit quoted schema \"1.1\" selects loader-namespaced Fabric/NeoForge and string/array product targets. The build still uses only settings.gradle.kts and mod.yaml/mod.yml. Schema defaults are documentation only; the plugin validates runtime semantics.",
   "type": "object",
   "required": ["product", "mod", "minecraft"],
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "type": "integer",
-      "const": 1,
-      "description": "Optional explicit Fabric Amper YAML schema version. If omitted the plugin selects its latest supported version (currently v1); explicit unsupported versions fail.",
+      "oneOf": [{ "type": "integer", "const": 1 }, { "type": "string", "const": "1.1" }],
+      "description": "Omitted or integer 1 uses legacy Fabric v1. NeoForge/target arrays require explicit quoted \"1.1\"; unquoted numeric 1.1 is invalid.",
       "default": 1
     },
     "product": {
-      "type": "string",
-      "enum": ["fabric/mod", "fabric/api", "fabric/library"],
-      "description": "fabric/api enables library-friendly Java API metadata and automatic Maven publishing. fabric/library is an exact alias for fabric/api.",
-      "default": "fabric/mod"
+      "oneOf": [
+        { "type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library", "neoforge/mod", "neoforge/api"] },
+        { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library", "neoforge/mod", "neoforge/api"] } }
+      ],
+      "description": "Schema 1 uses a Fabric string. Schema 1.1 permits one loader/kind or an array with at most one target per loader. Arrays may mix mod and api kinds."
     },
     "mod": { "$ref": "#/definitions/mod" },
-    "minecraft": { "$ref": "#/definitions/minecraft" },
+    "minecraft": {
+      "oneOf": [
+        { "$ref": "#/definitions/minecraft" },
+        { "$ref": "#/definitions/minecraftV11" }
+      ]
+    },
     "settings": { "$ref": "#/definitions/settings" },
     "architectury": { "$ref": "#/definitions/architectury" },
+    "fabric": { "$ref": "#/definitions/fabricV11" },
+    "neoforge": { "$ref": "#/definitions/neoForgeV11" },
     "repositories": {
       "type": "array",
       "description": "Dependency-resolution repositories (not Maven publishing destinations).",
@@ -125,10 +132,14 @@
           }
         }
       },
-      "else": { "not": { "required": ["publishing"] } }
+      "else": {
+        "if": { "properties": { "schema": { "not": { "const": "1.1" } } } },
+        "then": { "not": { "required": ["publishing"] } }
+      }
     },
     {
       "if": {
+        "not": { "required": ["schema"], "properties": { "schema": { "const": "1.1" } } },
         "properties": {
           "dependencies": {
             "contains": {
@@ -158,6 +169,36 @@
       }
     },
     {
+      "description": "In schema 1.1, client-targeted Gradle dependencies need a Fabric-only split client source set.",
+      "if": {
+        "required": ["schema", "dependencies"],
+        "properties": {
+          "schema": { "const": "1.1" },
+          "dependencies": {
+            "contains": {
+              "type": "object",
+              "required": ["target"],
+              "properties": { "target": { "const": "client" } }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["fabric"],
+        "properties": {
+          "fabric": {
+            "required": ["loom"],
+            "properties": {
+              "loom": {
+                "required": ["splitEnvironmentSourceSets"],
+                "properties": { "splitEnvironmentSourceSets": { "const": true } }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "publish": { "type": "object", "required": ["maven"] }
@@ -183,9 +224,180 @@
           "required": ["publishing"]
         }
       }
+    },
+    {
+      "description": "Schema 1 retains its original Fabric-only root; omission selects schema 1.",
+      "if": { "required": ["schema"], "properties": { "schema": { "const": "1.1" } } },
+      "then": {
+        "properties": {
+          "minecraft": { "$ref": "#/definitions/minecraftV11" },
+          "mod": { "$ref": "#/definitions/modV11" },
+          "settings": { "$ref": "#/definitions/settingsV11" },
+          "repositories": { "type": "array", "items": { "$ref": "#/definitions/repositoryV11" } }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "product": { "enum": ["fabric/mod", "fabric/api", "fabric/library"] } }, "required": ["product"] },
+            "then": { "required": ["fabric"], "not": { "required": ["neoforge"] } }
+          },
+          {
+            "if": { "properties": { "product": { "enum": ["neoforge/mod", "neoforge/api"] } }, "required": ["product"] },
+            "then": { "required": ["neoforge"], "not": { "required": ["fabric"] } }
+          },
+          {
+            "if": { "properties": { "product": { "type": "array", "contains": { "enum": ["fabric/mod", "fabric/api", "fabric/library"] } } }, "required": ["product"] },
+            "then": { "required": ["fabric"] },
+            "else": {
+              "if": { "properties": { "product": { "type": "array" } }, "required": ["product"] },
+              "then": { "not": { "required": ["fabric"] } }
+            }
+          },
+          {
+            "if": { "properties": { "product": { "type": "array", "contains": { "enum": ["neoforge/mod", "neoforge/api"] } } }, "required": ["product"] },
+            "then": { "required": ["neoforge"] },
+            "else": {
+              "if": { "properties": { "product": { "type": "array" } }, "required": ["product"] },
+              "then": { "not": { "required": ["neoforge"] } }
+            }
+          },
+          {
+            "if": {
+              "anyOf": [
+                { "properties": { "product": { "enum": ["fabric/api", "fabric/library", "neoforge/api"] } }, "required": ["product"] },
+                { "properties": { "product": { "type": "array", "contains": { "enum": ["fabric/api", "fabric/library", "neoforge/api"] } } }, "required": ["product"] }
+              ]
+            },
+            "then": { "properties": { "mod": { "required": ["group"] } } }
+          }
+        ]
+      },
+      "else": {
+        "properties": {
+          "product": { "type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library"] },
+          "minecraft": { "$ref": "#/definitions/minecraft" }
+        },
+        "not": {
+          "anyOf": [{ "required": ["fabric"] }, { "required": ["neoforge"] }]
+        }
+      }
     }
   ],
   "definitions": {
+    "modV11": {
+      "type": "object",
+      "required": ["id", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/modId" },
+        "version": { "$ref": "#/definitions/versionToken" },
+        "group": { "$ref": "#/definitions/mod/properties/group" },
+        "archivesName": { "$ref": "#/definitions/mod/properties/archivesName" },
+        "name": { "$ref": "#/definitions/nonblank" },
+        "description": { "type": "string" },
+        "license": { "$ref": "#/definitions/mod/properties/license" },
+        "authors": { "$ref": "#/definitions/people" },
+        "contributors": { "$ref": "#/definitions/people" },
+        "contact": { "$ref": "#/definitions/contact" }
+      }
+    },
+    "minecraftV11": {
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/definitions/minecraft/properties/version" }
+      }
+    },
+    "settingsV11": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "java": { "$ref": "#/definitions/settings/properties/java" },
+        "kotlin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "pluginVersion": { "$ref": "#/definitions/nonblank", "default": "2.4.21" },
+            "languageVersion": { "$ref": "#/definitions/nonblank", "default": "2.4" }
+          }
+        }
+      }
+    },
+    "fabricV11": {
+      "type": "object",
+      "required": ["loader"],
+      "additionalProperties": false,
+      "properties": {
+        "loader": { "$ref": "#/definitions/fixedGradleVersion" },
+        "api": { "$ref": "#/definitions/fixedGradleVersion" },
+        "mappings": { "$ref": "#/definitions/minecraft/properties/mappings" },
+        "environment": { "$ref": "#/definitions/mod/properties/environment" },
+        "entrypoints": { "$ref": "#/definitions/mod/properties/entrypoints" },
+        "languageAdapters": { "$ref": "#/definitions/languageAdapterMap" },
+        "mixins": { "$ref": "#/definitions/mod/properties/mixins" },
+        "accessWidener": { "$ref": "#/definitions/resourcePath" },
+        "provides": { "$ref": "#/definitions/mod/properties/provides" },
+        "depends": { "$ref": "#/definitions/versionMap" },
+        "recommends": { "$ref": "#/definitions/versionMap" },
+        "suggests": { "$ref": "#/definitions/versionMap" },
+        "conflicts": { "$ref": "#/definitions/versionMap" },
+        "breaks": { "$ref": "#/definitions/versionMap" },
+        "custom": { "type": "object", "additionalProperties": true },
+        "icon": { "$ref": "#/definitions/mod/properties/icon" },
+        "loom": { "$ref": "#/definitions/settings/properties/loom" },
+        "kotlin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fabricLanguageKotlin": { "$ref": "#/definitions/nonblank", "default": "1.14.2+kotlin.2.4.21" }
+          }
+        },
+        "resources": { "$ref": "#/definitions/settings/properties/resources" },
+        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/dependency" } },
+        "repositories": { "type": "array", "items": { "$ref": "#/definitions/repositoryV11" } }
+      }
+    },
+    "neoForgeV11": {
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "$ref": "#/definitions/fixedGradleVersion", "examples": ["26.3.0.101"] },
+        "modLoader": { "type": "string", "const": "javafml", "default": "javafml" },
+        "loaderVersion": { "$ref": "#/definitions/mavenRange", "default": "[1,)" },
+        "dependencies": { "type": "array", "items": { "$ref": "#/definitions/neoForgeDependency" } },
+        "mixins": { "type": "array", "items": { "$ref": "#/definitions/resourcePath" } },
+        "accessTransformers": { "type": "array", "items": { "$ref": "#/definitions/resourcePath" } },
+        "logoFile": { "$ref": "#/definitions/resourcePath" },
+        "displayURL": { "type": "string", "format": "uri" },
+        "issueTrackerURL": { "type": "string", "format": "uri" },
+        "credits": { "type": "string" },
+        "updateJSONURL": { "type": "string", "format": "uri" },
+        "modProperties": { "$ref": "#/definitions/stringMap" },
+        "features": { "$ref": "#/definitions/stringMap" },
+        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/dependency" } },
+        "repositories": { "type": "array", "items": { "$ref": "#/definitions/repositoryV11" } }
+      }
+    },
+    "mavenRange": {
+      "type": "string",
+      "pattern": "^[\\[(][^\\r\\n]+[\\])]$",
+      "description": "NeoForge Maven interval such as [1.0,), [1.0,2.0), or [1.0]. Fabric Loader >= predicates are not Maven ranges."
+    },
+    "neoForgeDependency": {
+      "type": "object",
+      "required": ["modId"],
+      "additionalProperties": false,
+      "properties": {
+        "modId": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
+        "type": { "type": "string", "enum": ["required", "optional", "incompatible", "discouraged"], "default": "required" },
+        "versionRange": { "$ref": "#/definitions/mavenRange" },
+        "ordering": { "type": "string", "enum": ["NONE", "BEFORE", "AFTER"], "default": "NONE" },
+        "side": { "type": "string", "enum": ["BOTH", "CLIENT", "SERVER"], "default": "BOTH" },
+        "reason": { "$ref": "#/definitions/nonblank" }
+      }
+    },
     "nonblank": {
       "type": "string",
       "minLength": 1,
@@ -529,6 +741,19 @@
               { "required": ["enable"], "properties": { "enable": { "const": true } } },
               { "required": ["enabled"], "properties": { "enabled": { "const": true } } }
             ]
+          }
+        }
+      ]
+    },
+    "repositoryV11": {
+      "oneOf": [
+        { "type": "string", "enum": ["fabric", "mavenCentral", "modrinth", "neoforge"] },
+        {
+          "type": "object",
+          "required": ["maven"],
+          "additionalProperties": false,
+          "properties": {
+            "maven": { "type": "string", "format": "uri", "pattern": "^https://.+" }
           }
         }
       ]

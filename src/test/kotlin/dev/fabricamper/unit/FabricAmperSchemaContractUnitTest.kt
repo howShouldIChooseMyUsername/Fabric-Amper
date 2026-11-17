@@ -43,18 +43,26 @@ class FabricAmperSchemaContractUnitTest {
         assertEquals(setOf(
             "schema", "product", "mod", "minecraft", "settings", "repositories",
             "dependencies", "test-dependencies", "publishing", "publish", "architectury",
+            "fabric", "neoforge",
         ), root.getAsJsonObject("properties").keySet(), "Schema root must mirror strict decoder keys")
         val version = root.getAsJsonObject("properties").getAsJsonObject("schema")
-        assertEquals(1, version.get("const").asInt)
-        assertEquals("integer", version.get("type").asString)
+        val supported = version.getAsJsonArray("oneOf").map { it.asJsonObject }
+        assertEquals(2, supported.size)
+        assertTrue(supported.any { it.get("type").asString == "integer" && it.get("const").asInt == 1 })
+        assertTrue(supported.any { it.get("type").asString == "string" && it.get("const").asString == "1.1" })
     }
 
     @Test
     fun `all user product names appear once and alias retains a shared API profile`() {
         val root = schema()
         val declared = root.getAsJsonObject("properties").getAsJsonObject("product")
-        assertEquals(setOf("fabric/mod", "fabric/api", "fabric/library"), declared.stringSet("enum"))
-        assertEquals(3, declared.getAsJsonArray("enum").size())
+        val productVariants = declared.getAsJsonArray("oneOf").map { it.asJsonObject }
+        val stringVariant = productVariants.single { it.get("type").asString == "string" }
+        val arrayVariant = productVariants.single { it.get("type").asString == "array" }
+        val names = setOf("fabric/mod", "fabric/api", "fabric/library", "neoforge/mod", "neoforge/api")
+        assertEquals(names, stringVariant.stringSet("enum"))
+        assertEquals(names, arrayVariant.getAsJsonObject("items").stringSet("enum"))
+        assertTrue(arrayVariant.get("uniqueItems").asBoolean)
         // Root conditions are unordered: newer Minecraft/profile guards can be
         // inserted before this API/library rule without changing its meaning.
         val branch = root.getAsJsonArray("allOf").map { it.asJsonObject }.singleOrNull { condition ->
@@ -70,8 +78,11 @@ class FabricAmperSchemaContractUnitTest {
         val thenMod = apiBranch.getAsJsonObject("then").getAsJsonObject("properties")
             .getAsJsonObject("mod")
         assertTrue("group" in thenMod.stringSet("required"), "API Maven group is mandatory")
-        assertTrue("publishing" in apiBranch.getAsJsonObject("else").getAsJsonObject("not").stringSet("required"),
-            "fabric/mod must reject publishing even when empty")
+        val legacyModGuard = apiBranch.getAsJsonObject("else")
+        assertEquals("1.1", legacyModGuard.getAsJsonObject("if").getAsJsonObject("properties")
+            .getAsJsonObject("schema").getAsJsonObject("not").get("const").asString)
+        assertTrue("publishing" in legacyModGuard.getAsJsonObject("then").getAsJsonObject("not").stringSet("required"),
+            "legacy fabric/mod must reject publishing even when empty")
     }
 
     @Test
@@ -93,7 +104,17 @@ class FabricAmperSchemaContractUnitTest {
                     if (obj.has("\$ref")) {
                         val ref = obj.get("\$ref").asString
                         assertTrue(ref.startsWith("#/definitions/"), "No external or dangling references: $ref")
-                        assertTrue(definitions.has(ref.removePrefix("#/definitions/")), "Missing reference: $ref")
+                        var current: JsonElement = root
+                        for (token in ref.removePrefix("#/").split('/')) {
+                            val key = token.replace("~1", "/").replace("~0", "~")
+                            current = when {
+                                current.isJsonObject -> current.asJsonObject.get(key)
+                                current.isJsonArray -> key.toIntOrNull()?.let { index ->
+                                    current.asJsonArray.takeIf { index in 0 until it.size() }?.get(index)
+                                }
+                                else -> null
+                            } ?: throw AssertionError("Missing reference: $ref")
+                        }
                     }
                     obj.entrySet().forEach { (_, value) -> traverse(value) }
                 }

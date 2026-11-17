@@ -6,7 +6,7 @@ import dev.fabricamper.config.ModYamlModel
 
 /** Pure metadata preparation; sensitive tokens and changelog file bytes are absent. */
 internal object FabricAmperPublishMetadata {
-    fun modrinth(model: ModYamlModel): String {
+    fun modrinth(model: ModYamlModel, loader: String = "fabric"): String {
         val selected = requireNotNull(model.publish?.modrinth)
         val metadata = JsonObject().apply {
             addProperty("project_id", selected.projectId)
@@ -16,7 +16,7 @@ internal object FabricAmperPublishMetadata {
             addProperty("version_number", selected.versionNumber ?: model.mod.version)
             addProperty("version_type", selected.releaseType)
             add("game_versions", strings(selected.gameVersions ?: listOf(model.minecraft.version)))
-            add("loaders", strings(selected.loaders ?: listOf("fabric")))
+            add("loaders", strings(selected.loaders ?: listOf(loader)))
             addProperty("featured", false)
             addProperty("environment", selected.environment ?: when (model.mod.environment) {
                 "client" -> "client_only"
@@ -35,11 +35,11 @@ internal object FabricAmperPublishMetadata {
         return metadata.toString()
     }
 
-    fun curseforge(model: ModYamlModel): String {
+    fun curseforge(model: ModYamlModel, loader: String = "fabric"): String {
         val selected = requireNotNull(model.publish?.curseforge)
         val names = selected.gameVersionNames ?: listOfNotNull(
             model.minecraft.version,
-            "Fabric",
+            if (loader == "neoforge") "NeoForge" else "Fabric",
             when (model.mod.environment) { "server" -> null; else -> "Client" },
             when (model.mod.environment) { "client" -> null; else -> "Server" },
         )

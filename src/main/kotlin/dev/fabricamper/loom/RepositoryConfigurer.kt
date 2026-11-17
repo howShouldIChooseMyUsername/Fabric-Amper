@@ -22,6 +22,7 @@ object RepositoryConfigurer {
             when (repository) {
                 is GradleRepositoryDeclaration.Named -> when (repository.name) {
                     "fabric" -> ensureMaven(project, "Fabric", "https://maven.fabricmc.net/")
+                    "neoforge" -> ensureMaven(project, "NeoForge", "https://maven.neoforged.net/releases/")
                     "mavenCentral" -> {
                         if (project.repositories.findByName(ArtifactRepositoryContainer.DEFAULT_MAVEN_CENTRAL_REPO_NAME) == null) {
                             project.repositories.mavenCentral()

@@ -33,6 +33,7 @@ object ModYamlValidator {
 
     @JvmStatic
     fun validate(raw: ModYamlModel): ModYamlModel {
+        if (raw.schemaVersion == "1.1") return validateV11(raw)
         val file = raw.source
         if (raw.schema != FabricAmperSchemaVersion.LATEST) {
             fail("FA003", "schema", "unsupported schema ${raw.schema}; supported schema: ${FabricAmperSchemaVersion.LATEST}", file)
@@ -355,6 +356,420 @@ object ModYamlValidator {
         )
     }
 
+    /** Schema 1.1 has distinct loader metadata; never feed NeoForge through Fabric's v1 validator. */
+    private fun validateV11(raw: ModYamlModel): ModYamlModel {
+        val file = raw.source
+        val mod = raw.mod
+        val mc = raw.minecraft
+        val java = raw.settings.java
+        if (raw.targets.isEmpty() || raw.targets.map { it.loader }.distinct().size != raw.targets.size) {
+            fail("FA003", "product", "target loaders must be unique and nonempty", file)
+        }
+        if (raw.targets.map { it.loader } != raw.targets.map { it.loader }.sorted()) {
+            fail("FA003", "product", "loader targets must have canonical ordering", file)
+        }
+        val hasFabric = raw.targets.any { it.loader == "fabric" }
+        val hasNeo = raw.targets.any { it.loader == "neoforge" }
+        if ((raw.fabric != null) != hasFabric || (raw.neoforge != null) != hasNeo) {
+            fail("FA003", "product", "each selected loader must have exactly its matching configuration", file)
+        }
+        rejectV11SourceMetadata(raw, file)
+        if (!idPattern.matches(mod.id)) {
+            fail("FA009", "mod.id", "mod ID must start lowercase and contain 2-64 ASCII letters, digits, _ or -", file)
+        }
+        if (hasNeo && !mod.id.matches(Regex("^[a-z][a-z0-9_]{1,63}$"))) {
+            fail("FA016", "mod.id", "NeoForge mod ID must use lowercase letters, digits and underscores, without hyphens", file)
+        }
+        if (mod.version.isBlank() || mod.version.any { it.isWhitespace() }) {
+            fail("FA009", "mod.version", "version must be one nonempty token", file)
+        }
+        mod.group?.let { group ->
+            if (group.split('.').any { !coordinateSegment.matches(it) }) {
+                fail("FA003", "mod.group", "expected dotted Maven group identifier", file)
+            }
+        }
+        if (raw.targets.any { it.kind == "api" } && mod.group.isNullOrBlank()) {
+            fail("FA003", "mod.group", "API targets require an explicit Maven group", file)
+        }
+        if (hasNeo && (mod.license !is String || mod.license.isBlank())) {
+            fail("FA016", "mod.license", "NeoForge requires a nonempty string license", file)
+        }
+        if (raw.publishing != null && !(raw.targets.size == 1 && raw.targets.first().product == "fabric/api")) {
+            fail("FA003", "publishing", "legacy publishing.repository is supported only for a single Fabric API target", file)
+        }
+        if (mod.archivesName != null && (!archivePattern.matches(mod.archivesName) ||
+                mod.archivesName in setOf(".", ".."))) {
+            fail("FA003", "mod.archivesName", "invalid archive base name", file)
+        }
+        if (!mc.version.matches(Regex("^\\d+\\.\\d+(?:\\.\\d+)?$"))) {
+            fail("FA003", "minecraft.version", "expected an exact quoted Minecraft version", file)
+        }
+        if (hasNeo && mc.version != "26.3") {
+            fail("FA016", "minecraft.version", "NeoForge backend is currently defined only for Minecraft 26.3", file)
+        }
+        if (java.release !in 8..30 || (mc.profile == MinecraftProfile.NON_REMAPPING && java.release != 25)) {
+            fail("FA005", "settings.java.release", "Minecraft 26.1+ requires Java 25", file)
+        }
+        if (raw.settings.kotlin.enabled) {
+            if (raw.settings.kotlin.pluginVersion != "2.4.21" || raw.settings.kotlin.languageVersion != "2.4") {
+                fail("FA006", "settings.kotlin", "only the pinned Kotlin Gradle plugin 2.4.21/language 2.4 is supported", file)
+            }
+            // NeoForge's pinned Kotlin Gradle plugin is configured by the NeoForge
+            // backend; Fabric Language Kotlin remains Fabric-only.
+        }
+        if (raw.architectury.enabled && mc.version != ArchitecturyDefaults.MINECRAFT_VERSION) {
+            fail("FA003", "architectury", "Architectury convenience requires Minecraft 26.3", file)
+        }
+        if (!raw.architectury.enabled && raw.architectury.version != null) {
+            fail("FA003", "architectury.version", "enable Architectury before selecting a version", file)
+        }
+        val archVersion = if (raw.architectury.enabled) raw.architectury.version ?: ArchitecturyDefaults.VERSION else null
+        if (archVersion != null && !VersionSyntax.isFixedGradleVersion(archVersion)) {
+            fail("FA003", "architectury.version", "Architectury requires a fixed version", file)
+        }
+        validatePublish(raw, file)
+        raw.publish?.modrinth?.loaders?.let { loaders ->
+            val selected = raw.targets.map { it.loader }.toSet()
+            if (loaders.toSet() != selected) {
+                fail("FA003", "publish.modrinth.loaders", "release loader tags must match exactly the selected target loaders", file)
+            }
+        }
+        raw.repositories.forEachIndexed { index, repo -> validateV11Repository(repo, "repositories[$index]", file) }
+        raw.fabric?.repositories.orEmpty().forEachIndexed { index, repo ->
+            validateV11Repository(repo, "fabric.repositories[$index]", file)
+        }
+        raw.neoforge?.repositories.orEmpty().forEachIndexed { index, repo ->
+            validateV11Repository(repo, "neoforge.repositories[$index]", file)
+        }
+        val allDependencyGroups = listOf(
+            "dependencies" to raw.dependencies, "test-dependencies" to raw.testDependencies,
+            "fabric.gradleDependencies" to raw.fabric?.gradleDependencies.orEmpty(),
+            "neoforge.gradleDependencies" to raw.neoforge?.gradleDependencies.orEmpty(),
+        )
+        allDependencyGroups.forEach { (path, deps) ->
+            // Client Gradle dependencies belong to Fabric's split source set only.
+            // A dual-loader root dependency is shared with NeoForge, so it can
+            // never target Fabric's client even when Fabric has split enabled.
+            // In dual Architectury mode --split is ignored for both backends.
+            val clientSourceSetEnabled = hasFabric &&
+                raw.fabric?.loom?.splitEnvironmentSourceSets == true &&
+                mc.profile == MinecraftProfile.NON_REMAPPING &&
+                (path == "fabric.gradleDependencies" ||
+                    (path == "dependencies" && !raw.isMultiLoader)) &&
+                (!raw.isMultiLoader || !raw.architectury.enabled)
+            deps.forEachIndexed { index, dep ->
+                if (dep.target == "client" && !clientSourceSetEnabled) {
+                    fail("FA014", "$path[$index].target",
+                        "client Gradle dependencies require Fabric's split source set; " +
+                            "multi-loader common/NeoForge and dual Architectury clients are not supported", file)
+                }
+                // Fabric's Loom include/JIJ is valid in its own dependency group,
+                // even when this YAML also produces a separate NeoForge target.
+                // Common dependencies of a dual-loader build and NeoForge's MDG
+                // JarJar must never inherit Fabric's include semantics.
+                val fabricOnlyInclude = hasFabric && (path == "fabric.gradleDependencies" ||
+                    (path == "dependencies" && !hasNeo && !raw.isMultiLoader))
+                if (dep.include && !fabricOnlyInclude) {
+                    fail("FA007", "$path[$index].include",
+                        "include requires a Fabric-only dependency group; NeoForge JarJar needs verified bounds", file)
+                }
+                if (raw.isMultiLoader && path == "dependencies" &&
+                    (dep.kind == "mod" || dep.include || dep.target != "main")) {
+                    fail("FA007", "$path[$index]", "multi-loader common dependencies must be neutral main libraries", file)
+                }
+            }
+            validateDependencies(deps, raw, path, clientSourceSetEnabled)
+        }
+        val fabric = raw.fabric?.let { f ->
+            if (!VersionSyntax.isFixedGradleVersion(f.loader)) {
+                fail("FA003", "fabric.loader", "expected a fixed Fabric Loader version", file)
+            }
+            f.api?.let { if (!VersionSyntax.isFixedGradleVersion(it)) fail("FA003", "fabric.api", "expected fixed Fabric API version", file) }
+            if (f.mappings.type !in setOf("mojang", "yarn") ||
+                (mc.profile == MinecraftProfile.NON_REMAPPING && f.mappings.type != "mojang") ||
+                (f.mappings.type == "yarn" && f.mappings.version.isNullOrBlank()) ||
+                (f.mappings.type == "mojang" && f.mappings.version != null)) {
+                fail("FA004", "fabric.mappings", "mapping namespace does not match Minecraft profile", file)
+            }
+            if (f.environment !in envs) fail("FA009", "fabric.environment", "expected '*', client or server", file)
+            if (f.provides.distinct().size != f.provides.size || f.provides.any { it == mod.id || !idPattern.matches(it) }) {
+                fail("FA009", "fabric.provides", "duplicate, invalid or self-referential Fabric mod ID alias", file)
+            }
+            f.entrypoints.forEach { (group, entries) ->
+                if (group.isBlank() || entries.isEmpty()) {
+                    fail("FA009", "fabric.entrypoints.$group", "nonempty entrypoint list required", file)
+                }
+                entries.forEachIndexed { index, entrypoint ->
+                    if (entrypoint.value.isBlank() || (entrypoint.adapter == "kotlin" &&
+                            !raw.settings.kotlin.enabled)) {
+                        fail("FA006", "fabric.entrypoints.$group[$index]", "invalid Fabric entrypoint or disabled Kotlin adapter", file)
+                    }
+                }
+            }
+            f.mixins.forEachIndexed { index, mixin ->
+                if (mixin.environment != null && mixin.environment !in envs) {
+                    fail("FA009", "fabric.mixins[$index].environment", "expected '*', client or server", file)
+                }
+            }
+            if (!f.resources.failOnExistingFabricModJson) {
+                fail("FA003", "fabric.resources.failOnExistingFabricModJson", "must remain true", file)
+            }
+            if (raw.settings.kotlin.enabled && f.kotlin.fabricLanguageKotlin != "1.14.2+kotlin.2.4.21") {
+                fail("FA006", "fabric.kotlin.fabricLanguageKotlin", "bundled Fabric Language Kotlin version required", file)
+            }
+            val depends = LinkedHashMap(f.depends)
+            val defaults = linkedMapOf(
+                "minecraft" to mc.version,
+                "fabricloader" to ">=${f.loader}",
+                "java" to ">=${java.release}",
+            )
+            f.api?.let { defaults["fabric-api"] = ">=" + it.substringBefore('+') }
+            if (raw.settings.kotlin.enabled) {
+                defaults["fabric-language-kotlin"] = ">=" + f.kotlin.fabricLanguageKotlin.substringBefore('+')
+            }
+            if (archVersion != null) defaults["architectury"] = ">=$archVersion"
+            val selectedVersions = linkedMapOf(
+                "minecraft" to mc.version, "fabricloader" to f.loader, "java" to java.release.toString(),
+            )
+            f.api?.let { selectedVersions["fabric-api"] = it }
+            if (raw.settings.kotlin.enabled) selectedVersions["fabric-language-kotlin"] = f.kotlin.fabricLanguageKotlin
+            if (archVersion != null) selectedVersions["architectury"] = archVersion
+            listOf(f.depends, f.recommends, f.suggests, f.conflicts, f.breaks).forEach { constraints ->
+                constraints.forEach { (id, requirement) ->
+                    val expressions = when (requirement) {
+                        is String -> listOf(requirement)
+                        is List<*> -> requirement.filterIsInstance<String>()
+                        else -> emptyList()
+                    }
+                    if (expressions.isEmpty() || expressions.any { !VersionSyntax.isLoaderPredicate(it) }) {
+                        fail("FA009", "fabric.depends.$id", "invalid Fabric Loader version predicate", file)
+                    }
+                }
+            }
+            defaults.forEach { (id, requirement) -> depends.putIfAbsent(id, requirement) }
+            selectedVersions.forEach { (id, version) ->
+                val value = depends.getValue(id)
+                val patterns = if (value is String) listOf(value) else (value as List<*>).filterIsInstance<String>()
+                if (LoaderVersionConstraints.matchesAny(patterns, version) != true) {
+                    fail("FA009", "fabric.depends.$id", "version predicate does not accept selected $id version", file)
+                }
+            }
+            for ((index, path) in f.mixins.map { it.config }.withIndex()) {
+                checkV11Resource(raw, "fabric", path, "fabric.mixins[$index]", file)
+            }
+            f.accessWidener?.let { relative ->
+                val path = "fabric.accessWidener"
+                val expectedSuffix = if (mc.profile == MinecraftProfile.NON_REMAPPING) ".classtweaker"
+                    else ".accesswidener"
+                if (!relative.endsWith(expectedSuffix)) {
+                    fail("FA009", path, "access widener extension does not match Minecraft naming profile", file)
+                }
+                val resource = checkV11Resource(raw, "fabric", relative, path, file)
+                val header = try { Files.newBufferedReader(resource).use { it.readLine() } }
+                    catch (_: IOException) { null }
+                val validHeader = if (mc.profile == MinecraftProfile.NON_REMAPPING) {
+                    header == "classTweaker v1 official"
+                } else {
+                    header?.matches(Regex("accessWidener v[12] (named|intermediary)")) == true
+                }
+                if (!validHeader) fail("FA009", path, "access widener header does not match selected profile", file)
+            }
+            f.icon?.let { icon ->
+                if (icon is String) checkV11Resource(raw, "fabric", icon, "fabric.icon", file)
+                if (icon is Map<*, *>) icon.forEach { (size, path) ->
+                    checkV11Resource(raw, "fabric", path as String, "fabric.icon.$size", file)
+                }
+            }
+            f.copy(
+                depends = depends,
+                gradleDependencies = if (archVersion == null) f.gradleDependencies else
+                    f.gradleDependencies + DependencySpec("mod",
+                        "${ArchitecturyDefaults.GROUP_ARTIFACT}:$archVersion"),
+            )
+        }
+        val neo = raw.neoforge?.let { nf ->
+            if (!VersionSyntax.isFixedGradleVersion(nf.version) || !nf.version.startsWith("26.3.")) {
+                fail("FA016", "neoforge.version", "expected a fixed NeoForge 26.3 version", file)
+            }
+            if (nf.modLoader != "javafml") {
+                fail("FA016", "neoforge.modLoader", "the verified initial NeoForge backend uses javafml", file)
+            }
+            validateMavenRange(nf.loaderVersion, "neoforge.loaderVersion", file)
+            val dependencyIDs = mutableSetOf<String>()
+            nf.dependencies.forEachIndexed { index, dependency ->
+                val path = "neoforge.dependencies[$index]"
+                if (!dependency.modId.matches(Regex("^[a-z][a-z0-9_]{1,63}$"))) {
+                    fail("FA016", "$path.modId", "invalid NeoForge dependency modId", file)
+                }
+                if (dependency.modId == mod.id) {
+                    fail("FA016", "$path.modId", "mod cannot depend on itself", file)
+                }
+                if (!dependencyIDs.add(dependency.modId)) {
+                    fail("FA016", "$path.modId", "duplicate NeoForge dependency", file)
+                }
+                if (dependency.type !in setOf("required", "optional", "incompatible", "discouraged")) {
+                    fail("FA016", "$path.type", "unsupported NeoForge dependency type", file)
+                }
+                if (dependency.ordering !in setOf("NONE", "BEFORE", "AFTER")) {
+                    fail("FA016", "$path.ordering", "expected NONE, BEFORE or AFTER", file)
+                }
+                if (dependency.side !in setOf("BOTH", "CLIENT", "SERVER")) {
+                    fail("FA016", "$path.side", "expected BOTH, CLIENT or SERVER", file)
+                }
+                if (dependency.versionRange.isNotEmpty()) {
+                    validateMavenRange(dependency.versionRange, "$path.versionRange", file)
+                }
+            }
+            val defaults = linkedMapOf(
+                "minecraft" to mc.version,
+                "neoforge" to nf.version,
+            )
+            if (archVersion != null) defaults["architectury"] = archVersion
+            defaults.forEach { (id, version) ->
+                val authored = nf.dependencies.firstOrNull { it.modId == id }
+                if (authored == null) return@forEach
+                if (authored.type != "required" || authored.side != "BOTH" ||
+                    authored.versionRange.isEmpty() ||
+                    !matchesKnownMavenRange(authored.versionRange, version)) {
+                    fail("FA016", "neoforge.dependencies", "$id must be a required BOTH dependency accepting the selected version", file)
+                }
+            }
+            val generated = defaults.entries.filter { it.key !in dependencyIDs }.map { (id, version) ->
+                NeoForgeDependencySpec(
+                    modId = id,
+                    type = "required",
+                    versionRange = if (id == "minecraft") "[$version]" else "[$version,)",
+                )
+            }
+            nf.mixins.forEachIndexed { index, path ->
+                checkV11Resource(raw, "neoforge", path, "neoforge.mixins[$index]", file)
+            }
+            nf.accessTransformers.forEachIndexed { index, path ->
+                checkV11Resource(raw, "neoforge", path, "neoforge.accessTransformers[$index]", file)
+            }
+            nf.logoFile?.let {
+                if (!it.endsWith(".png", ignoreCase = true)) {
+                    fail("FA009", "neoforge.logoFile", "NeoForge logo must be a PNG resource", file)
+                }
+                checkV11Resource(raw, "neoforge", it, "neoforge.logoFile", file)
+            }
+            nf.copy(
+                dependencies = generated + nf.dependencies,
+                gradleDependencies = if (archVersion == null) nf.gradleDependencies else
+                    nf.gradleDependencies + DependencySpec("mod",
+                        "dev.architectury:architectury-neoforge:$archVersion"),
+            )
+        }
+        val repo = if (archVersion != null && raw.repositories.none {
+                it.kind == "maven" && it.url?.trimEnd('/') == ArchitecturyDefaults.MAVEN_URL.trimEnd('/')
+            }) raw.repositories + RepositorySpec("maven", ArchitecturyDefaults.MAVEN_URL)
+            else raw.repositories
+        // Architectury's dual-target code layout does not use Fabric's optional
+        // client split. Ignore --split even if the YAML was authored by hand.
+        val ignoreDualArchitecturySplit = raw.isMultiLoader && raw.architectury.enabled
+        return raw.copy(
+            mod = if (fabric != null) mod.copy(depends = fabric.depends) else mod,
+            settings = if (ignoreDualArchitecturySplit) raw.settings.copy(loom = LoomSettings(false))
+                else raw.settings,
+            fabric = if (ignoreDualArchitecturySplit) fabric?.copy(loom = LoomSettings(false)) else fabric,
+            neoforge = neo,
+            repositories = repo,
+            architectury = raw.architectury.copy(version = archVersion),
+        )
+    }
+
+    private fun validateV11Repository(repo: RepositorySpec, path: String, file: Path) {
+        if (repo.kind !in setOf("fabric", "neoforge", "mavenCentral", "modrinth", "maven")) {
+            fail("FA003", path, "unknown repository", file)
+        }
+        if (repo.kind == "maven") {
+            validateRemoteMavenUrl(repo.url ?: "", path, file)
+        }
+    }
+
+    private fun rejectV11SourceMetadata(raw: ModYamlModel, file: Path) {
+        val projectRoot = file.toAbsolutePath().normalize().parent
+            ?: fail("FA008", "mod.yaml", "invalid project root", file)
+        val sourceSets = if (raw.isMultiLoader) {
+            listOf("common/src/main/resources", "fabric/src/main/resources",
+                "fabric/src/client/resources", "neoforge/src/main/resources")
+        } else listOf("src/main/resources", "src/client/resources")
+        sourceSets.forEach { root ->
+            listOf("fabric.mod.json", "META-INF/neoforge.mods.toml").forEach { filename ->
+                val relative = "$root/$filename"
+                if (Files.exists(projectRoot.resolve(relative), LinkOption.NOFOLLOW_LINKS)) {
+                    fail("FA008", relative, "Loader metadata must be generated by Fabric Amper", file)
+                }
+            }
+        }
+    }
+
+    private fun validateMavenRange(value: String, path: String, file: Path) {
+        if (value.length < 3 || value.first() !in "[(" || value.last() !in "])" ||
+            value.any { it == '\n' || it == '\r' || it == '\t' } || value.contains(' ')) {
+            fail("FA016", path, "expected NeoForge Maven version range like [1.0,) or [1.0]", file)
+        }
+        val body = value.substring(1, value.lastIndex)
+        val boundaries = body.split(',')
+        if (boundaries.size !in 1..2 || boundaries.all(String::isBlank) ||
+            boundaries.any { it.isNotBlank() && !VersionSyntax.isFixedGradleVersion(it) } ||
+            (boundaries.size == 1 && (value.first() != '[' || value.last() != ']'))) {
+            fail("FA016", path, "invalid Maven version range", file)
+        }
+    }
+
+    private fun matchesKnownMavenRange(range: String, selected: String): Boolean {
+        val body = range.substring(1, range.lastIndex)
+        val boundaries = body.split(',')
+        if (boundaries.size == 1) return boundaries.single() == selected
+        val left = boundaries.first()
+        val right = boundaries.last()
+        // Compare purely numeric version components only. Unparseable comparisons must not
+        // be silently treated as compatible when overriding a required platform default.
+        fun numeric(version: String): List<Int>? = version.split('.').map { it.toIntOrNull() }
+            .takeIf { it.none { n -> n == null } }?.filterNotNull()
+        fun compare(a: String, b: String): Int? {
+            val aa = numeric(a) ?: return null
+            val bb = numeric(b) ?: return null
+            for (i in 0 until maxOf(aa.size, bb.size)) {
+                val diff = (aa.getOrElse(i) { 0 }).compareTo(bb.getOrElse(i) { 0 })
+                if (diff != 0) return diff
+            }
+            return 0
+        }
+        val lower = if (left.isBlank()) true else compare(selected, left)?.let {
+            it > 0 || (it == 0 && range.first() == '[')
+        } ?: false
+        val upper = if (right.isBlank()) true else compare(selected, right)?.let {
+            it < 0 || (it == 0 && range.last() == ']')
+        } ?: false
+        return lower && upper
+    }
+
+    private fun checkV11Resource(raw: ModYamlModel, loader: String, relative: String, path: String, file: Path): Path {
+        if (relative.isBlank() || relative.contains('\\') || relative.contains(':') ||
+            relative.split('/').any { it.isEmpty() || it == "." || it == ".." }) {
+            fail("FA009", path, "resource must be a relative JAR path without traversal", file)
+        }
+        val base = file.toAbsolutePath().normalize().parent
+            ?: fail("FA009", path, "invalid project root", file)
+        val resourceRoot = base.resolve(
+            if (raw.isMultiLoader) "$loader/src/main/resources" else "src/main/resources")
+        val candidate = resourceRoot.resolve(relative).normalize()
+        if (!candidate.startsWith(resourceRoot)) fail("FA009", path, "resource escapes source root", file)
+        val valid = try {
+            val actual = candidate.toRealPath()
+            val root = resourceRoot.toRealPath()
+            actual.startsWith(root) && Files.isRegularFile(actual, LinkOption.NOFOLLOW_LINKS)
+        } catch (_: IOException) {
+            false
+        } catch (_: SecurityException) {
+            false
+        }
+        if (!valid) fail("FA009", path, "required $loader resource missing or outside source root", file)
+        return candidate
+    }
+
     private fun validatePublish(model: ModYamlModel, file: Path) {
         val publish = model.publish ?: return
         if (publish.maven == null && publish.modrinth == null && publish.curseforge == null) {
@@ -567,7 +982,10 @@ object ModYamlValidator {
         }
     }
 
-    private fun validateDependencies(items: List<DependencySpec>, model: ModYamlModel, prefix: String) {
+    private fun validateDependencies(
+        items: List<DependencySpec>, model: ModYamlModel, prefix: String,
+        clientSourceSetEnabled: Boolean = model.settings.loom.splitEnvironmentSourceSets,
+    ) {
         val seen = mutableMapOf<Pair<String, String>, Pair<Int, DependencySpec>>()
         items.forEachIndexed { index, dep ->
             val p = "$prefix[$index]"
@@ -583,7 +1001,7 @@ object ModYamlValidator {
                 fail("FA007", "$p.include", "include=true requires scope=all", model.source)
             }
             if (dep.target == "client" &&
-                (!model.settings.loom.splitEnvironmentSourceSets || dep.exported || dep.include ||
+                (!clientSourceSetEnabled || dep.exported || dep.include ||
                     model.minecraft.profile == MinecraftProfile.REMAPPING)
             ) {
                 fail("FA014", "$p.target",

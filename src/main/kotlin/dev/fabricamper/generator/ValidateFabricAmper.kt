@@ -43,6 +43,10 @@ abstract class ValidateFabricAmper : DefaultTask() {
         /** Pure structural and cross-field validation, with no filesystem access. */
         @JvmStatic
         fun validate(model: ModYamlModel) {
+            if (model.schemaVersion == "1.1") {
+                validate(FabricV11Projection.fromModel(model))
+                return
+            }
             check(model.schema == 1, "FA101", "schema", "지원하는 스키마는 정수 1뿐입니다.")
             // API/library are Fabric Loader mods too: only publication behavior
             // differs. Neither product name belongs in fabric.mod.json.
@@ -161,14 +165,40 @@ abstract class ValidateFabricAmper : DefaultTask() {
         /** The output task/Project bridge should invoke this when source trees exist. */
         @JvmStatic
         fun validateSourceResources(model: ModYamlModel) {
-            val base = model.source.toAbsolutePath().normalize().parent
+            val yamlRoot = model.source.toAbsolutePath().normalize().parent
                 ?: failAmper("FA120", "mod.yaml", "설정 파일의 상위 폴더를 확인할 수 없습니다.")
-            for (sourceSet in listOf("main", "client")) {
-                val metadata = base.resolve("src/$sourceSet/resources/fabric.mod.json")
-                check(!Files.exists(metadata), "FA008", "src/$sourceSet/resources/fabric.mod.json", "직접 만든 fabric.mod.json과 생성 파일은 함께 사용할 수 없습니다.")
-            }
+            val selectedRoot = if (model.schemaVersion == "1.1" && model.isMultiLoader) {
+                yamlRoot.resolve("fabric")
+            } else yamlRoot
+            validateSourceResources(model, selectedRoot)
+        }
 
-            val mod = model.mod
+        /**
+         * The v1.1 root YAML is outside the :fabric project. Resource paths
+         * are resolved relative to the actual target project, never the YAML.
+         * Keep the v1 one-argument overload for existing callers.
+         */
+        @JvmStatic
+        fun validateSourceResources(model: ModYamlModel, projectRoot: Path) {
+            val fabricModel = FabricV11Projection.fromModel(model)
+            val base = projectRoot.toAbsolutePath().normalize()
+            val yamlRoot = model.source.toAbsolutePath().normalize().parent
+                ?: failAmper("FA120", "mod.yaml", "설정 파일의 상위 폴더를 확인할 수 없습니다.")
+            val metadataRoots = linkedSetOf(base)
+            if (model.schemaVersion == "1.1" && model.isMultiLoader) {
+                // Common and root resources can leak into a platform archive.
+                metadataRoots.add(yamlRoot)
+                metadataRoots.add(yamlRoot.resolve("common"))
+            }
+            for (metadataRoot in metadataRoots) {
+                for (sourceSet in listOf("main", "client")) {
+                    val metadata = metadataRoot.resolve("src/$sourceSet/resources/fabric.mod.json")
+                    check(!Files.exists(metadata, LinkOption.NOFOLLOW_LINKS),
+                        "FA008", metadata.toString(),
+                        "직접 만든 fabric.mod.json과 생성 파일은 함께 사용할 수 없습니다.")
+                }
+            }
+            val mod = fabricModel.mod
             when (val icon = mod.icon) {
                 is String -> findResource(base, icon, "mod.icon", png = true)
                 is Map<*, *> -> icon.forEach { (size, resource) ->
@@ -183,7 +213,7 @@ abstract class ValidateFabricAmper : DefaultTask() {
                 // Loom's accessWidenerPath is resolved from the main resources
                 // tree. A client-only class tweaker cannot be used here.
                 val file = findResource(base, resource, "mod.accessWidener", mainOnly = true)
-                if (model.minecraft.profile == MinecraftProfile.NON_REMAPPING) {
+                if (fabricModel.minecraft.profile == MinecraftProfile.NON_REMAPPING) {
                     check(resource.endsWith(".classtweaker"), "FA122", "mod.accessWidener", "26.1 이상에서는 .classtweaker 확장자가 필요합니다.")
                     val header = try {
                         Files.newBufferedReader(file, StandardCharsets.UTF_8).use { it.readLine() }

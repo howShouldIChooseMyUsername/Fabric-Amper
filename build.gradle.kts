@@ -38,6 +38,9 @@ dependencies {
     // The Settings plugin must transitively supply these plugin implementations:
     // a consumer's settings.gradle.kts must not need a second plugin declaration.
     implementation("net.fabricmc:fabric-loom:$bundledLoomVersion")
+    // Single Settings plugin owns both loader backends. Never apply MDG to a
+    // Fabric project: only its implementation is present on the plugin classpath.
+    implementation("net.neoforged.moddev:net.neoforged.moddev.gradle.plugin:2.0.148")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21")
     implementation("org.snakeyaml:snakeyaml-engine:2.10")
     implementation("com.google.code.gson:gson:2.14.0")
