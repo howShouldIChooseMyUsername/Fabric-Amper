@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.fabricamper'
+version = '0.1.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+def ideHome = providers.gradleProperty('ideaHome')
+    .orElse(providers.environmentVariable('IDEA_HOME'))
+    .orElse('C:/Program Files/JetBrains/IntelliJ IDEA 2026.3')
+def sdk = file(ideHome.get())
+def buildFile = new File(sdk, 'build.txt')
+if (!buildFile.isFile() || !(buildFile.text.trim() ==~ /(?:[A-Z]+-)?263\..+/)) {
+    throw new GradleException("Use the IntelliJ IDEA 2026.3 installation (-PideaHome=...). Found: " +
+        (buildFile.isFile() ? buildFile.text.trim() : sdk))
+}
+def platform = fileTree(new File(sdk, 'lib')) { include '*.jar' }
+def gradlePlugin = fileTree(new File(sdk, 'plugins/gradle-plugin/lib')) { include '*.jar' }
+def sdkClasspath = files(platform, gradlePlugin)
+
+dependencies {
+    compileOnly sdkClasspath
+    testImplementation sdkClasspath
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+    options.compilerArgs += ['-proc:none']
+}
+
+tasks.register('collectorTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.fabricamper.intellij.CollectorTest'
+    args sdk.absolutePath
+}
+tasks.named('test') {
+    // No JUnit download; collectorTest runs against the installed SDK.
+    enabled = false
+}
+tasks.named('check') { dependsOn collectorTest }
+tasks.named('jar') {
+    archiveBaseName = 'fabric-amper-intellij'
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.register('buildPlugin', Zip) {
+    dependsOn check, jar
+    archiveBaseName = 'fabric-amper-intellij'
+    destinationDirectory = layout.projectDirectory.dir('dist')
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    into('fabric-amper-intellij/lib') { from(tasks.named('jar')) }
+}
