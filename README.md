@@ -4,7 +4,7 @@
 
 [![](https://jitpack.io/v/howShouldIChooseMyUsername/Fabric-Amper.svg)](https://jitpack.io/#howShouldIChooseMyUsername/Fabric-Amper)
 
-**v0.3.1 · Developer Preview (prerelease)** — [Download release](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.3.1) · [Quick Guide](HUMAN_QuickGuide.md) · [Full Guide](HUMAN.md) · [AI Guide](FabricAmperSKILL.md) · [Schema](fabric-amper.schema.json)
+**v0.3.1 · Public Developer Preview prerelease (November 18, 2026)** — [Download release](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.3.1) · [Quick Guide](HUMAN_QuickGuide.md) · [Full Guide](HUMAN.md) · [AI Guide](FabricAmperSKILL.md) · [Schema](fabric-amper.schema.json)
 
 ## Why Fabric Amper?
 
@@ -158,7 +158,7 @@ dependencies:
     scope: all
 ```
 
-The coordinates above are **illustrative, not actual published artifacts**. Supply the correct repository and exact Maven or supported Modrinth coordinates. Fabric Amper does **not** automatically discover matching versions across loaders.
+The coordinates above are **illustrative, not actual published artifacts**. Supply the correct repository and Maven or supported Modrinth coordinates. Fabric Amper does **not** automatically discover matching versions across loaders. The `loader` selector separates **requested dependencies**; Gradle may still choose a different resolved version due to an ordinary transitive version conflict, so check the platform's dependency report if an exact runtime version matters.
 
 There are two distinct kinds of dependencies:
 
@@ -243,9 +243,9 @@ Remote Maven, Modrinth, and CurseForge publishing requires an explicitly configu
 
 ## Verification and current limits
 
-**Prior release evidence:** v0.3.0 was published as a GitHub prerelease on November 17, 2026. Its nine release assets were redownloaded and SHA-256 checked. JitPack reported build status `ok`, and a newly generated NeoForge + Architectury + Kotlin consumer resolved the public v0.3.0 plugin and passed Gradle `help`, validation, build, and JAR verification. This is **historical v0.3.0 evidence**, not an independent v0.3.1 remote-JitPack validation.
+**v0.3.1 published and verified:** The GitHub prerelease contains nine assets, independently redownloaded and checked against all eight SHA-256 entries. JitPack `v0.3.1` reported status `ok`, Java 25 and all three expected modules, at the exact release-tag commit. A fresh **settings-only Fabric/Java consumer using public JitPack v0.3.1**, not a locally injected plugin, passed `help validateFabricAmper build verifyFabricAmperJar`, compiled a real initializer and packaged exactly one `fabric.mod.json`. The producer's Gradle 9.7.1/JDK 25 `clean build validatePlugins` passed **383 tests: 324 passed, 59 skipped, 0 failed**, and new local dual-loader isolation TestKit checks passed **2/2**.
 
-The earlier v0.3.0 source release baseline ran Gradle 9.7.1/JDK 25 `clean build validatePlugins --offline`: **371 tests = 314 passed, 57 skipped, 0 failed**. These results are not blanket gameplay approval or v0.3.1 test counts. Actual Minecraft client/server runtime, complete IntelliJ GUI Sync, all G1–G30/NF1–NF26 gates, and strict cold second-run configuration-cache reuse remain unapproved; a dual Architectury run had an additional cold-cache miss before a later warm hit.
+**Prior release evidence:** v0.3.0 was independently published and verified on November 17, 2026, including a separate public NeoForge + Architectury + Kotlin consumer build. That is dated v0.3.0 evidence; the new **v0.3.1 public consumer smoke above is Fabric-only**, while loader isolation was checked in local dual-loader TestKit. Actual Minecraft client/server runtime, complete IntelliJ GUI Sync, all G1–G30/NF1–NF26 gates, and strict cold second-run configuration-cache reuse remain unapproved. **59 skipped tests are not passes.**
 
 For dated test results, historical hashes, security checks and remaining gates, read [QA_REPORT.md](QA_REPORT.md) and [specs.md](specs.md). The README is a starting point, not the acceptance evidence archive.
 
