@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 @EnabledOnOs(OS.WINDOWS)
 class FabricAmperInitSchemaUnitTest {
     @Test
-    fun `init copies current producer schema and explicitly pins legacy Fabric starter for mod and api`() {
+    fun `init copies current producer schema and writes namespaced Fabric 11 for mod and api`() {
         val producer = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
         val batch = producer.resolve("fabric-amper.bat")
         val originalSchema = Files.readAllBytes(producer.resolve("fabric-amper.schema.json"))
@@ -46,9 +46,16 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals(FabricAmperSchemaVersion.LATEST, effective.schema)
             assertEquals("fabric/$profile", effective.product)
             assertEquals(id, effective.mod.id)
-            assertTrue(Regex("(?m)^schema: 1$").containsMatchIn(yaml),
-                "legacy Fabric starter must pin schema: 1 now that omission means schema 1.1")
-            assertEquals("1", effective.schemaVersion)
+            assertTrue(Regex("(?m)^schema: \"1.1\"$").containsMatchIn(yaml),
+                "New Fabric starter must use the current namespaced schema 1.1")
+            assertEquals("1.1", effective.schemaVersion)
+            assertEquals("0.20.1", effective.fabric?.loader)
+            assertEquals("0.165.2+26.3", effective.fabric?.api)
+            assertFalse(yaml.contains("minecraft:\n  loader:"), "Loader belongs under fabric, not minecraft")
+            assertFalse(yaml.contains("  fabricApi:"), "Fabric API belongs under fabric.api")
+            val normalized = yaml.replace("\r\n", "\n")
+            assertFalse(normalized.substringAfter("\nmod:\n").substringBefore("\nminecraft:\n").contains("entrypoints:"),
+                "Authored Fabric entrypoints must not be nested under mod")
             assertArrayEquals(originalSchema, Files.readAllBytes(consumer.resolve("schemas/mod.schema.json")))
             assertTrue(Files.isRegularFile(consumer.resolve(".vscode/settings.json")))
             assertTrue(
@@ -74,7 +81,8 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(effective.settings.loom.splitEnvironmentSourceSets,
                 "Split source sets must remain opt-in for the Java starter")
             assertFalse(Files.exists(consumer.resolve("src/client")), "Unflagged init must not create client sources")
-            assertFalse(effective.mod.entrypoints.containsKey("client"), "Unflagged init must not register a client starter")
+            assertEquals("org.example.ExampleMod", effective.fabric?.entrypoints?.getValue("main")?.single()?.value)
+            assertFalse(effective.fabric!!.entrypoints.containsKey("client"), "Unflagged init must not register a client starter")
             assertFalse(Regex("(?m)^  loom:").containsMatchIn(yaml),
                 "Unflagged init should not add a redundant settings.loom block")
             assertFalse(Files.exists(consumer.resolve("build.gradle")))
@@ -122,7 +130,8 @@ class FabricAmperInitSchemaUnitTest {
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
             assertEquals("# \$schema: ./schemas/mod.schema.json", yaml.lineSequence().drop(1).first())
             assertTrue(Files.isRegularFile(consumer.resolve("schemas/mod.schema.json")))
-            assertEquals("org.example.ExampleMod", model.mod.entrypoints.getValue("main").single().value)
+            assertEquals("1.1", model.schemaVersion)
+            assertEquals("org.example.ExampleMod", model.fabric!!.entrypoints.getValue("main").single().value)
             val source = consumer.resolve("src/main/kotlin/org/example/ExampleMod.kt")
             assertTrue(Files.isRegularFile(source), "Missing Kotlin ModInitializer at $source")
             val kotlin = Files.readString(source, StandardCharsets.UTF_8)
@@ -131,7 +140,7 @@ class FabricAmperInitSchemaUnitTest {
             assertFalse(Files.exists(consumer.resolve("src/main/java/org/example/ExampleMod.java")),
                 "Kotlin init must not generate the Java example as well")
             assertFalse(Files.exists(consumer.resolve("src/client")), "Kotlin-only init must not enable split sources")
-            assertFalse(model.mod.entrypoints.containsKey("client"))
+            assertFalse(model.fabric!!.entrypoints.containsKey("client"))
             assertFalse(Files.exists(consumer.resolve("build.gradle.kts")))
             assertFalse(Files.exists(consumer.resolve("src/main/resources/fabric.mod.json")))
         }
@@ -167,11 +176,13 @@ class FabricAmperInitSchemaUnitTest {
             val normalizedYaml = yaml.replace("\r\n", "\n")
             val model = ModYamlLoader.load(yamlFile)
             assertEquals(product, model.product, args)
-            assertTrue(model.settings.loom.splitEnvironmentSourceSets, "Loom split not enabled: $args")
+            assertEquals("1.1", model.schemaVersion, args)
+            assertTrue(model.fabric!!.loom.splitEnvironmentSourceSets, "Loom split not enabled: $args")
             assertEquals(1, Regex("(?m)^    splitEnvironmentSourceSets: true$").findAll(normalizedYaml).count(),
                 "Expected one indented Loom setting in YAML: $args")
-            assertTrue(normalizedYaml.contains("  loom:\n    splitEnvironmentSourceSets: true"),
+            assertTrue(normalizedYaml.contains("fabric:\n") && normalizedYaml.contains("  loom:\n    splitEnvironmentSourceSets: true"),
                 "YAML nesting incorrect: $yaml")
+            assertFalse(normalizedYaml.contains("settings:\n  loom:"), "Schema 1.1 Loom settings must belong under fabric")
             assertEquals(isKotlin, model.settings.kotlin.enabled, args)
             assertTrue(Files.isRegularFile(folder.resolve("schemas/mod.schema.json")))
             assertEquals("# yaml-language-server: \$schema=./schemas/mod.schema.json", yaml.lineSequence().first())
@@ -179,8 +190,8 @@ class FabricAmperInitSchemaUnitTest {
             assertTrue(Files.isRegularFile(folder.resolve(
                 if (isKotlin) "src/main/kotlin/org/example/ExampleMod.kt" else "src/main/java/org/example/ExampleMod.java"
             )), "Entrypoint source missing: $args")
-            assertEquals("org.example.ExampleMod", model.mod.entrypoints.getValue("main").single().value, args)
-            assertEquals("org.example.ExampleModClient", model.mod.entrypoints.getValue("client").single().value, args)
+            assertEquals("org.example.ExampleMod", model.fabric!!.entrypoints.getValue("main").single().value, args)
+            assertEquals("org.example.ExampleModClient", model.fabric!!.entrypoints.getValue("client").single().value, args)
             assertTrue(normalizedYaml.contains("    client:\n      - org.example.ExampleModClient"),
                 "Client entrypoint must be included in generated YAML: $args")
             assertTrue(Files.isDirectory(folder.resolve("src/main/resources")), args)

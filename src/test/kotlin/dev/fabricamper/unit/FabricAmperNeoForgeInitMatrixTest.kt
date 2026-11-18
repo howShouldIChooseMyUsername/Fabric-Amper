@@ -20,14 +20,18 @@ class FabricAmperNeoForgeInitMatrixTest {
     @TempDir lateinit var workspace: Path
 
     @Test
-    fun `default Fabric remains backwards compatible and settings only`() {
+    fun `default Fabric uses latest schema 11 and settings only`() {
         val root = workspace.resolve("Default Fabric")
         val run = InitBatMatrixProbe.init("defaultmod", root)
         assertEquals(0, run.code, run.output)
         val yaml = InitBatMatrixProbe.yaml(root)
         assertEquals("fabric/mod", yaml["product"])
-        assertTrue(yaml["schema"] == null || yaml["schema"] == 1, yaml.toString())
-        assertEquals("0.20.1", InitBatMatrixProbe.field(yaml, "minecraft")["loader"])
+        assertEquals("1.1", yaml["schema"])
+        assertEquals("0.20.1", InitBatMatrixProbe.field(yaml, "fabric")["loader"])
+        assertFalse(InitBatMatrixProbe.field(yaml, "minecraft").containsKey("loader"))
+        assertFalse(InitBatMatrixProbe.field(yaml, "mod").containsKey("entrypoints"))
+        assertEquals(listOf("org.example.ExampleMod"),
+            InitBatMatrixProbe.field(InitBatMatrixProbe.field(yaml, "fabric"), "entrypoints")["main"])
         assertEquals(false, InitBatMatrixProbe.field(InitBatMatrixProbe.field(yaml, "settings"), "kotlin")["enabled"])
         assertTrue(Files.isRegularFile(root.resolve("src/main/java/org/example/ExampleMod.java")))
         assertTrue(Files.readString(root.resolve("src/main/java/org/example/ExampleMod.java")).contains("ModInitializer"))
@@ -52,8 +56,10 @@ class FabricAmperNeoForgeInitMatrixTest {
                 val run = InitBatMatrixProbe.init(id, root, flags)
                 assertEquals(0, run.code, run.output)
                 val yaml = InitBatMatrixProbe.yaml(root)
+                assertEquals("1.1", yaml["schema"], "Every new Fabric starter must be namespaced")
                 assertEquals("fabric/mod", yaml["product"])
                 InitBatMatrixProbe.assertFabricProfile(yaml)
+                assertFalse(yaml.containsKey("neoforge"), "Fabric-only init must never emit NeoForge configuration")
                 assertEquals(kotlin, InitBatMatrixProbe.field(InitBatMatrixProbe.field(yaml, "settings"), "kotlin")["enabled"])
                 assertEquals(architectury, (yaml["architectury"] as? Map<*, *>)?.get("enable") == true)
                 val source = InitBatMatrixProbe.oneSource(root, "src/main", kotlin)
@@ -66,6 +72,22 @@ class FabricAmperNeoForgeInitMatrixTest {
                 InitBatMatrixProbe.assertBootstrap(root)
             }
         }
+    }
+
+    @Test
+    fun `explicit legacy opt in is Fabric only and retains schema 1`() {
+        val legacy = workspace.resolve("Legacy Fabric")
+        val run = InitBatMatrixProbe.init("oldformat", legacy, listOf("--legacy-schema1"))
+        assertEquals(0, run.code, run.output)
+        val yaml = InitBatMatrixProbe.yaml(legacy)
+        assertEquals(1, yaml["schema"])
+        assertEquals("0.20.1", InitBatMatrixProbe.field(yaml, "minecraft")["loader"])
+        assertFalse(yaml.containsKey("fabric"))
+        assertTrue(InitBatMatrixProbe.field(yaml, "mod").containsKey("entrypoints"))
+        val invalid = workspace.resolve("Invalid Legacy NeoForge")
+        val rejected = InitBatMatrixProbe.init("newformat", invalid, listOf("--legacy-schema1", "--mod-neoforge"))
+        assertEquals(2, rejected.code, rejected.output)
+        assertFalse(Files.exists(invalid))
     }
 
     @Test
