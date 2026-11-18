@@ -4,15 +4,15 @@
 
 Fabric Amper is a **Gradle binary plugin**, not a Minecraft mod. Instead of hand-maintaining consumer `build.gradle(.kts)` and Loader metadata, you write `settings.gradle.kts` and **exactly one** `mod.yaml` or `mod.yml`. With schema **1.1**, it configures Fabric Loom, NeoForge ModDevGradle, or both, plus Java/optional Kotlin, dependencies, generated loader metadata, and independent platform JARs. Explicit `schema: 1` preserves the previous Fabric-only configuration language.
 
-> **v0.3.1 prerelease target (2026-11-18); v0.3.0 historical verification (2026-11-17).** Current bootstrap examples below target **0.3.1**, whose new tag/assets/JitPack resolution require independent release verification. The published v0.3.0 prerelease had all nine GitHub assets redownloaded and SHA-256 checked; JitPack `v0.3.0` resolved successfully, and a fresh NeoForge + Architectury + Kotlin consumer passed real remote-plugin `help`, validation, build and JAR verification. Selected schema 1.1 NeoForge and dual-loader TestKit builds also passed. **Actual Minecraft client/server runtime, complete IntelliJ GUI sync, strict cold configuration-cache reuse and full shipping gates remain unapproved.** A version string alone does not prove remote availability, and neither release is established as a Gradle Plugin Portal publication. The BAT's dual `build`/`validate`/`verify` routing was verified with fake Gradle. See [Verification and known limits](#verification-and-known-limits).
+> **v0.3.1 Developer Preview — published public GitHub prerelease (2026-11-18).** Nine release assets were independently redownloaded and passed SHA-256 checks. JitPack reported `ok` for annotated tag `v0.3.1` at commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`, with JDK 25, three built modules and POM HTTP 200. A fresh **settings-only Fabric Java** public JitPack consumer passed `help validateFabricAmper build verifyFabricAmperJar` in 33 seconds, including real compilation and a single `fabric.mod.json`. Producer validation passed **383 tests (324 PASS, 59 SKIP, 0 FAIL)** and `validatePlugins`; dual-loader local TestKit passed **2/2**. **Historical v0.3.0 evidence (2026-11-17):** nine SHA-256-verified assets and a fresh NeoForge + Architectury + Kotlin JitPack consumer build PASS. The v0.3.1 remote consumer evidence applies to **Fabric Java**, not NeoForge public consumers or actual Minecraft client/server runtime, complete IntelliJ GUI sync, strict cold configuration-cache reuse, or full shipping gates. Neither release is established as a Gradle Plugin Portal publication. See [Verification and known limits](#verification-and-known-limits).
 
 This is the **user-facing** guide. For source-of-truth field constraints, see [`fabric-amper.schema.json`](fabric-amper.schema.json); for the actual implementation, see `src/main/kotlin/dev/fabricamper/config/`; for implementation acceptance, see [`specs.md`](specs.md) and [`QA_REPORT.md`](QA_REPORT.md). Agents generating configurations should also read [`FabricAmperSKILL.md`](FabricAmperSKILL.md). For the **single English, Windows-first quick start and feature cheat sheet**, see [`HUMAN_QuickGuide.md`](HUMAN_QuickGuide.md); the former `HUMAN_QuickStart.md` is retained only as a link redirect.
 
-**Check the Windows launcher version without Gradle:** `fabric-amper.bat` (no arguments), `-V`, `--version` or `version` prints its embedded version. The v0.3.1 release-target BAT should print `v0.3.1`; an older value means the local copy is not the current target. Use `help` for usage. **Version output alone is not evidence of publication; GitHub release assets and JitPack v0.3.0 were separately verified on 2026-11-17, while v0.3.1 needs its own verification.**
+**Check the Windows launcher version without Gradle:** `fabric-amper.bat` (no arguments), `-V`, `--version` or `version` prints its embedded version. The published v0.3.1 BAT prints `v0.3.1`; an older value means the local copy is outdated. Use `help` for usage. **Version output alone does not prove publication; the nine release assets, public JitPack result and fresh Fabric Java consumer were independently verified on 2026-11-18.**
 
-## v0.3.1 target — schema 1.1 in practice
+## v0.3.1 published prerelease — schema 1.1 in practice
 
-**Previously verified schema behavior.** GitHub `v0.3.0` and its SHA-256-verified assets were available and a fresh remote JitPack consumer built successfully on 2026-11-17. The v0.3.1 examples describe the upcoming release contract and need separate consumer verification. Treat Minecraft runtime, IDE sync and strict cold-cache behavior as separate acceptance requirements.
+**Published schema behavior.** GitHub `v0.3.1` was published on 2026-11-18; its nine assets, JitPack status and fresh settings-only Fabric Java remote consumer build were verified. GitHub `v0.3.0` and its separate NeoForge + Architectury + Kotlin remote consumer were verified on 2026-11-17. Treat NeoForge public v0.3.1 consumer builds, Minecraft runtime, IDE sync and strict cold-cache behavior as separate acceptance requirements.
 
 | Root YAML `schema` | Meaning in published v0.3.0 |
 | --- | --- |
@@ -23,9 +23,9 @@ This is the **user-facing** guide. For source-of-truth field constraints, see [`
 
 Exactly one **`mod.yaml` or `mod.yml`** is allowed at the consumer root (both or neither: FA001). A v1.1 `product` can be `fabric/mod`, `neoforge/mod`, `fabric/api`, `neoforge/api`, or an array of one Fabric plus one NeoForge target; `fabric/library` is an alias for `fabric/api`. Root `mod` contains common identity, `minecraft.version` the game version, `settings` Java/Kotlin options, and `repositories` / `dependencies` shared build intent. In schema 1.1, an **object entry** inside root `dependencies[]` can optionally use `loader: fabric` or `loader: neoforge` to select one target; omission applies it to all selected targets. Fabric Loader/API, entrypoints, Mixins, predicates and Loom settings live under `fabric`; NeoForge version, Mixins, access transformers and TOML dependencies under `neoforge`. Never mix v1 root loader fields into a v1.1 document.
 
-### Intended v0.3.1 Settings bootstrap
+### Published v0.3.1 Settings bootstrap
 
-This v0.3.1 tag/plugin request is the release-target configuration; independent remote resolution remains to be verified. The **previous v0.3.0** tagged prerelease was verified through a fresh JitPack consumer. The Settings plugin remains the **single** user-applied plugin; no consumer `build.gradle(.kts)` and no manually authored loader JSON/TOML is needed:
+This v0.3.1 tag/plugin request was independently resolved from public JitPack and used by a **fresh Fabric Java settings-only consumer**. The **previous v0.3.0** tagged prerelease was separately verified on 2026-11-17. The Settings plugin remains the **single** user-applied plugin; no consumer `build.gradle(.kts)` and no manually authored loader JSON/TOML is needed:
 
 ```kotlin
 pluginManagement {
@@ -49,7 +49,7 @@ plugins {
 }
 ```
 
-The published v0.3.0 JitPack coordinate was resolved and a fresh NeoForge + Architectury + Kotlin consumer built successfully; that evidence does not establish v0.3.1 publication. New consumer builds still depend on tag/JitPack/network availability. Do not manually apply `dev.fabric-amper.project`, Fabric Loom or `net.neoforged.moddev` in consumer scripts.
+The published v0.3.1 coordinate passed JitPack resolution and a fresh Fabric Java consumer `help validateFabricAmper build verifyFabricAmperJar` (33 seconds). The v0.3.0 NeoForge + Architectury + Kotlin remote consumer is separately dated evidence; a **NeoForge public v0.3.1 consumer has not been verified by this result**. New builds still depend on network availability. Do not manually apply `dev.fabric-amper.project`, Fabric Loom or `net.neoforged.moddev` in consumer scripts.
 
 ### Fabric-only and NeoForge-only YAML
 
@@ -230,7 +230,7 @@ Use a project Gradle Wrapper when one is actually installed. If the consumer doe
 
 ### How to obtain the plugin today
 
-A plugin repository normally supplies a Gradle marker and binary. **Fabric Amper is not published to the Gradle Plugin Portal**. For the **v0.3.1 release target**, request `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1` and plugin version `0.3.1`, then verify that the tag and JitPack artifact are available. **Historically, v0.3.0** was published on 2026-11-17; its JitPack status and POM were checked and a new NeoForge + Architectury + Kotlin consumer built successfully against that coordinate. Check the actual BAT/version in an old local checkout before using `init` or `migrate`.
+A plugin repository normally supplies a Gradle marker and binary. **Fabric Amper is not published to the Gradle Plugin Portal**. The **published v0.3.1 GitHub prerelease** uses `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1` and plugin version `0.3.1`. JitPack reported `ok` for annotated tag commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd` (JDK 25, three modules, POM HTTP 200), and a fresh Fabric Java consumer built successfully from this public coordinate. **Historically, v0.3.0** was published on 2026-11-17 and a separate NeoForge + Architectury + Kotlin consumer built successfully against that version. Check the actual BAT/version in an old local checkout before using `init` or `migrate`.
 
 For **local producer development / offline integration tests only**, a separate direct Gradle publication still exists. From the Fabric Amper source project:
 
@@ -281,7 +281,7 @@ plugins {
 }
 ```
 
-This bootstrap requests the **v0.3.1 target** JitPack tag with plugin version `0.3.1` (verify availability when released). `pluginManagement.repositories` resolves plugins, while `mod.yaml` `repositories` resolves mod libraries. A matching local launcher and network access are required.
+This bootstrap requests the **published v0.3.1** JitPack tag with plugin version `0.3.1`; its public artifact and a fresh Fabric Java settings-only consumer were verified on 2026-11-18. `pluginManagement.repositories` resolves plugins, while `mod.yaml` `repositories` resolves mod libraries. A matching local launcher and network access are required for new builds.
 
 ### 3. Write `mod.yaml`
 
@@ -988,7 +988,7 @@ fabric:
     splitEnvironmentSourceSets: true
 ```
 
-`init <id> [new_folder] [mod|api] [loader flags] [--kotlin] [--architectury] [--splitEnvironmentSourceSets]` creates `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` snapshot, optional editor settings and a matching initializer. **Java is default**; `--kotlin` sets `settings.kotlin.enabled: true` and writes real Kotlin classes instead. NeoForge uses `@Mod`, not a Fabric `ModInitializer`. Flags follow the positional parameters and duplicated/misplaced flags are rejected. `--here` preserves unrelated tools but refuses conflicting YAML, Settings/build scripts or source trees; no overwrites. A missing `fabric-amper.schema.json` may be downloaded from GitHub `main` **only after matching the BAT's pinned SHA-256**; a changed or mismatched file is rejected. NeoForge/dual starters write explicit `schema: "1.1"`; Fabric-only BAT starters use their documented [compatibility layout](#historical-schema-1-reference), while manually written omitted-schema YAML is 1.1. v0.3.1 release-target generated Settings request JitPack `v0.3.1` (availability must be checked). The local editor schema is a snapshot, not automatically refreshed after plugin upgrades. `setup` was removed.
+`init <id> [new_folder] [mod|api] [loader flags] [--kotlin] [--architectury] [--splitEnvironmentSourceSets]` creates `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` snapshot, optional editor settings and a matching initializer. **Java is default**; `--kotlin` sets `settings.kotlin.enabled: true` and writes real Kotlin classes instead. NeoForge uses `@Mod`, not a Fabric `ModInitializer`. Flags follow the positional parameters and duplicated/misplaced flags are rejected. `--here` preserves unrelated tools but refuses conflicting YAML, Settings/build scripts or source trees; no overwrites. A missing `fabric-amper.schema.json` may be downloaded from GitHub `main` **only after matching the BAT's pinned SHA-256**; a changed or mismatched file is rejected. NeoForge/dual starters write explicit `schema: "1.1"`; Fabric-only BAT starters use their documented [compatibility layout](#historical-schema-1-reference), while manually written omitted-schema YAML is 1.1. v0.3.1 generated Settings request the now-published JitPack `v0.3.1` (fresh Fabric Java consumer PASS). The local editor schema is a snapshot, not automatically refreshed after plugin upgrades. `setup` was removed.
 
 From the **consumer directory**, use the batch file's full path (unless its directory is on `PATH`):
 
@@ -1030,7 +1030,7 @@ Consumer tasks check that exactly one YAML exists and reject a consumer `build.g
 
 The existing Windows `migrate` workflow is deliberately **Fabric v1 only**, converting a supported Groovy or Kotlin DSL project with one authored Fabric Loader JSON to explicit `schema: 1` and `settings.gradle.kts`. It preserves Java/Kotlin sources, Mixins and resources, but **does not automatically convert to schema 1.1/NeoForge**, run the old Gradle DSL, download dependencies, compile or launch Minecraft.
 
-The Windows launcher can bootstrap the matching versioned `scripts/fabric-amper-migrate.ps1` helper and local schema from GitHub Releases if missing, and it verifies both against hashes embedded in that **same BAT** before execution. The v0.3.0 helper assets were published and hash-verified on 2026-11-17; the **new v0.3.1** BAT must use its own matching helper/schema hashes and its Release assets must be verified before download succeeds. Older BATs can still request older assets and plugin versions. Mismatched local files are rejected, not overwritten. `migrate --dry-run` is read-only; normal migration may create backups in `gradle_backup/`. From the old mod folder, for supported Kotlin or Groovy DSL:
+The Windows launcher can bootstrap the matching versioned `scripts/fabric-amper-migrate.ps1` helper and local schema from GitHub Releases if missing, and it verifies both against hashes embedded in that **same BAT** before execution. **v0.3.1** was published with exactly nine assets, independently redownloaded and SHA-256 verified on 2026-11-18; match each local helper/schema to the **v0.3.1 BAT's own embedded hashes**. Older v0.3.0 assets were separately verified on 2026-11-17. Older BATs can still request older assets and plugin versions. Mismatched local files are rejected, not overwritten. `migrate --dry-run` is read-only; normal migration may create backups in `gradle_backup/`. From the old mod folder, for supported Kotlin or Groovy DSL:
 
 ```bat
 "C:\tools\Fabric-Amper\fabric-amper.bat" migrate --dry-run
@@ -1076,14 +1076,14 @@ dependencies {
 }
 ```
 
-Both examples need an existing `src/main/resources/fabric.mod.json` with Fabric Loader `schemaVersion: 1`, matching mod ID/version and real referenced resources. They illustrate *recognized input syntax*, not complete tested migration projects. The converted YAML explicitly retains `schema: 1`, `product: fabric/mod`, old Loader fields and compatible Java/Kotlin settings. A **v0.3.1** release-target Settings script must request `dev.fabric-amper.settings:0.3.1` via `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`. Verify the actual generated bytes and remote availability before building.
+Both examples need an existing `src/main/resources/fabric.mod.json` with Fabric Loader `schemaVersion: 1`, matching mod ID/version and real referenced resources. They illustrate *recognized input syntax*, not complete tested migration projects. The converted YAML explicitly retains `schema: 1`, `product: fabric/mod`, old Loader fields and compatible Java/Kotlin settings. A **v0.3.1** Settings script requests `dev.fabric-amper.settings:0.3.1` via the now-public `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`. Public resolution and a fresh Fabric Java settings-only build passed; inspect migrated output and validate the actual converted project separately.
 
 With the **default backup mode**, the result resembles:
 
 ```text
 my-old-mod/
 ├── mod.yaml                              # generated
-├── settings.gradle.kts                   # generated for Fabric Amper 0.3.1 prerelease target
+├── settings.gradle.kts                   # generated for published Fabric Amper 0.3.1 prerelease
 ├── gradle_backup/
 │   ├── build.gradle.kts                  # or build.gradle
 │   ├── settings.gradle.kts                # or settings.gradle; only if originally present
@@ -1106,17 +1106,17 @@ These **post-migration** commands do invoke Gradle and may need JDK 25, Gradle a
 
 ### Windows `doctor --fix`: one-file GitHub Release bootstrap
 
-The v0.3.1 release-target BAT requests the following version-matched helper URL when `doctor --fix` is explicitly invoked and its local helper is missing. The new release asset must exist and pass the BAT-pinned SHA-256 check before use; the independently verified helper publication described above belongs to **v0.3.0**, not v0.3.1:
+The published v0.3.1 BAT requests the following version-matched helper URL when `doctor --fix` is explicitly invoked and its local helper is missing. The v0.3.1 GitHub prerelease contains nine assets independently redownloaded and SHA-256 verified on 2026-11-18; the BAT also verifies its pinned checksum before executing a downloaded helper:
 
 ```text
 https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/download/v0.3.1/fabric-amper-doctor-fix.ps1
 ```
 
-The BAT obtains the doctor helper **only** when you explicitly run `doctor --fix` and the verified file is absent; the `v0.3.1` path derives from the release-target BAT's embedded version. The initial download uses a temporary file, pinned SHA-256 verification and a local `scripts/fabric-amper-doctor-fix.ps1` destination. A checksum-keyed request and cache-control headers reduce stale-asset risk; the **expected hash**, not server claims, is authoritative. The doctor helper itself is not a blanket JDK/Gradle download; any authorized repair can perform separate toolchain downloads. The `migrate` helper follows the same pinned policy.
+The BAT obtains the doctor helper **only** when you explicitly run `doctor --fix` and the verified file is absent; the `v0.3.1` path derives from the published BAT's embedded version. The initial download uses a temporary file, pinned SHA-256 verification and a local `scripts/fabric-amper-doctor-fix.ps1` destination. A checksum-keyed request and cache-control headers reduce stale-asset risk; the **expected hash**, not server claims, is authoritative. The doctor helper itself is not a blanket JDK/Gradle download; any authorized repair can perform separate toolchain downloads. The `migrate` helper follows the same pinned policy.
 
 If either helper is already present in **`scripts/`**, the BAT **does not download or overwrite it**: it verifies its hash before execution. A mismatched file, unavailable Release asset, failed checksum or unwritable BAT folder stops the requested operation without executing that helper. On a fresh BAT-only install, `doctor --fix --dry-run` and `migrate --dry-run` merely show missing-helper download plans and **never download**; rerun the normal action to bootstrap, then use `--dry-run` to preview actual migration. `migrate` bootstraps the schema and converter from the Release; `init` downloads a missing schema from the GitHub `main` branch with the same SHA-256 protection. Both still require the relevant toolchain and valid user project files for later tasks.
 
-**Historical prerelease note:** The earlier `v0.1.2` and `v0.1.3` workflows are retained for context only. Their helper downloads, checksums and generated plugin versions do **not** represent the published `v0.3.0` artifacts. The verified v0.3.0 release evidence is dated 2026-11-17; match every helper to the **installed BAT version** and its own SHA-256-pinned GitHub Release assets, including v0.3.1 when available.
+**Historical prerelease note:** The earlier `v0.1.2` and `v0.1.3` workflows are retained for context only. Their helper downloads, checksums and generated plugin versions do **not** represent the published `v0.3.0` or `v0.3.1` artifacts. v0.3.0 release evidence is dated 2026-11-17; v0.3.1 release evidence is dated 2026-11-18. Match every helper to the **installed BAT version** and its own SHA-256-pinned GitHub Release assets.
 
 ### Read-only developer diagnostics and release preview
 
@@ -1643,7 +1643,7 @@ Fabric Amper prints diagnostic codes `FA001`–`FA015` for its own strict YAML, 
 
 ### Plugin marker cannot be resolved
 
-If Gradle cannot resolve `dev.fabric-amper.settings:0.3.1` **before** it reads the YAML, this is not necessarily a parser bug. For the v0.3.1 target, check `pluginManagement.repositories` (including `https://jitpack.io`), the exact `resolutionStrategy.eachPlugin` redirect (`com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`), **whether that prerelease tag and JitPack artifact actually exist**, network and JDK compatibility. The separately verified **v0.3.0** JitPack consumer is historical evidence and cannot establish v0.3.1 availability. `fabric-amper.bat setup` was removed. The local G29 producer repository is only for isolated development. Gradle Plugin Portal publication is not established.
+If Gradle cannot resolve `dev.fabric-amper.settings:0.3.1` **before** it reads the YAML, this is not necessarily a parser bug. **v0.3.1 public JitPack is verified**: tag commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`, status `ok`, three JDK 25 modules and POM HTTP 200, with a fresh Fabric Java consumer build PASS on 2026-11-18. Check `pluginManagement.repositories` (including `https://jitpack.io`), the exact `resolutionStrategy.eachPlugin` redirect (`com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`), network, cache and JDK compatibility. **v0.3.0** JitPack verification remains separately dated. `fabric-amper.bat setup` was removed. The local G29 producer repository is only for isolated development. Gradle Plugin Portal publication is not established.
 
 ### The YAML parses but the build rejects it
 
@@ -1663,12 +1663,17 @@ Check the **environment variable names**, not their secret values in the YAML. A
 
 ## Verification and known limits
 
-Verification evidence is tracked in [`QA_REPORT.md`](QA_REPORT.md), [`specs.md`](specs.md) §12 and the earlier acceptance-evidence index under `analysis/acceptance-evidence-2026-11-13/`. Earlier Fabric-only and v0.3.0 candidate records are retained; the subsequent **published GitHub v0.3.0 prerelease / JitPack remote consumer PASS** is recorded separately from source and TestKit evidence, and does not imply Minecraft runtime approval.
+Verification evidence is tracked in [`QA_REPORT.md`](QA_REPORT.md), [`specs.md`](specs.md) §12 and the earlier acceptance-evidence index under `analysis/acceptance-evidence-2026-11-13/`. Earlier Fabric-only and v0.3.0 candidate records are retained; **v0.3.0 public release/JitPack NeoForge + Architectury + Kotlin consumer PASS (2026-11-17)** and **v0.3.1 public release/JitPack Fabric Java consumer PASS (2026-11-18)** are independently dated from producer and local TestKit evidence. Neither implies Minecraft runtime or IDE approval.
 
 | Area | Recorded evidence / limitation |
 | --- | --- |
 | Gradle 9.7.1, JDK 25, later develop `clean build validatePlugins --offline` | **PASS** recorded; not a v0.3.0 public install or full runtime validation |
-| Producer JUnit: prior baseline and v0.3.0 candidate | Previous **364 total: 307 PASS, 57 SKIP**; latest `clean build validatePlugins --offline` **371 total: 314 PASS, 57 SKIP, 0 FAIL, 0 ERROR**, with BAT routing and schema-default regressions; not a proof of remote install or actual game startup |
+| Producer JUnit: previous v0.3.0 candidate | **364 total: 307 PASS, 57 SKIP**; later v0.3.0 source candidate `clean build validatePlugins --offline` **371 total: 314 PASS, 57 SKIP, 0 FAIL, 0 ERROR**, including BAT routing and schema-default regressions |
+| Producer v0.3.1 full validation | **383 total = 324 PASS + 59 SKIP + 0 FAIL**, `validatePlugins` **PASS**; skipped tests remain untested |
+| GitHub v0.3.1 public prerelease assets | **2026-11-18: exactly 9 assets independently redownloaded, SHA-256 PASS** |
+| JitPack v0.3.1 annotated tag | Commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`, status **`ok`**, **JDK 25**, **3 modules**, **POM HTTP 200** |
+| v0.3.1 public settings-only Fabric Java consumer | `help validateFabricAmper build verifyFabricAmperJar` **PASS (33 s)**, actual Java compile and exactly **one `fabric.mod.json`** in artifact |
+| v0.3.1 local dual consumer TestKit | **2/2 PASS**; does not establish public v0.3.1 NeoForge consumer or actual game loading |
 | Schema 1.1 NeoForge standalone + Fabric/NeoForge dual Java/Kotlin consumer builds | Selected real TestKit **PASS**, including dual Architectury, API/mod and independent-loader combinations |
 | Schema 1.1 two-loader `:common` cache behavior | Steady-state HIT and stable JARs **PASS**; strict cold second-run HIT **NOT MET** once when `:common` JAR was first created |
 | Settings-only consumers, generated metadata and JAR checks | Selected real TestKit consumers **PASS** |
@@ -1681,7 +1686,7 @@ Verification evidence is tracked in [`QA_REPORT.md`](QA_REPORT.md), [`specs.md`]
 | Authenticated native remote Maven HTTPS PUT and configuration-cache HIT **simultaneously** | **Not demonstrated**; Gradle native `PasswordCredentials` CC incompatibility recorded |
 | External Modrinth/CurseForge actual release | **Not attempted**; no outside-platform upload authorized |
 
-The **57 skipped tests are not passing tests**, and the combined Fabric G1–G30 / NeoForge NF shipping gates remain **NOT FULLY APPROVED**. The 2026-11-13 `build/libs/fabric-amper-0.1.0.jar` artifact (315,122 bytes, SHA-256 `13022B24ADE7C9809400FC6AEBE99E7751783A9DAE7EF8B8C53780FE70B698AD`) is **historical only**, not the current plugin or a v0.3.0 checksum. Public v0.3.0 JitPack resolution and remote consumer build passed separately; game runtime and IntelliJ GUI acceptance are still unapproved.
+The **59 skipped tests in the v0.3.1 suite are not passing tests** (the historical v0.3.0 suite had 57 SKIP), and the combined Fabric G1–G30 / NeoForge NF shipping gates remain **NOT FULLY APPROVED**. The 2026-11-13 `build/libs/fabric-amper-0.1.0.jar` artifact (315,122 bytes, SHA-256 `13022B24ADE7C9809400FC6AEBE99E7751783A9DAE7EF8B8C53780FE70B698AD`) is **historical only**, not a v0.3.1 checksum. Public v0.3.1 JitPack Fabric Java consumer build and prior v0.3.0 NeoForge + Architectury + Kotlin remote build both passed in their stated scopes; public v0.3.1 NeoForge, game runtime and IntelliJ GUI acceptance remain unapproved.
 
 The separate updated `fabric-amper.schema.json` underwent Draft-07 and selected positive/negative regression checks. That validation is useful for editor completion, but the plugin is the final authority for side-safety, resource existence, real dependency resolution, and runtime Loader predicates.
 

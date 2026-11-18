@@ -1563,3 +1563,28 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 **v0.3.1 배포 후보:** 새 컴파일 결과에서 구버전 바이너리 이름을 바꾸지 않고 플러그인 JAR / sources JAR / 로컬 Maven ZIP / Windows 도구 ZIP / 4개 단독 도구·스키마 / SHA256SUMS 총 **9개 자산**을 구성했다. 별도 검증 스크립트가 8개 해시, Maven ZIP 양쪽 Plugin Marker, Windows ZIP 9개 정확한 구성요소와 고정된 helper/schema SHA, Maven/JAR byte identity를 검사해 **PASS**. 이 절의 검증은 로컬 후보 자산 검사로, GitHub 원격 재다운로드 및 JitPack v0.3.1 공개 소비자 빌드 결과와 구분한다.
 
 **미수락 상태:** Minecraft 실제 클라이언트/서버 런타임, IntelliJ 실제 GUI Sync, 엄격한 콜드 두 번째 config-cache HIT, 외부 플랫폼 인증 게시, 모든 G1–G30/NF1–NF26은 여전히 별도 출하 게이트다. 59 SKIP는 PASS가 아니다.
+
+## 43. v0.3.1 GitHub 공개 프리릴리즈·원격 자산·JitPack 소비자 검증 (2026-11-18)
+
+**릴리즈 실게시:** §42의 소스 후보를 main 커밋 `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`로 고정하고, 이를 가리키는 새 annotated Git 태그 `v0.3.1`를 origin에 게시했다. `origin/main`은 해당 커밋에, `origin/develop`은 별도 소스 동기화 커밋 `b90496165fe07f78ca62a92be76e140df0926df4`에 각각 푸시했다. 양 worktree의 추적 소스 154개 파일을 바이트 비교해 **차이 0건**을 확인했다. develop에 기존부터 남아 있던 추적 `build/**` 산출물의 미커밋 변경은 삭제/수정/스테이징하지 않았다. 과거 annotated `v0.3.0` 태그 객체 `371b81095248c9c02a4dc623bf2071427bf891cb`와 기존 자산은 그대로 보존했다.
+
+**GitHub 공개 검증:** https://github.com/howShouldIChooseMyUsername/Fabric-Amper/releases/tag/v0.3.1 에서 `draft: false`, `prerelease: true`, 제목 `Fabric Amper v0.3.1 - Developer Preview`, 2026-11-18 게시 및 다음 **9개 자산**을 실제 확인했다. 서버에서 모든 자산을 새 디렉터리에 **재다운로드**한 후 독립 패키지 검증기가 SHA256SUMS의 **8/8 해시 일치**, 루트 Plugin Marker, Maven ZIP의 두 marker POM, 배포 JAR/Maven JAR 동일 바이트, Windows ZIP 9개 구성요소·helper/schema BAT 핀 일치를 모두 확인해 PASS.
+
+| 자산 | 재다운로드 SHA-256 |
+| --- | --- |
+| `fabric-amper-0.3.1.jar` | `b4050eefae5917b938412c5d033ba35523cd93728e5aa8883846ba73055b6af5` |
+| `fabric-amper-0.3.1-sources.jar` | `b56b2c3ef40211b78aef4ed707cb4b2829683e401b89c6f3014e148297980768` |
+| `fabric-amper-0.3.1-maven-repository.zip` | `e7253135e0022c2952755e61007622d1b8f8c677b84d38527500b8355f73dca6` |
+| `fabric-amper-0.3.1-windows-tools.zip` | `b6fe299a685045ebac4d2c2ca89764187b3c79dad3ee63322f07e562b4a3bbbc` |
+| `fabric-amper.bat` | `c0ae5c8519603c06d328df47d22b0352fee914ea0ed10faef419ce22f99e9326` |
+| `fabric-amper.schema.json` | `dd84e7af00ce9bde155ec7d13d672d040f43d8c46f5f1145131cdbee5f9c6d3c` |
+| `fabric-amper-migrate.ps1` | `20ff79e813933b724b8032789253c89747cd36df5895d05d1321ffb8133d0b2d` |
+| `fabric-amper-doctor-fix.ps1` | `c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053` |
+
+9번째 `SHA256SUMS.txt`는 위 8개 파일의 해시 목록이다. 릴리즈 ZIP은 기존 v0.3.0의 파일명을 바꿔 재사용한 것이 아니라 0.3.1 생산자 빌드와 G29 실제 Maven 게시 결과를 사용한다.
+
+**JitPack 공개 확인:** 실제 원격 `https://jitpack.io/api/builds/com.github.howShouldIChooseMyUsername/Fabric-Amper/v0.3.1`는 `status: ok`, `isTag: true`, `private: false`, `jdk: 25`, commit `3f8d0f1...`, 세 모듈 `fabric-amper`, `dev.fabric-amper.settings.gradle.plugin`, `dev.fabric-amper.project.gradle.plugin`을 반환했다. 별도의 새 태그 공개 POM `Fabric-Amper-v0.3.1.pom` 요청 HTTP **200**, 실제 `version: v0.3.1` 확인. 초기에 JitPack API `status: none`였으나 공개 POM 요청으로 해당 태그 빌드가 수행된 뒤 `ok`로 변한 **후속 검증**이다.
+
+**새 실제 공개 소비자 (로컬 Plugin classpath 주입 없음):** `build/release-031-public-consumer`의 `settings.gradle.kts`는 오직 공개 JitPack `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`, plugin version `0.3.1`을 요청한다. `mod.yaml`은 schema 1.1 Fabric/Java + 새 root `dependencies[].loader: fabric`을 사용하고 `build.gradle(.kts)`가 없다. Gradle 9.7.1/JDK 25 `help validateFabricAmper build verifyFabricAmperJar --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 33s, 9 tasks executed**. 실제 `compileJava`·JSON 생성·`jar`·검증 완료. 산출 `release031probe-1.0.0+26.3.jar`에는 루트 `fabric.mod.json` 정확히 1개, 실제 `org/example/Release031Probe.class`, NeoForge TOML 0개를 별도로 ZIP 검증했다. 이는 **v0.3.1 공개 JitPack Fabric 소비자 실증**이며, v0.3.1 NeoForge 공개 소비자/실제 Minecraft 게임 실행을 했다는 뜻이 아니다.
+
+**증거 경계:** v0.3.1 GitHub 공개 자산/JitPack/Fabric 단독 소비자 PASS와 §42의 로컬 NeoForge·듀얼 TestKit 2/2 PASS를 구분해야 한다. 게임 client/server 실제 부팅, IntelliJ GUI Sync, 엄격한 cold 두 번째 CC HIT, 모든 G/NF 게이트, 실제 외부 Modrinth·CurseForge 인증 업로드는 여전히 **NOT APPROVED**. 사용자 EULA를 자동 승인하거나 인증을 대체하지 않는다.

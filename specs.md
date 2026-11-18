@@ -1,6 +1,6 @@
 # Fabric Amper — 구현 청사진 (`specs.md`)
 
-**원본 설계 기준일:** 2026-11-11. **현재 개발 계약 기준일:** 2026-11-18 (§12.12.7 추가). **이력 구분:** 기존 §1–§11의 `schema: 1`, `0.1.0`, 최초 구현 전제 및 “아직 검증 없음” 등의 서술은 **당시 설계 기록**이다. 현행 `main`의 실제 입력·기능 계약은 §12, 특히 §12.1·§12.8·§12.12를 우선한다. **현행 스키마 생략 기본값은 1.1**이며, 과거 v1을 선택하려면 `schema: 1`을 명시해야 한다. 공개 v0.2.0의 사용 계약을 소급 변경하지 않으며, **v0.3.0 GitHub 프리릴리즈는 2026-11-17에 게시되었고, 9개 자산 해시와 JitPack 공개 소비자 빌드가 검증되었다.** §12.12.5의 소비자 TestKit 및 공개 JitPack 빌드 PASS를 Minecraft 게임 실행·IntelliJ GUI Sync·전체 출하 승인으로 해석하지 않는다. **v0.3.1은 2026-11-18 프리릴리즈 준비 대상으로, 새 릴리즈 자산과 JitPack 성공 검증을 완료한 것으로 기록하지 않는다.**
+**원본 설계 기준일:** 2026-11-11. **현재 개발 계약 기준일:** 2026-11-18 (§12.12.7 및 공개 릴리즈 검증 갱신). **이력 구분:** 기존 §1–§11의 `schema: 1`, `0.1.0`, 최초 구현 전제 및 “아직 검증 없음” 등의 서술은 **당시 설계 기록**이다. 현행 `main`의 실제 입력·기능 계약은 §12, 특히 §12.1·§12.8·§12.12를 우선한다. **현행 스키마 생략 기본값은 1.1**이며, 과거 v1을 선택하려면 `schema: 1`을 명시해야 한다. 공개 v0.2.0의 사용 계약을 소급 변경하지 않으며, **v0.3.0 GitHub 프리릴리즈는 2026-11-17에 게시되어 9개 자산 해시와 NeoForge+Architectury+Kotlin JitPack 공개 소비자 빌드가 검증되었다.** **v0.3.1 GitHub 공개 프리릴리즈는 2026-11-18에 게시되었고**, 정확히 **9개 릴리즈 자산 원격 재다운로드/SHA-256 PASS**, 주석 달린 `v0.3.1` 태그의 커밋 `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`에 대한 JitPack `ok`(JDK 25, 3개 모듈, POM HTTP 200), 공개 JitPack 설정 전용 **Fabric Java** 소비자 `help validateFabricAmper build verifyFabricAmperJar` **33초 PASS**(실제 컴파일 및 `fabric.mod.json` 단 하나)를 확인했다. Producer 전체 테스트 **383개 = 324 PASS + 59 SKIP + 0 FAIL**, `validatePlugins` PASS, dual 로컬 TestKit **2/2 PASS**다. 이 결과를 **v0.3.1 공개 NeoForge 소비자·Minecraft 게임 실행·IntelliJ GUI Sync·콜드 CC·전체 출하 승인으로 해석하지 않는다.**
 
 ## 1. 사용자 계약·기술적 사실
 
@@ -1129,7 +1129,7 @@ dependencies: []                    # 기본 공통 중립 Gradle 의존성; 객
 test-dependencies: []
 ```
 
-이 예시는 **공통 필드는 루트, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`**로 유지하는 12.3절의 설계 규칙을 따른다. 루트 YAML의 이름이 `mod.yml`이어도 의미·생성 디렉터리·수락 조건은 동일하다. 두 로더 + Architectury 켬이라면 동일 YAML의 `architectury.enable`만 `true`로 바꾸고, 생성되는 코드/Gradle 프로젝트를 C형으로 바꾼다. `--kotlin` 역시 공통 `settings.kotlin.enabled: true` 및 세 소스 경로의 `.kt`와 일치시킨다. split이 **유효한** 경우에만 `fabric.loom.splitEnvironmentSourceSets: true`를 쓴다. v0.3.1 준비 계약에서 루트 `dependencies` 항목은 기본 공통이며 객체에 선택적 `loader: fabric|neoforge`를 붙이면 해당 타깃으로만 라우팅한다(§12.12.7).
+이 예시는 **공통 필드는 루트, Fabric 전용은 `fabric:`, NeoForge 전용은 `neoforge:`**로 유지하는 12.3절의 설계 규칙을 따른다. 루트 YAML의 이름이 `mod.yml`이어도 의미·생성 디렉터리·수락 조건은 동일하다. 두 로더 + Architectury 켬이라면 동일 YAML의 `architectury.enable`만 `true`로 바꾸고, 생성되는 코드/Gradle 프로젝트를 C형으로 바꾼다. `--kotlin` 역시 공통 `settings.kotlin.enabled: true` 및 세 소스 경로의 `.kt`와 일치시킨다. split이 **유효한** 경우에만 `fabric.loom.splitEnvironmentSourceSets: true`를 쓴다. 공개된 v0.3.1 계약에서 루트 `dependencies` 항목은 기본 공통이며 객체에 선택적 `loader: fabric|neoforge`를 붙이면 해당 타깃으로만 라우팅한다(§12.12.7).
 
 다음은 설정 생성 전 또는 초기 Gradle 구성에서 **경로/선택 타깃/필드 위치를 포함해 실패**해야 하는 조건이다.
 
@@ -1210,7 +1210,7 @@ fabric-amper.bat -C "consumer_folder" server --mod-neoforge
 
 **검증 수준:** Worker21이 **가짜 `gradlew.bat` 스텁으로 실제 게임/Gradle을 실행하지 않고** 전달 인자를 캡처하는 BAT 스모크를 PASS로 확인했다. 이는 dual에서 로더 미지정 거부, 각 client/server의 네 작업 매핑, 단일 로더 무플래그 동작, 로더 불일치·미지/추가 인자 거부를 뒷받침한다. **실제 Minecraft 26.3 `runFabricClient`/`runNeoForgeClient`/`runFabricServer`/`runNeoForgeServer`, EULA 또는 인증이 필요한 서버 로딩, IntelliJ GUI 실행은 NOT RUN**이다. 이 경계와 공개 v0.2.0의 미지원 상태를 유지하며 실제 Loader 로딩은 후속 런타임 수락 게이트로 남긴다.
 
-#### 12.12.7. v0.3.1 프리릴리즈 준비 — 루트 `dependencies[].loader` 선택 규약 (2026-11-18)
+#### 12.12.7. 공개 v0.3.1 프리릴리즈 — 루트 `dependencies[].loader` 선택 규약 및 검증 (2026-11-18)
 
 스키마 1.1에서 **루트 `dependencies` 배열의 객체형 항목**에 `loader: fabric` 또는 `loader: neoforge`를 선택적으로 지정할 수 있다. 이 설정은 **Gradle 아티팩트 의존성의 적용 대상**을 정한다. 생략하면 기존대로 `product`가 선택한 모든 로더에 공유하고, 명시하면 해당 로더에만 적용한다. 단일 Fabric/NeoForge 제품에서도 자기 로더를 명시하는 것이 유효하며, 선택하지 않은 상대 로더를 요청하거나 다른 값을 지정하면 FA003으로 거부한다. 다음은 `product: [fabric/mod, neoforge/mod]`인 기존 1.1 YAML에 들어갈 **의존성 부분만** 발췌한 예시다.
 
@@ -1225,4 +1225,14 @@ dependencies:
 
 `org.example` 좌표는 문법 설명용 가상 아티팩트다. `loader`는 루트의 `dependencies.loader`가 아니라 **각 의존성 객체의 멤버**다. 좌표 문자열과 한 키짜리 scope 축약형은 기존처럼 유효하지만 자체 `loader` 멤버를 가질 수 없다. `fabric.gradleDependencies[]`와 `neoforge.gradleDependencies[]`는 이미 로더 블록에 소속되므로 별도 `loader` 필드를 받지 않으며, 공통 테스트 의존성 `test-dependencies[]`에도 사용하지 않는다. **명시적 정수 `schema: 1`은 기존 문법을 유지하며 loader 키를 금지한다.**
 
-`dependencies[].loader`는 `fabric.depends` 또는 `neoforge.dependencies[]` 같은 **게임 실행 시 Loader 관계**를 자동 등록하는 필드가 아니다. 또한 원래의 `scope`, `kind`, `target`, `exported`, `include` 제약과 리소스·플랫폼 격리 계약을 우회하지 않는다. 특히 Fabric JAR-in-JAR `include`를 NeoForge에 그대로 복제하지 않는다. 이 절은 **v0.3.1 구현·정적 스키마 동기화 대상 계약**이다. 2026-11-17 **v0.3.0의 371-test 소스 후보/9개 릴리즈 자산/JitPack 소비자 PASS**와 구별해 v0.3.1 실제 테스트·원격 게시·게임 실행 결과는 해당 작업 이후 별도 QA에 기록해야 한다.
+`dependencies[].loader`는 `fabric.depends` 또는 `neoforge.dependencies[]` 같은 **게임 실행 시 Loader 관계**를 자동 등록하는 필드가 아니다. 또한 원래의 `scope`, `kind`, `target`, `exported`, `include` 제약과 리소스·플랫폼 격리 계약을 우회하지 않는다. 특히 Fabric JAR-in-JAR `include`를 NeoForge에 그대로 복제하지 않는다. 이 절은 **2026-11-18 공개 v0.3.1 구현 및 정적 스키마 계약**이다. v0.3.1 릴리즈 자산과 원격 소비자 검증은 다음과 같다.
+
+| 검증 영역 (2026-11-18) | 확인된 사실 | 결과 해석의 경계 |
+| --- | --- | --- |
+| GitHub `v0.3.1` 프리릴리즈 | **공개 게시 완료**, 정확히 **9개** 자산 재다운로드 및 SHA-256 **PASS** | 태그 또는 자산 재작성은 이 문서 작업에서 수행하지 않음 |
+| JitPack 공개 태그 | annotated tag commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`, status **`ok`**, **JDK 25 / 3 modules**, POM **HTTP 200** | 저장소 상태와 원격 메타데이터 확인; 모든 Loader 런타임 보증 아님 |
+| 공개 JitPack Fabric Java 설정 전용 소비자 | `help validateFabricAmper build verifyFabricAmperJar` **PASS (33초)**, 실제 Java 컴파일, 결과 JAR의 `fabric.mod.json` 정확히 1개 | **v0.3.1 NeoForge 공개 소비자·실제 게임 시작·IDE GUI 검증 결과 아님** |
+| Producer 전체 테스트·플러그인 검증 | **383 total = 324 PASS + 59 SKIP + 0 FAIL**, `validatePlugins` **PASS** | 59개 SKIP은 PASS로 간주하지 않음 |
+| 로컬 dual 소비자 TestKit | **2/2 PASS** | 공개 v0.3.1 JitPack NeoForge 소비자 빌드·Minecraft 런타임은 별도 |
+
+2026-11-17의 공개 **v0.3.0** 371-test 후보·9개 릴리즈 자산·NeoForge+Architectury+Kotlin JitPack 소비자 PASS는 이전 버전의 날짜가 있는 증거로 유지한다. 새 **v0.3.1** 공개 검증을 같은 버전의 Fabric Java 소비자·Producer·로컬 dual TestKit 범위로 한정하며, Minecraft 게임 실행·NeoForge 공개 원격 소비자·IntelliJ GUI·엄격한 콜드 CC·전체 NF/G 게이트 승인까지 완료했다고 주장하지 않는다.
