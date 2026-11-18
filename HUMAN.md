@@ -14,7 +14,7 @@ This is the **user-facing** guide. For source-of-truth field constraints, see [`
 
 **Published schema behavior.** GitHub `v0.3.1` was published on 2026-11-18; its nine assets, JitPack status and fresh settings-only Fabric Java remote consumer build were verified. GitHub `v0.3.0` and its separate NeoForge + Architectury + Kotlin remote consumer were verified on 2026-11-17. Treat NeoForge public v0.3.1 consumer builds, Minecraft runtime, IDE sync and strict cold-cache behavior as separate acceptance requirements.
 
-| Root YAML `schema` | Meaning in published v0.3.0 |
+| Root YAML `schema` | Meaning in current v0.3.1 |
 | --- | --- |
 | **Omitted** | **Defaults to 1.1** (implemented and regression-tested); loader fields belong under `fabric:` / `neoforge:` |
 | `schema: "1.1"` | Explicit schema 1.1; safest during transition |
@@ -152,7 +152,10 @@ For Kotlin, set `settings.kotlin.enabled: true` and use the corresponding `src/m
 ### Windows initialization and explicit execution selection
 
 ```bat
-fabric-amper.bat init examplemod                  rem Fabric by default
+rem Default Fabric-only init generates schema 1.1.
+fabric-amper.bat init examplemod
+rem Use the explicit flag only for historical Fabric schema 1.
+fabric-amper.bat init examplelegacy "Legacy Example" mod --legacy-schema1
 fabric-amper.bat init examplemod --here --mod-neoforge
 fabric-amper.bat init examplemod dualmod mod --mod-fabric --mod-neoforge --architectury
 fabric-amper.bat init examplemod independent mod --mod-fabric --mod-neoforge --kotlin
@@ -167,7 +170,7 @@ fabric-amper.bat -C "dualmod" server --mod-fabric
 fabric-amper.bat -C "dualmod" server --mod-neoforge
 ```
 
-`init` without loader flags defaults to Fabric; `--mod-neoforge` selects NeoForge alone; both loader flags select dual. `--architectury` adds the shared module only in dual mode; `--kotlin` creates Kotlin sources instead of Java, and `--here` initializes a compatible existing tools folder. NeoForge/dual BAT templates write `schema: "1.1"`; for the historic Fabric template's compatibility pin, see the [legacy reference](#historical-schema-1-reference). No starter writes consumer build scripts or manual loader manifests.
+`init` without loader flags defaults to Fabric; `--mod-neoforge` selects NeoForge alone; both loader flags select dual. `--architectury` adds the shared module only in dual mode; `--kotlin` creates Kotlin sources instead of Java, and `--here` initializes a compatible existing tools folder. **All ordinary BAT templates, including Fabric-only, write explicit `schema: "1.1"`.** Only an explicit Fabric-only `--legacy-schema1` writes `schema: 1` and the [legacy field layout](#historical-schema-1-reference). `migrate` also retains the legacy pin. No starter writes consumer build scripts or manual loader manifests.
 
 Single-loader `run` / `server` without flags use `runClient` / `runServer`. **Dual loaders require exactly one** `--mod-fabric` or `--mod-neoforge` on each run/server invocation; they map to `runFabricClient` / `runNeoForgeClient` and `runFabricServer` / `runNeoForgeServer`. Missing/mismatched loader selection, duplicate flags and arbitrary arguments are rejected. `gradle build` at the dual root builds both modules; check `gradle tasks --all` for available target tasks. The current BAT's `build`, `validate` and `verify` safely dispatch to both `:fabric` and `:neoforge` validations/verifications in dual mode (and keep root tasks for a single loader). This dispatch has fake-Gradle command-routing tests; actual consumer compilation and game runtime are separate checks. The server EULA must be reviewed manually; Fabric Amper never accepts it or handles authentication automatically.
 
@@ -217,7 +220,7 @@ The **single entry plugin** is `dev.fabric-amper.settings`. Do not separately ap
 
 | Component | Current documented example | Notes |
 | --- | --- | --- |
-| Fabric Amper | **v0.3.0 published prerelease** | GitHub assets SHA-256 checked; public JitPack resolved in a fresh NeoForge+Architectury+Kotlin consumer |
+| Fabric Amper | **v0.3.1 published prerelease** | Nine SHA-256-checked assets, public JitPack and a fresh Fabric Java consumer verified; prior v0.3.0 NeoForge+Architectury+Kotlin consumer evidence remains separately dated |
 | Minecraft | `26.3` | Non-remapping, Mojang official names |
 | Java/JDK | **25** | Gradle itself must run on Java 25 or newer for Minecraft 26.3; YAML release must be 25 |
 | Fabric Loader | `0.20.1` | Fixed version, not `latest.release` |
@@ -318,7 +321,7 @@ repositories:
   - mavenCentral
 ```
 
-This is a complete **schema 1.1** Fabric example. You can omit the `schema` key in v0.3.0; the quoted value makes the version explicit. Loader configuration and metadata belong in `fabric`, while `mod` holds common identity. `repositories` is an array in **both** schema versions. Quote version strings and implement the entrypoint in real source. See [historical schema 1](#historical-schema-1-reference) to maintain older projects.
+This is a complete **schema 1.1** Fabric example. You can omit the `schema` key in v0.3.1; the quoted value makes the version explicit, just like current BAT `init`. Loader configuration and metadata belong in `fabric`, while `mod` holds common identity. `repositories` is an array in **both** schema versions. Quote version strings and implement the entrypoint in real source. See [historical schema 1](#historical-schema-1-reference) to maintain older projects.
 
 ### 4. Write the Java entrypoint
 
@@ -530,7 +533,7 @@ Again, this is a **fragment**. In a real schema 1.1 YAML file, provide `minecraf
 
 - **Use two spaces for indentation.** Write ordinary mappings and lists, not executable Gradle/Kotlin snippets inside YAML.
 - Use **exactly one** `mod.yaml` **or** `mod.yml`. Both at once, or neither, is **FA001**.
-- In published v0.3.0, omitted `schema` selects **1.1**, and `schema: "1.1"` is its explicit form. Schema 1.1 supports Fabric, NeoForge and dual-loader arrays. Older projects must explicitly pin schema 1 and use the [historical syntax](#historical-schema-1-reference). Unsupported versions fail FA003.
+- In published v0.3.1, omitted `schema` selects **1.1**, and `schema: "1.1"` is its explicit form. Schema 1.1 supports Fabric, NeoForge and dual-loader arrays, and ordinary BAT `init` now writes that form for all targets. Older projects must explicitly pin schema 1 and use the [historical syntax](#historical-schema-1-reference). Unsupported versions fail FA003.
 - Quote Minecraft, Loader, API, Maven, version-range, and numeric-looking version **strings**. `version: 26.3` may parse as a number and fail; use `version: "26.3"`.
 - Use true YAML booleans `true` / `false`, not `yes` or quoted `"true"`.
 - Fixed Gradle versions only. No `latest.release`, `1.+`, or `1.2.x` for `fabric.loader` / `fabric.api` / `neoforge.version`.
@@ -969,6 +972,7 @@ From the **Fabric Amper producer directory**:
 ```bat
 fabric-amper.bat doctor
 fabric-amper.bat init example_mod
+fabric-amper.bat init legacy_mod "Legacy Mod" mod --legacy-schema1
 fabric-amper.bat init test_mode "Test Mode" mod --kotlin
 fabric-amper.bat init strict_mod "Strict Mod" mod --splitEnvironmentSourceSets
 fabric-amper.bat init strict_kotlin "Strict Kotlin" mod --kotlin --splitEnvironmentSourceSets
@@ -978,7 +982,7 @@ fabric-amper.bat init architectury_kotlin "Architectury Kotlin" mod --kotlin --a
 fabric-amper.bat init example_api "C:\work\example_api" api
 ```
 
-**Optional source-set isolation during `init`:** append `--splitEnvironmentSourceSets` to generate `fabric.loom.splitEnvironmentSourceSets: true` under `fabric:` for schema 1.1. Without it, source-set splitting remains disabled by default. The option supports `mod`, `api`, `--here`, Java and Kotlin. Combine it with `--kotlin` in **either order after the optional folder/profile arguments**; duplicated/misplaced switches are rejected. In addition to the common `src/main/java/org/example/ExampleMod.java` (or Kotlin `.kt`), split initialization creates `src/client/java/org/example/ExampleModClient.java` (or `src/client/kotlin/org/example/ExampleModClient.kt`) implementing `ClientModInitializer`, creates `src/main/resources` and `src/client/resources`, and registers `fabric.entrypoints.client: [org.example.ExampleModClient]` alongside `main`. Both the Java and Kotlin client examples compile in the split source set. `src/main` remains **common code**, not dedicated-server-only, and the flag does **not** set the entire mod's `fabric.environment` to `client`. Unflagged initialization creates neither a client source tree nor a client entrypoint. Older Fabric-only `init` output can still use schema 1: see the [historical reference](#historical-schema-1-reference).
+**Optional source-set isolation during `init`:** append `--splitEnvironmentSourceSets` to generate `fabric.loom.splitEnvironmentSourceSets: true` under `fabric:` in the default schema 1.1 Fabric starter. Without it, source-set splitting remains disabled. The option supports Fabric `mod`, `api`, `--here`, Java and Kotlin; NeoForge-only rejects it and dual Architectury ignores it with a notice. Combine it with `--kotlin` in **either order after the optional folder/profile arguments**; duplicated/misplaced switches are rejected. In addition to the common `src/main/java/org/example/ExampleMod.java` (or Kotlin `.kt`), Fabric-only split initialization creates `src/client/java/org/example/ExampleModClient.java` (or `src/client/kotlin/org/example/ExampleModClient.kt`) implementing `ClientModInitializer`, creates `src/main/resources` and `src/client/resources`, and registers `fabric.entrypoints.client: [org.example.ExampleModClient]` alongside `main`. Both the Java and Kotlin client examples compile in the split source set. `src/main` remains **common code**, not dedicated-server-only, and the flag does **not** set the entire mod's `fabric.environment` to `client`. Unflagged initialization creates neither a client source tree nor a client entrypoint. An explicit `--legacy-schema1` Fabric starter instead places these settings at `settings.loom` and `mod.entrypoints.client`; see the [historical reference](#historical-schema-1-reference).
 
 **Architectury initialization (published v0.3.0 prerelease):** `--architectury` enables the common `architectury.enable: true` setting. For Fabric-only projects it integrates the Fabric API variant; NeoForge-only uses the NeoForge variant. Dual-target projects additionally generate `common/` with loader-neutral `ExampleCommon`, plus independent platform entrypoints under `fabric/` and `neoforge/`. Java or Kotlin sources are generated according to `--kotlin`. A fresh public v0.3.0 JitPack NeoForge + Architectury + Kotlin consumer built successfully; actual-game Architectury initialization still needs independent validation.
 
@@ -988,7 +992,7 @@ fabric:
     splitEnvironmentSourceSets: true
 ```
 
-`init <id> [new_folder] [mod|api] [loader flags] [--kotlin] [--architectury] [--splitEnvironmentSourceSets]` creates `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` snapshot, optional editor settings and a matching initializer. **Java is default**; `--kotlin` sets `settings.kotlin.enabled: true` and writes real Kotlin classes instead. NeoForge uses `@Mod`, not a Fabric `ModInitializer`. Flags follow the positional parameters and duplicated/misplaced flags are rejected. `--here` preserves unrelated tools but refuses conflicting YAML, Settings/build scripts or source trees; no overwrites. A missing `fabric-amper.schema.json` may be downloaded from GitHub `main` **only after matching the BAT's pinned SHA-256**; a changed or mismatched file is rejected. NeoForge/dual starters write explicit `schema: "1.1"`; Fabric-only BAT starters use their documented [compatibility layout](#historical-schema-1-reference), while manually written omitted-schema YAML is 1.1. v0.3.1 generated Settings request the now-published JitPack `v0.3.1` (fresh Fabric Java consumer PASS). The local editor schema is a snapshot, not automatically refreshed after plugin upgrades. `setup` was removed.
+`init <id> [new_folder] [mod|api] [loader flags] [--kotlin] [--architectury] [--splitEnvironmentSourceSets] [--legacy-schema1]` creates `settings.gradle.kts`, `mod.yaml`, a local `schemas/mod.schema.json` snapshot, optional editor settings and a matching initializer. **Java is default**; `--kotlin` sets `settings.kotlin.enabled: true` and writes real Kotlin classes instead. NeoForge uses `@Mod`, not a Fabric `ModInitializer`. Flags follow the positional parameters and duplicated/misplaced flags are rejected. `--here` preserves unrelated tools but refuses conflicting YAML, Settings/build scripts or source trees; no overwrites. A missing `fabric-amper.schema.json` may be downloaded from GitHub `main` **only after matching the BAT's pinned SHA-256**; a changed or mismatched file is rejected. **All default starters emit explicit `schema: "1.1"`**, including Fabric alone. Only `--legacy-schema1` on Fabric-only `init` selects the old [compatibility layout](#historical-schema-1-reference); NeoForge/dual plus this flag fails. Manually written omitted-schema YAML also uses 1.1. v0.3.1 generated Settings request the now-published JitPack `v0.3.1` (fresh Fabric Java consumer PASS). The local editor schema is a snapshot, not automatically refreshed after plugin upgrades. `setup` was removed.
 
 From the **consumer directory**, use the batch file's full path (unless its directory is on `PATH`):
 
@@ -1011,7 +1015,7 @@ Or select a consumer explicitly with `-C` or `--project` **before the subcommand
 | `doctor --fix --dry-run` | **No network or file/registry changes.** With a verified local PS1, preview JDK25/Gradle and missing consumer Settings/editor files; without one, show only the proposed PS1 download URL and stop |
 | `doctor --fix` | **Explicit opt-in.** When missing, fetch the matching release's `fabric-amper-doctor-fix.ps1` into **`scripts/` beside the BAT**, verify its pinned SHA-256, then inspect/install missing JDK25/Gradle and repair missing consumer bootstrap/editor files |
 | `init <id> [folder] [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]` | Choose Fabric (default), NeoForge or both; Architectury adds `common/` to dual; Kotlin or Fabric split optional; no overwrite |
-| `init <id> --here [mod|api] [loader flags] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]` | Same choices in a compatible tools-only folder; refuse existing consumer scripts/YAML/sources |
+| `init <id> --here [mod|api] [loader flags] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1]` | Same choices in a compatible tools-only folder; explicit legacy flag only for Fabric; refuse existing consumer scripts/YAML/sources |
 | `migrate [--dry-run] [-D|--delete]` | Fetch and verify missing `scripts/fabric-amper-migrate.ps1` (and root schema if needed), then statically convert a supported Fabric mod; default preserves originals in `gradle_backup/`. `--dry-run` never downloads |
 | `migrate -C "consumer_folder" [--dry-run] [-D|--delete]` | Select an existing mod from another directory; `-C`/`--project` also works before `migrate` |
 | `tasks`, `validate` | Run `tasks --all` or the applicable platform validation(s) (`:fabric:validateFabricAmper` / `:neoforge:validateFabricAmper` for dual) |
@@ -1386,7 +1390,7 @@ publish:
     changelogType: markdown
 ```
 
-The full example explicitly pins quoted schema 1.1, though omission would select the same grammar in v0.3.0. The release-site project IDs are placeholders and `CHANGELOG.md` must exist in the consumer root. Nothing above uploads until a publish task is explicitly invoked.
+The full example explicitly pins quoted schema 1.1, though omission would select the same grammar in v0.3.1. The release-site project IDs are placeholders and `CHANGELOG.md` must exist in the consumer root. Nothing above uploads until a publish task is explicitly invoked.
 
 | Common key | Modrinth output | CurseForge output |
 | --- | --- | --- |
@@ -1446,7 +1450,7 @@ This is the **schema 1.1** field reference for Fabric, NeoForge, and dual-loader
 
 | Key | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `schema` | Quoted string `"1.1"` | No | Omitting this key also selects schema 1.1 in v0.3.0 |
+| `schema` | Quoted string `"1.1"` | No | Omitting this key also selects schema 1.1 in v0.3.1; normal BAT `init` writes it explicitly |
 | `product` | Fabric/NeoForge `mod` or `api`, or one target per loader in an array | Yes | `fabric/library` aliases `fabric/api`; dual with Architectury creates `:common` |
 | `mod` | Mapping | Yes | Shared project identity, metadata, and archive identity |
 | `minecraft` | Mapping | Yes | Fixed Minecraft version; Loader versions are in platform sections |
@@ -1734,7 +1738,7 @@ The separate updated `fabric-amper.schema.json` underwent Draft-07 and selected 
 
 ## Historical schema 1 reference
 
-This is the **single legacy Fabric-only syntax reference** for existing consumers and the output of the Windows Fabric-only `init` and `migrate` compatibility workflows. The BAT `init` with Fabric alone (with no loader flag **or** explicit `--mod-fabric`) still generates **explicit `schema: 1`**; `migrate` also pins 1 so converted projects keep their original field layout. For a hand-written new project, use the [schema 1.1 quick start](#five-minute-quick-start). **Omitting `schema` in v0.3.0 selects 1.1**; it does not preserve the old layout.
+This is the **single legacy Fabric-only syntax reference** for existing consumers, explicit `init --legacy-schema1` compatibility projects, and the Windows `migrate` output. Ordinary Fabric-only `init` now emits **`schema: "1.1"`**; only `--legacy-schema1` intentionally generates **integer `schema: 1`** with old key locations, and `migrate` still pins 1 to preserve converted projects. For new projects, use the [schema 1.1 quick start](#five-minute-quick-start). **Omitting `schema` in v0.3.1 selects 1.1**; it does not preserve the old layout.
 
 This complete example is Fabric schema 1. Its declared Java initializer must exist in `src/main/java/org/example/ExampleMod.java` and implement `ModInitializer`:
 

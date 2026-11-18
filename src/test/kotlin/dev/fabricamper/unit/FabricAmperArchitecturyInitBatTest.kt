@@ -47,9 +47,10 @@ class FabricAmperArchitecturyInitBatTest {
             assertTrue(content.replace("\r\n", "\n").contains("architectury:\n  enable: true"), content)
             assertTrue(model.architectury.enabled)
             assertEquals("22.0.5", model.architectury.version)
-            assertEquals(case.split, model.settings.loom.splitEnvironmentSourceSets)
+            assertEquals("1.1", model.schemaVersion)
+            assertEquals(case.split, model.fabric!!.loom.splitEnvironmentSourceSets)
             assertEquals(case.kotlin, model.settings.kotlin.enabled)
-            assertEquals(">=22.0.5", model.mod.depends["architectury"])
+            assertEquals(">=22.0.5", model.fabric!!.depends["architectury"])
             assertArrayEquals(schema, Files.readAllBytes(case.folder.resolve("schemas/mod.schema.json")))
             val ext = if (case.kotlin) "kt" else "java"
             val language = if (case.kotlin) "kotlin" else "java"
@@ -67,10 +68,10 @@ class FabricAmperArchitecturyInitBatTest {
                 assertTrue(clientCode.contains("Platform.getMinecraftVersion()"), clientCode)
                 assertTrue(clientCode.contains("Architectury client source set"), clientCode)
                 assertTrue(clientCode.contains("ClientModInitializer"), clientCode)
-                assertEquals("org.example.ExampleModClient", model.mod.entrypoints.getValue("client").single().value)
+                assertEquals("org.example.ExampleModClient", model.fabric!!.entrypoints.getValue("client").single().value)
             } else {
                 assertFalse(Files.exists(case.folder.resolve("src/client")))
-                assertFalse(model.mod.entrypoints.containsKey("client"))
+                assertFalse(model.fabric!!.entrypoints.containsKey("client"))
             }
             assertFalse(Files.exists(case.folder.resolve("build.gradle.kts")))
             assertFalse(Files.exists(case.folder.resolve("build.gradle")))

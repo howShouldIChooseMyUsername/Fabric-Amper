@@ -52,7 +52,7 @@
   },
   "allOf": [
     {
-      "description": "Architectury convenience was verified for Fabric Minecraft 26.3 only.",
+      "description": "Architectury convenience targets Minecraft 26.3; Fabric/NeoForge consumer builds are exercised separately, but actual game runtime and IDE GUI sync remain unverified.",
       "if": {
         "required": ["architectury"],
         "properties": {
@@ -716,13 +716,13 @@
     },
     "architectury": {
       "type": "object",
-      "description": "Opt-in Architectury API for Fabric Minecraft 26.3. No separate Gradle script, version property, repository or dependency declaration is needed. Does not enable Architectury Loom or create a multiplatform build.",
+      "description": "Opt-in Architectury API for Minecraft 26.3. Fabric-only and NeoForge-only use their platform variants; dual-loader with Architectury creates managed common, fabric and neoforge Gradle projects. No consumer-authored Gradle build script is needed; this does not switch to Architectury Loom.",
       "additionalProperties": false,
       "properties": {
         "enable": {
           "type": "boolean",
           "default": false,
-          "description": "Enable automatic Architectury Fabric API dependency, repository, and Loader requirement."
+          "description": "Enable automatic Architectury platform dependencies and repository; Fabric Loader requirements are generated only for selected Fabric targets."
         },
         "enabled": {
           "type": "boolean",
