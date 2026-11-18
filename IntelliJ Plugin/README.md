@@ -2,21 +2,25 @@
 
 An optional IntelliJ IDEA 2026.3 (263.x) plugin for Fabric Amper projects.
 Once a project is linked to Gradle, editing its root `mod.yaml` or `mod.yml`
-is treated as a Gradle settings-file change. The IDE handles its own reload
-notification and sync policy; no generated Gradle scripts, polling, or
-automatic reload requests are introduced.
+is intended to trigger the native Gradle reload action. This revision adds an
+editor document-change listener in addition to registering the YAML paths as
+Gradle settings inputs. The IDE handles its own reload notification and sync
+policy; no generated Gradle scripts or polling are required.
 
 ## Install
 
 1. Open IntelliJ IDEA 2026.3 → Settings → Plugins.
-2. Open the gear menu → Install Plugin from Disk… and select
-   `dist/fabric-amper-intellij-0.1.0.zip`. Restart the IDE if prompted.
+2. If the old 0.1.0 plugin is already installed, uninstall it and restart the
+   IDE. Open the gear menu → Install Plugin from Disk… and select the newly
+   built `dist/fabric-amper-intellij-0.1.1.zip`. Restart the IDE so the revised
+   listener is loaded. Check the installed version on the Plugins page.
 3. Open/link a Fabric Amper Gradle project (its root `settings.gradle.kts`
    explicitly applies `id("dev.fabric-amper.settings")`).
 4. Perform an initial Gradle sync so the IDE records its settings files.
 5. Edit the root `mod.yaml` or `mod.yml`. With Gradle auto-reload set to
    external changes only (or manual), the IDE should offer its usual reload
    action. With automatic reload enabled for any changes, it may sync directly.
+   Confirm the IDE is using the revised plugin before troubleshooting the icon.
 
 The plugin does not watch unrelated Gradle projects or nested YAML files.
 Both aliases are tracked; Fabric Amper itself still requires exactly one
@@ -44,17 +48,23 @@ The shipped Gradle integration declares the extension point
 is `org.jetbrains.plugins.gradle.service.project.GradleAutoReloadSettingsCollector`.
 The actual 263 SDK's Gradle plugin ID is `com.intellij.gradle`.
 The API returns filesystem paths for the existing Gradle auto-reload
-tracker. It is an **internal** API, not a stable public contract. Compatibility
-is limited to build family 263 and future IntelliJ versions require rechecking.
+tracker. The document listener supplements this registration for editor changes.
+The Gradle collector and reload integration are **internal** APIs, not stable
+public contracts. Compatibility is limited to build family 263 and future
+IntelliJ versions require rechecking.
 
 References:
 - [JetBrains extension point list](https://plugins.jetbrains.com/docs/intellij/intellij-community-plugins-extension-point-list.html)
 - [Plugin configuration](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html)
 - [Gradle reload settings](https://www.jetbrains.com/help/idea/work-with-gradle-projects.html)
 
-`collectorTest` executes the collector against the installed 263 SDK and
-checks root scoping, both filename aliases, and extension registration.
+`collectorTest` executes the collector and listener path matcher against the
+installed 263 SDK and checks root scoping, both filename aliases, sibling and
+nested project isolation, and collector, startup activity and project service
+descriptor registration.
 A real IDE GUI smoke test is separate: after installation, modify a field
-in the YAML, verify the native Gradle reload button appears (depending on
-the IDE sync policy), click it, and confirm the project updates. Do not
-interpret a successful SDK test as a completed GUI test.
+in each supported root YAML alias (one file at a time), verify the native Gradle
+reload button appears (depending on the IDE sync policy), click it, and confirm
+the project updates. Also check that changing unrelated or nested YAML files
+does not trigger the Fabric Amper integration. The revised plugin's live GUI
+behavior has not been certified by these SDK tests.

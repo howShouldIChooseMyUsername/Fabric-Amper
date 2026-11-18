@@ -1,15 +1,20 @@
 <idea-plugin>
     <id>dev.fabricamper.intellij</id>
     <name>Fabric Amper IntelliJ Support</name>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <vendor>Fabric Amper</vendor>
     <idea-version since-build="263" until-build="263.*"/>
     <description><![CDATA[
         Registers the root mod.yaml and mod.yml of linked Fabric Amper projects
-        as Gradle synchronization inputs, so IntelliJ uses its own Gradle reload UI.
+        as Gradle synchronization inputs and reports editor changes to IntelliJ's
+        native Gradle reload tracker.
     ]]></description>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.gradle</depends>
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="dev.fabricamper.intellij.FabricAmperReloadActivity"/>
+        <projectService serviceImplementation="dev.fabricamper.intellij.FabricAmperReloadListener"/>
+    </extensions>
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <autoReloadSettingsCollector implementation="dev.fabricamper.intellij.FabricAmperSettingsCollector"/>
     </extensions>
