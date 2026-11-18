@@ -74,8 +74,8 @@ echo   fabric-amper.bat doctor -C consumer_folder doctor
 echo   fabric-amper.bat migrate [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat migrate -C "consumer_folder" [--dry-run] [-D^|--delete]
 echo   fabric-amper.bat -C "consumer_folder" migrate [-D^|--delete]
-echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1]
-echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1]
+echo   fabric-amper.bat init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
+echo   fabric-amper.bat init ^<mod_id^> --here [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
 echo               Missing schema is downloaded from GitHub main, SHA-256 verified.
 echo               No loader flag defaults to Fabric; a single flag creates one loader project.
 echo               Both loader flags create fabric/ and neoforge/; --architectury also creates common/.
@@ -83,7 +83,7 @@ echo               --architectury enables per-loader Architectury API and shared
 echo               --kotlin selects Kotlin examples; otherwise Java is used.
 echo               --splitEnvironmentSourceSets creates a Fabric client source set.
 echo               Both loaders with Architectury ignore the split flag.
-echo               New projects use schema 1.1; --legacy-schema1 opts into old Fabric-only schema 1.
+echo               New projects use schema 1.1 for every supported loader combination.
 echo               Flags can be combined in any order after the optional folder/profile.
 echo   fabric-amper.bat [-C consumer_folder] ^<command^>
 echo.
@@ -481,8 +481,6 @@ set "FA_INIT_ARCHITECTURY=0"
 set "FA_INIT_FABRIC=0"
 set "FA_INIT_NEOFORGE=0"
 set "FA_INIT_MULTI=0"
-set "FA_INIT_V11=1"
-set "FA_INIT_LEGACY=0"
 set "FA_INIT_SPLIT_IGNORED=0"
 set "FA_INIT_ARG3="
 set "FA_INIT_ARG4="
@@ -523,7 +521,6 @@ if /i "%~1"=="--splitEnvironmentSourceSets" goto :initParseSplitFlag
 if /i "%~1"=="--architectury" goto :initParseArchitecturyFlag
 if /i "%~1"=="--mod-fabric" goto :initParseFabricFlag
 if /i "%~1"=="--mod-neoforge" goto :initParseNeoForgeFlag
-if /i "%~1"=="--legacy-schema1" goto :initParseLegacyFlag
 rem Unknown switches must not silently become an output directory/profile.
 set "FA_INIT_CANDIDATE=%~1"
 if "%FA_INIT_CANDIDATE:~0,1%"=="-" if /i not "%~1"=="--here" goto :initExtraArguments
@@ -567,24 +564,13 @@ set "FA_INIT_NEOFORGE=1"
 set "FA_INIT_FLAGS_STARTED=1"
 exit /b 0
 
-:initParseLegacyFlag
-if "%FA_INIT_LEGACY%"=="1" goto :initExtraArguments
-set "FA_INIT_LEGACY=1"
-set "FA_INIT_FLAGS_STARTED=1"
-exit /b 0
-
 :initExtraArguments
 echo ERROR: init received unexpected, duplicated or misplaced arguments.
-echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1].
+echo        Use init ^<mod_id^> [new_folder] [mod^|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets].
 exit /b 2
 
 :initArgumentsReady
 if "%FA_INIT_FABRIC%"=="0" if "%FA_INIT_NEOFORGE%"=="0" set "FA_INIT_FABRIC=1"
-if "%FA_INIT_LEGACY%"=="1" if "%FA_INIT_NEOFORGE%"=="1" (
-    echo ERROR: --legacy-schema1 is only available for Fabric-only projects.
-    exit /b 2
-)
-if "%FA_INIT_LEGACY%"=="1" set "FA_INIT_V11=0"
 if "%FA_INIT_FABRIC%"=="1" if "%FA_INIT_NEOFORGE%"=="1" set "FA_INIT_MULTI=1"
 if "%FA_INIT_NEOFORGE%"=="1" if "%FA_INIT_FABRIC%"=="0" if "%FA_INIT_SPLIT%"=="1" (
     echo ERROR: --splitEnvironmentSourceSets requires Fabric; NeoForge-only projects have no Loom client source set.
@@ -675,9 +661,9 @@ echo ERROR: --here must immediately follow the mod ID, not a folder path.
 exit /b 2
 
 :initPreflightDone
-rem Always use the producer's CURRENT schema for editor completion. Every
-rem normal starter uses namespaced schema 1.1; an explicit --legacy-schema1
-rem retains old Fabric-only fields for consumers that specifically request it.
+rem Always use the producer's CURRENT schema for editor completion.
+rem All new starters use namespaced schema 1.1; existing schema 1 files remain
+rem readable by the plugin and the separate migrate converter preserves them.
 where powershell.exe >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Windows PowerShell is required to verify the init schema.
@@ -781,7 +767,7 @@ rem Keep the GitHub owner spelling and tagged artifact version exact.
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://jitpack.io")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.fabricmc.net/")
 if "%FA_INIT_NEOFORGE%"=="1" >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.neoforged.net/releases/")
-if "%FA_INIT_V11%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.architectury.dev/")
+if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\settings.gradle.kts" echo(        maven("https://maven.architectury.dev/")
 >> "%FA_TARGET%\settings.gradle.kts" echo(        gradlePluginPortal()
 >> "%FA_TARGET%\settings.gradle.kts" echo(        mavenCentral()
 >> "%FA_TARGET%\settings.gradle.kts" echo(    }
@@ -797,58 +783,7 @@ if "%FA_INIT_V11%"=="1" if "%FA_INIT_ARCHITECTURY%"=="1" >> "%FA_TARGET%\setting
 >> "%FA_TARGET%\settings.gradle.kts" echo(    id("dev.fabric-amper.settings") version "%FA_VERSION%"
 >> "%FA_TARGET%\settings.gradle.kts" echo(}
 
-if "%FA_INIT_V11%"=="1" goto :initWriteSchema11
-rem New projects default to Java, with explicit --kotlin selecting a Kotlin entrypoint.
-rem The plugin defaults omitted schema to 1.1. Keep this Fabric-only legacy
-rem starter's existing metadata layout with an explicit schema: 1 instead.
-> "%FA_TARGET%\mod.yaml" echo(# yaml-language-server: $schema=./schemas/mod.schema.json
->> "%FA_TARGET%\mod.yaml" echo(# $schema: ./schemas/mod.schema.json
->> "%FA_TARGET%\mod.yaml" echo(schema: 1
->> "%FA_TARGET%\mod.yaml" echo(product: %FA_PRODUCT%
->> "%FA_TARGET%\mod.yaml" echo(mod:
->> "%FA_TARGET%\mod.yaml" echo(  id: %FA_INIT_ID%
->> "%FA_TARGET%\mod.yaml" echo(  version: "1.0.0+26.3"
->> "%FA_TARGET%\mod.yaml" echo(  group: org.example
->> "%FA_TARGET%\mod.yaml" echo(  name: Example Mod
->> "%FA_TARGET%\mod.yaml" echo(  entrypoints:
->> "%FA_TARGET%\mod.yaml" echo(    main:
->> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleMod
-if "%FA_INIT_SPLIT%"=="1" (
-    >> "%FA_TARGET%\mod.yaml" echo(    client:
-    >> "%FA_TARGET%\mod.yaml" echo(      - org.example.ExampleModClient
-)
->> "%FA_TARGET%\mod.yaml" echo(minecraft:
->> "%FA_TARGET%\mod.yaml" echo(  version: "26.3"
->> "%FA_TARGET%\mod.yaml" echo(  mappings: mojang
->> "%FA_TARGET%\mod.yaml" echo(  loader: "0.20.1"
->> "%FA_TARGET%\mod.yaml" echo(  fabricApi: "0.165.2+26.3"
->> "%FA_TARGET%\mod.yaml" echo(settings:
->> "%FA_TARGET%\mod.yaml" echo(  java:
->> "%FA_TARGET%\mod.yaml" echo(    release: 25
->> "%FA_TARGET%\mod.yaml" echo(    sourcesJar: true
->> "%FA_TARGET%\mod.yaml" echo(  kotlin:
-if "%FA_INIT_KOTLIN%"=="1" goto :initEnableKotlin
->> "%FA_TARGET%\mod.yaml" echo(    enabled: false
-goto :initKotlinSettingDone
-
-:initEnableKotlin
->> "%FA_TARGET%\mod.yaml" echo(    enabled: true
-
-:initKotlinSettingDone
-if "%FA_INIT_SPLIT%"=="1" (
-    >> "%FA_TARGET%\mod.yaml" echo(  loom:
-    >> "%FA_TARGET%\mod.yaml" echo(    splitEnvironmentSourceSets: true
-)
-if "%FA_INIT_ARCHITECTURY%"=="1" (
-    >> "%FA_TARGET%\mod.yaml" echo(architectury:
-    >> "%FA_TARGET%\mod.yaml" echo(  enable: true
-)
->> "%FA_TARGET%\mod.yaml" echo(repositories:
->> "%FA_TARGET%\mod.yaml" echo(  - fabric
->> "%FA_TARGET%\mod.yaml" echo(  - mavenCentral
-
-if "%FA_INIT_KOTLIN%"=="1" goto :initWriteKotlinSource
-if "%FA_INIT_ARCHITECTURY%"=="1" goto :initWriteJavaArchitecturySource
+goto :initWriteSchema11
 
 :initWriteJavaSource
 > "%FA_TARGET%\src\main\java\org\example\ExampleMod.java" echo(package org.example;
@@ -990,8 +925,7 @@ if not exist "%FA_TARGET%\src\client\kotlin\org\example\ExampleModClient.kt" exi
 :initClientSourceVerified
 echo [init] Created: "%FA_TARGET%"
 echo [init] Profile: %FA_PRODUCT%
-if "%FA_INIT_V11%"=="1" echo [init] Schema: 1.1 ^(namespaced Fabric configuration^).
-if "%FA_INIT_LEGACY%"=="1" echo [init] Schema: 1 ^(explicit legacy compatibility^).
+echo [init] Schema: 1.1 ^(namespaced loader configuration^).
 if "%FA_INIT_KOTLIN%"=="1" echo [init] Language: Kotlin ^(Fabric Language Kotlin automatically configured^).
 if "%FA_INIT_KOTLIN%"=="0" echo [init] Language: Java.
 if "%FA_INIT_SPLIT%"=="1" echo [init] Loom: splitEnvironmentSourceSets=true ^(common/client source sets and starter entrypoints^).

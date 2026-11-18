@@ -75,19 +75,22 @@ class FabricAmperNeoForgeInitMatrixTest {
     }
 
     @Test
-    fun `explicit legacy opt in is Fabric only and retains schema 1`() {
-        val legacy = workspace.resolve("Legacy Fabric")
-        val run = InitBatMatrixProbe.init("oldformat", legacy, listOf("--legacy-schema1"))
-        assertEquals(0, run.code, run.output)
-        val yaml = InitBatMatrixProbe.yaml(legacy)
-        assertEquals(1, yaml["schema"])
-        assertEquals("0.20.1", InitBatMatrixProbe.field(yaml, "minecraft")["loader"])
-        assertFalse(yaml.containsKey("fabric"))
-        assertTrue(InitBatMatrixProbe.field(yaml, "mod").containsKey("entrypoints"))
-        val invalid = workspace.resolve("Invalid Legacy NeoForge")
-        val rejected = InitBatMatrixProbe.init("newformat", invalid, listOf("--legacy-schema1", "--mod-neoforge"))
-        assertEquals(2, rejected.code, rejected.output)
-        assertFalse(Files.exists(invalid))
+    fun `removed legacy schema flag is rejected for Fabric and NeoForge before creating files`() {
+        val cases = listOf(
+            "Default Fabric" to emptyList(),
+            "Explicit Fabric" to listOf("--mod-fabric"),
+            "NeoForge" to listOf("--mod-neoforge"),
+        )
+        for ((index, case) in cases.withIndex()) {
+            val (name, loaderFlags) = case
+            val target = workspace.resolve(name)
+            val flags = loaderFlags + "--legacy-schema1"
+            val rejected = InitBatMatrixProbe.init("removedflag$index", target, flags)
+            assertEquals(2, rejected.code, "Removed init flag must be rejected for $name: ${rejected.output}")
+            assertTrue(rejected.output.contains("unexpected, duplicated or misplaced arguments"),
+                "Removed flag should be handled as an unknown option: ${rejected.output}")
+            assertFalse(Files.exists(target), "Removed flag must not create $target")
+        }
     }
 
     @Test

@@ -1591,9 +1591,9 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 
 ## 44. v0.3.1 출시 후 문서·BAT 최신 스키마 초기화 교정 및 공개 자산 교체 (2026-11-18)
 
-**사용자 추가 요구와 발견:** 현재 문서의 완전한 YAML 예제를 현행 스키마 1.1과 대조했고, 당시 `fabric-amper.bat init`의 기본 Fabric 전용 경로만 명시적 `schema: 1`을 생성한다는 불일치를 확인했다. JSON Schema의 Architectury 설명도 Fabric-only로 제한하거나 멀티 프로젝트가 없다고 잘못 서술하고 있었다. §40–§43 및 날짜가 붙은 v0.3.0/초기 v0.3.1 검증은 당시의 실제 기록으로 보존하되, **이 절이 교정 이후의 현행 배포 계약 및 SHA-256 값에 우선**한다.
+**사용자 추가 요구와 발견:** 현재 문서의 완전한 YAML 예제를 현행 스키마 1.1과 대조했고, 당시 `fabric-amper.bat init`의 기본 Fabric 전용 경로만 명시적 `schema: 1`을 생성한다는 불일치를 확인했다. JSON Schema의 Architectury 설명도 Fabric-only로 제한하거나 멀티 프로젝트가 없다고 잘못 서술하고 있었다. §40–§43 및 날짜가 붙은 v0.3.0/초기 v0.3.1 검증은 당시의 실제 기록으로 보존한다. **이 절의 교정·배포 상태는 당시 시점의 사실이고, 현행 초기화 명령 계약은 후속 §45가 우선한다.** §44의 SHA-256 값도 당시 재다운로드로 검증한 공개 자산에만 해당한다.
 
-**교정된 초기화 계약:** 일반적인 Fabric-only, NeoForge-only, 독립 듀얼, Architectury 듀얼 `init`은 모두 명시적 `schema: "1.1"`을 출력하며 Fabric Loader/API/entrypoints/선택적 split 구성을 `fabric:` 아래에 둔다. 실제 Fabric 단독 Java/Kotlin `ExampleMod` 및 분리 클라이언트 `ExampleModClient` 경로와 YAML 항목을 맞추고 NeoForge가 없는 프로젝트에는 `neoforge:` 블록과 repository를 생성하지 않는다. **새 `--legacy-schema1`는 Fabric-only에서만** 구형 필드 위치의 정수 `schema: 1`을 생성한다. NeoForge 포함 프로젝트는 해당 플래그를 사전 거부하고, 기존 `migrate`는 변환 프로젝트의 호환성을 위해 계속 명시적 schema 1을 생성한다. 독립 듀얼에 `common/`이 없고 Architectury 듀얼에는 있는 기존 동작은 보존한다.
+**당시 교정된 초기화 계약(후속 변경은 §45):** Fabric-only, NeoForge-only, 독립 듀얼, Architectury 듀얼의 기본 `init`은 모두 명시적 `schema: "1.1"`을 출력하며 Fabric Loader/API/entrypoints/선택적 split 구성을 `fabric:` 아래에 둔다. 실제 Fabric 단독 Java/Kotlin `ExampleMod` 및 분리 클라이언트 `ExampleModClient` 경로와 YAML 항목을 맞추고 NeoForge가 없는 프로젝트에는 `neoforge:` 블록과 repository를 생성하지 않는다. **§44 수정 당시에는 Fabric 단독 구형 필드 위치의 정수 `schema: 1`을 출력하는 임시 호환 초기화 분기가 잠시 존재했다. 이 분기는 후속 §45에서 제거됐으므로 현행 명령이 아니다.** 당시 NeoForge 포함 프로젝트에는 이 분기가 허용되지 않았고, 기존 `migrate`는 변환 프로젝트의 호환성을 위해 계속 명시적 schema 1을 생성한다. 독립 듀얼에 `common/`이 없고 Architectury 듀얼에는 있는 기존 동작은 보존한다.
 
 **문서/스키마:** `README.md`, `HUMAN.md`, `HUMAN_QuickGuide.md`, `HUMAN_QuickStart.md`, `FabricAmperSKILL.md`, `FabricAmperSKILL_SYN.md`, `specs.md`의 현행 BAT 안내와 예제를 통일하고, 구형 완전 YAML 예제는 별도 역사 섹션에 유지했다. 영어 README 첫 슬로건과 JitPack 배지를 유지했다. `fabric.gradleDependencies`·`neoforge.gradleDependencies`는 구형 v1 호환 키가 아닌 실제 스키마 1.1의 로더별 의존성 키라고 바로잡았다. `fabric-amper.schema.json` Draft-07 Architectury 설명은 Fabric/NeoForge 단독 및 dual `:common` 프로젝트 계약에 맞췄으며 `jsonschema.Draft7Validator.check_schema` **PASS**. 이 스키마의 SHA-256은 `5974608d6a8a0b37c9830fd9e2e01c298cf2d6495b6af40639d99ba63a716615`이며 BAT의 `FA_SCHEMA_SHA256`와 정확히 일치한다. Migrate/doctor helper SHA 고정값은 그대로 유지했다.
 
@@ -1617,3 +1617,9 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 9번째 `SHA256SUMS.txt`는 **위 교체 이후 새 8개 해시**의 목록이다. §42/§43의 최초 공개 BAT·스키마·Windows ZIP SHA는 이 시점의 배포 상태가 아닌 **초기 공개 당시 증거**다. `v0.3.0` 태그·릴리즈 자산, `v0.3.1` 플러그인 바이너리·source/Maven ZIP·태그 커밋은 변경하지 않았다.
 
 **잔여 게이트:** 실제 Minecraft 클라이언트/서버 런타임, IntelliJ GUI Sync, strict cold second configuration-cache HIT, 인증된 외부 Modrinth/CurseForge 배포 및 모든 G1–G30/NF1–NF26 최종 수락은 이번 교정으로 추가 승인되지 않았다. GitHub 프리릴리즈는 계속 **Developer Preview**다.
+
+## 45. 후속 초기화 CLI 단순화 — 임시 구형 스키마 생성 분기 제거 (2026-11-18)
+
+**현재 소스 계약:** 사용자 요청에 따라 §44에서 도입됐던 Fabric 전용 스키마 1 생성 선택 분기는 BAT에서 완전히 제거했다. **현재 모든 `init`은 Fabric 단독, NeoForge 단독, 독립 듀얼 및 Architectury 듀얼 모두 `schema: "1.1"`만 출력**한다. 사용자 문서의 구형 초기화 명령 예시와 옵션 안내도 제거했다. 기존 정수 `schema: 1` YAML의 **디코더 호환성은 여전히 유지**되고, 기존 Fabric Gradle 프로젝트를 변환하는 `migrate`도 계속 `schema: 1`을 명시한다. §44는 당시 임시 분기를 포함한 구현·테스트·공개 자산 교체의 날짜가 있는 기록이며, 현재 동작은 이 §45가 우선한다.
+
+**검증 범위:** 문서 8개 파일에서 제거한 옵션 문자열의 잔여 여부를 정적 검색했다. 이 문서 편집 자체에서 BAT, 테스트, 스키마 JSON, Git, 릴리즈 자산 또는 Gradle 빌드를 변경·실행하지 않았다. §44의 빌드 PASS·해시·공개 릴리즈 검증은 **그 당시 자산/커밋에 관한 이력**으로만 보존하며, 후속 BAT 자산의 재게시나 재검증을 의미하지 않는다.

@@ -22,7 +22,7 @@ This file is a **custom root AI guide**; its filename is not the standardized au
 ## Strict invariants (always)
 
 - Consumer authored build configuration = **`settings.gradle.kts` + exactly one `mod.yaml`/`mod.yml`**; developer still writes real source/resources/tests. Never create consumer `build.gradle(.kts)`, manually authored `fabric.mod.json`, or apply internal `dev.fabric-amper.project`.
-- Required root `product`, `mod`, `minecraft`; shared nested `mod.id`, `mod.version`, `minecraft.version`. **Published v0.3.1 decoder: omitted `schema` defaults to 1.1** (first introduced in v0.3.0), and `schema: "1.1"` explicitly selects it. Every default BAT `init` writes quoted schema 1.1 for Fabric-only, NeoForge-only and dual projects. Explicit Fabric-only `init --legacy-schema1` selects the preserved integer schema 1 format shown in [Legacy schema 1](#legacy-schema-1-fabric-only-reference); `migrate` also remains schema 1. Unquoted `schema: 1.1` is invalid YAML float; unknown version/type → FA003.
+- Required root `product`, `mod`, `minecraft`; shared nested `mod.id`, `mod.version`, `minecraft.version`. **Published v0.3.1 decoder: omitted `schema` defaults to 1.1** (first introduced in v0.3.0), and `schema: "1.1"` explicitly selects it. **Every BAT `init` writes quoted schema 1.1** for Fabric-only, NeoForge-only and dual projects; schema 1 initialization is unavailable. The decoder preserves the historical integer schema 1 format shown in [Legacy schema 1](#legacy-schema-1-fabric-only-reference) for existing Fabric YAML; `migrate` also remains schema 1. Unquoted `schema: 1.1` is invalid YAML float; unknown version/type → FA003.
 - Schema 1.1 `product`: scalar `fabric/mod`, `fabric/api`, `neoforge/mod`, `neoforge/api` or array `[fabric/mod, neoforge/mod]`, `[fabric/api, neoforge/api]` and hybrid mod/API types. `fabric/library` aliases Fabric API. Exactly **one target per loader**; `fabric:` is **mandatory** when Fabric selected, `neoforge:` when NeoForge selected. Shared root `mod`, `minecraft.version`, `settings.java`, `settings.kotlin`, plus common `dependencies[]` entries where `loader` is omitted. An optional `loader: fabric` / `neoforge` **inside a root dependency object** directs that artifact to one declared target (single or dual). Loader-specific `fabric.loader/api/mappings/entrypoints/loom/gradleDependencies` and `neoforge.version/modLoader/dependencies/gradleDependencies` do not require another loader selector. The older root key placements are collected in [Legacy schema 1](#legacy-schema-1-fabric-only-reference).
 - Strict UTF-8 single YAML mapping; no duplicate keys, anchors (`&`), aliases (`*`), merges (`<<`), unrecognized tags or fields. When editing, **merge** partial recipes into existing mappings — no repeated root `mod:` or `settings:`.
 - `fabric.environment` is the Fabric Loader whole-mod side; `dependencies[].target` is a Gradle dependency source set. Gradle artifact dependencies, Fabric `fabric.depends` Loader relationships, NeoForge `neoforge.dependencies[]`, and `publish.modrinth.dependencies[]` are separate concepts.
@@ -97,7 +97,7 @@ These are **schema 1.1 namespaced keys** unless explicitly marked legacy v1. Do 
 
 ## Legacy schema 1 (Fabric-only reference)
 
-**All historical schema 1 syntax is collected here.** Explicit integer `schema: 1` retains the previous Fabric-only format. In v0.3.1, **every ordinary BAT `init`, including Fabric-only without flags or with `--mod-fabric`, generates explicit `schema: "1.1"`**. Only Fabric-only `init --legacy-schema1` generates the old schema 1 format, and `migrate` still pins 1 for converted projects. Omitted `schema` selects **1.1** in hand-written YAML. Use the 1.1 Fabric starter below or default BAT `init` for new work; use the legacy reference only for an older consumer or an explicit compatibility request.
+**All historical schema 1 syntax is collected here.** Explicit integer `schema: 1` retains the previous Fabric-only decoder format for existing consumers. In v0.3.1, **every BAT `init`, including Fabric-only without flags or with `--mod-fabric`, generates explicit `schema: "1.1"`**; no legacy initializer exists. `migrate` still pins 1 for converted projects. Omitted `schema` selects **1.1** in hand-written YAML. Use the 1.1 Fabric starter below or BAT `init` for new work; use the legacy reference only to maintain an older consumer or inspect migration output.
 
 **Complete old Fabric-only mod document (requires actual Java initializer/resource files):**
 
@@ -163,18 +163,7 @@ publishing:
 
 It must not be combined with the newer `publish.maven`. Both environment variable names are present or both absent, and publication remains an explicitly authorized action. For full legacy validation detail, see [Legacy schema 1 in the long guide](FabricAmperSKILL.md#legacy-schema-1-fabric-only-reference).
 
-**BAT Fabric-only explicit legacy creation examples** (each command requests schema 1 through `--legacy-schema1`; omit that flag for the default 1.1 starter):
-
-```bat
-fabric-amper.bat init example_mod --legacy-schema1
-fabric-amper.bat init test_mode "Test Mode" mod --kotlin --legacy-schema1
-fabric-amper.bat init strict_mod "Strict Mod" mod --splitEnvironmentSourceSets --legacy-schema1
-fabric-amper.bat init arch_mod "Architectury Mod" mod --architectury --legacy-schema1
-fabric-amper.bat init example_api "C:\work\example_api" api --legacy-schema1
-fabric-amper.bat init night_vision --here --legacy-schema1
-```
-
-These opt-in commands generate real Fabric Java/Kotlin code as requested, but the YAML uses the old `mod`/`minecraft`/`settings` key placements. Without `--legacy-schema1`, the same Fabric init combinations generate namespaced schema 1.1.
+**Initialization is not a schema 1 migration path.** All new Fabric project creation commands write schema 1.1 under `fabric:`; use `migrate` only for the separately documented conversion of existing Gradle-based Fabric projects, which preserves schema 1 for compatibility.
 
 ## Shared release configuration — short safe decision path
 
@@ -265,7 +254,7 @@ repositories:
   - mavenCentral
 ```
 
-For new hand-authored schema 1.1 files, omitted `schema` is **interpreted as 1.1 by the published v0.3.1 decoder**; the explicit quoted form improves clarity. Fabric-only BAT `init` also emits schema 1.1 by default even with `--mod-fabric`; only `--legacy-schema1` opts into the old field placement. For **NeoForge-only**, change to `product: neoforge/mod`, keep shared `mod`, `minecraft.version`, `settings`, replace the entire `fabric:` block with `neoforge: {version: "VERIFIED_NEOFORGE_VERSION", modLoader: javafml}`, and provide a real Java/Kotlin `@Mod` source. **Never invent a NeoForge version**; the minimal block shown is a **fragment**, not a complete document.
+For new hand-authored schema 1.1 files, omitted `schema` is **interpreted as 1.1 by the published v0.3.1 decoder**; the explicit quoted form improves clarity. Fabric-only BAT `init` emits schema 1.1 even with `--mod-fabric`; no schema 1 initializer is supported. For **NeoForge-only**, change to `product: neoforge/mod`, keep shared `mod`, `minecraft.version`, `settings`, replace the entire `fabric:` block with `neoforge: {version: "VERIFIED_NEOFORGE_VERSION", modLoader: javafml}`, and provide a real Java/Kotlin `@Mod` source. **Never invent a NeoForge version**; the minimal block shown is a **fragment**, not a complete document.
 
 **Dual 1.1 minimal complete YAML** (real platform-specific sources required; version strings must be verified):
 
