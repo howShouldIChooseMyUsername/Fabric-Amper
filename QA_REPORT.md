@@ -1588,3 +1588,32 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 **새 실제 공개 소비자 (로컬 Plugin classpath 주입 없음):** `build/release-031-public-consumer`의 `settings.gradle.kts`는 오직 공개 JitPack `com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1`, plugin version `0.3.1`을 요청한다. `mod.yaml`은 schema 1.1 Fabric/Java + 새 root `dependencies[].loader: fabric`을 사용하고 `build.gradle(.kts)`가 없다. Gradle 9.7.1/JDK 25 `help validateFabricAmper build verifyFabricAmperJar --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 33s, 9 tasks executed**. 실제 `compileJava`·JSON 생성·`jar`·검증 완료. 산출 `release031probe-1.0.0+26.3.jar`에는 루트 `fabric.mod.json` 정확히 1개, 실제 `org/example/Release031Probe.class`, NeoForge TOML 0개를 별도로 ZIP 검증했다. 이는 **v0.3.1 공개 JitPack Fabric 소비자 실증**이며, v0.3.1 NeoForge 공개 소비자/실제 Minecraft 게임 실행을 했다는 뜻이 아니다.
 
 **증거 경계:** v0.3.1 GitHub 공개 자산/JitPack/Fabric 단독 소비자 PASS와 §42의 로컬 NeoForge·듀얼 TestKit 2/2 PASS를 구분해야 한다. 게임 client/server 실제 부팅, IntelliJ GUI Sync, 엄격한 cold 두 번째 CC HIT, 모든 G/NF 게이트, 실제 외부 Modrinth·CurseForge 인증 업로드는 여전히 **NOT APPROVED**. 사용자 EULA를 자동 승인하거나 인증을 대체하지 않는다.
+
+## 44. v0.3.1 출시 후 문서·BAT 최신 스키마 초기화 교정 및 공개 자산 교체 (2026-11-18)
+
+**사용자 추가 요구와 발견:** 현재 문서의 완전한 YAML 예제를 현행 스키마 1.1과 대조했고, 당시 `fabric-amper.bat init`의 기본 Fabric 전용 경로만 명시적 `schema: 1`을 생성한다는 불일치를 확인했다. JSON Schema의 Architectury 설명도 Fabric-only로 제한하거나 멀티 프로젝트가 없다고 잘못 서술하고 있었다. §40–§43 및 날짜가 붙은 v0.3.0/초기 v0.3.1 검증은 당시의 실제 기록으로 보존하되, **이 절이 교정 이후의 현행 배포 계약 및 SHA-256 값에 우선**한다.
+
+**교정된 초기화 계약:** 일반적인 Fabric-only, NeoForge-only, 독립 듀얼, Architectury 듀얼 `init`은 모두 명시적 `schema: "1.1"`을 출력하며 Fabric Loader/API/entrypoints/선택적 split 구성을 `fabric:` 아래에 둔다. 실제 Fabric 단독 Java/Kotlin `ExampleMod` 및 분리 클라이언트 `ExampleModClient` 경로와 YAML 항목을 맞추고 NeoForge가 없는 프로젝트에는 `neoforge:` 블록과 repository를 생성하지 않는다. **새 `--legacy-schema1`는 Fabric-only에서만** 구형 필드 위치의 정수 `schema: 1`을 생성한다. NeoForge 포함 프로젝트는 해당 플래그를 사전 거부하고, 기존 `migrate`는 변환 프로젝트의 호환성을 위해 계속 명시적 schema 1을 생성한다. 독립 듀얼에 `common/`이 없고 Architectury 듀얼에는 있는 기존 동작은 보존한다.
+
+**문서/스키마:** `README.md`, `HUMAN.md`, `HUMAN_QuickGuide.md`, `HUMAN_QuickStart.md`, `FabricAmperSKILL.md`, `FabricAmperSKILL_SYN.md`, `specs.md`의 현행 BAT 안내와 예제를 통일하고, 구형 완전 YAML 예제는 별도 역사 섹션에 유지했다. 영어 README 첫 슬로건과 JitPack 배지를 유지했다. `fabric.gradleDependencies`·`neoforge.gradleDependencies`는 구형 v1 호환 키가 아닌 실제 스키마 1.1의 로더별 의존성 키라고 바로잡았다. `fabric-amper.schema.json` Draft-07 Architectury 설명은 Fabric/NeoForge 단독 및 dual `:common` 프로젝트 계약에 맞췄으며 `jsonschema.Draft7Validator.check_schema` **PASS**. 이 스키마의 SHA-256은 `5974608d6a8a0b37c9830fd9e2e01c298cf2d6495b6af40639d99ba63a716615`이며 BAT의 `FA_SCHEMA_SHA256`와 정확히 일치한다. Migrate/doctor helper SHA 고정값은 그대로 유지했다.
+
+**실제 검증:** Java25/Gradle9.7.1, 필터된 Windows BAT init/Architectury/NeoForge/문서/스키마 회귀 테스트는 최종 **BUILD SUCCESSFUL**. 처음 수정 과정의 일부 테스트는 이름공간 아래에 존재해야 하는 `fabric.entrypoints`를 전체 YAML에서 금지하거나 Windows CRLF 줄바꿈을 정규화하지 않는 **테스트 단언 오류**였으며, 실제 YAML 경로별 단언으로 고친 후 전체 빌드를 다시 실행했다. 최종 `clean build validatePlugins -PfabricAmperProbeMavenRepo=true --offline --no-daemon --no-build-cache --console=plain`은 **BUILD SUCCESSFUL in 3m, 11 tasks executed, validatePlugins PASS**, JUnit XML 73 suites에서 **384 total = 325 PASS + 59 SKIP + 0 FAIL + 0 ERROR**. 스킵은 통과로 계산하지 않았다. 수정 BAT로 새 Fabric-only schema 1.1 Java 소비자를 `build/release031-corrected-consumer`에 만들고, 실제 공개 JitPack v0.3.1을 그대로 이용해 `help validateFabricAmper build verifyFabricAmperJar --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 21s / 9 tasks executed**: 실제 `compileJava`, `generateFabricModJson`, `jar` 및 `verifyFabricAmperJar` PASS. 새 소비자에 수동 `build.gradle(.kts)`는 없다. 이 확인은 게임 실행이나 v0.3.1 신규 공개 NeoForge 소비자 검증이 아니다.
+
+**양 브랜치 기능 반영:** `main` commit `1abe5669092fddaccd06137d185a62136db1361c`, `develop` commit `8e13ec6d7ed24ffcade46f213beacf18e9868825`를 각각 `origin/main`, `origin/develop`로 푸시했다. 두 격리 worktree의 **추적 소스 154개 전수 바이트 비교 = 차이 0개**. 기존 develop worktree의 미커밋 추적 `build/**` 파일 및 원래 루트 dirty 작업트리는 건드리지 않고 보존했다.
+
+**공개 GitHub v0.3.1 프리릴리즈 교체:** 기존 annotated tag `v0.3.1`은 **이동하지 않고** 최초 소스 commit `3f8d0f12427e05a089f8ee11d53ddf3e951b0bfd`를 유지했다. 공개 `v0.3.1` 릴리즈의 9자산 구성은 그대로 보존하며, `fabric-amper.bat`, `fabric-amper.schema.json`, `fabric-amper-0.3.1-windows-tools.zip`, `SHA256SUMS.txt` **4개만** 수정본으로 교체했다. GitHub 업로드 직후 별도의 새 디렉터리 `build/release-031-corrected-redownload`에 공개 자산 9개를 모두 다시 내려받아 검증기 `build/release-031-verify.py`로 **8/8 SHA-256 일치**, ZIP 9개 파일 구성/CRC/내부 BAT·스키마·helper SHA 고정값/Maven plugin marker/배포 JAR 동일 바이트 **PASS**, 준비한 9개 로컬 자산과 **바이트 불일치 0건**을 확인했다. GitHub 릴리즈 본문에는 교정 사실과 바이너리·태그 불변을 추가했다.
+
+| 현재 v0.3.1 공개 자산 | 재다운로드 SHA-256 | 변경 |
+| --- | --- | --- |
+| `fabric-amper-0.3.1.jar` | `b4050eefae5917b938412c5d033ba35523cd93728e5aa8883846ba73055b6af5` | 원래 바이트 유지 |
+| `fabric-amper-0.3.1-sources.jar` | `b56b2c3ef40211b78aef4ed707cb4b2829683e401b89c6f3014e148297980768` | 원래 바이트 유지 |
+| `fabric-amper-0.3.1-maven-repository.zip` | `e7253135e0022c2952755e61007622d1b8f8c677b84d38527500b8355f73dca6` | 원래 바이트 유지 |
+| `fabric-amper-0.3.1-windows-tools.zip` | `87ec3041b467e5ed3bd4d5c15657dadaba4ee8c050436baa4bdfa1238e87cfd8` | 교체 |
+| `fabric-amper.bat` | `b44082e0af13a38c1671319ffd9120ab5d491ac9a8c031e934492d40d7a7911a` | 교체 |
+| `fabric-amper.schema.json` | `5974608d6a8a0b37c9830fd9e2e01c298cf2d6495b6af40639d99ba63a716615` | 교체 |
+| `fabric-amper-migrate.ps1` | `20ff79e813933b724b8032789253c89747cd36df5895d05d1321ffb8133d0b2d` | 원래 바이트 유지 |
+| `fabric-amper-doctor-fix.ps1` | `c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053` | 원래 바이트 유지 |
+
+9번째 `SHA256SUMS.txt`는 **위 교체 이후 새 8개 해시**의 목록이다. §42/§43의 최초 공개 BAT·스키마·Windows ZIP SHA는 이 시점의 배포 상태가 아닌 **초기 공개 당시 증거**다. `v0.3.0` 태그·릴리즈 자산, `v0.3.1` 플러그인 바이너리·source/Maven ZIP·태그 커밋은 변경하지 않았다.
+
+**잔여 게이트:** 실제 Minecraft 클라이언트/서버 런타임, IntelliJ GUI Sync, strict cold second configuration-cache HIT, 인증된 외부 Modrinth/CurseForge 배포 및 모든 G1–G30/NF1–NF26 최종 수락은 이번 교정으로 추가 승인되지 않았다. GitHub 프리릴리즈는 계속 **Developer Preview**다.
