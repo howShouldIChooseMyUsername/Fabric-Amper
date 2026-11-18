@@ -1,5 +1,59 @@
-.h-longcopy-1/
-.h/
-.gradle/
-.kotlin/
+# Fabric Amper release source: do not publish local artifacts or probes.
+# These patterns do not remove files from existing Git history. The first
+# public-facing main snapshot is intentionally created without old build logs.
+
+# Gradle, Kotlin and local generated outputs (at any nesting depth)
+**/.gradle/
+**/.kotlin/
+**/build/
+**/out/
+**/run/
 *caches*/
+
+# Experimental runtime / verification workspaces and local investigation
+/analysis/
+/PROBLEMS.md
+/.h/
+/.h-longcopy-1/
+
+# Editor and operating system metadata
+**/.idea/
+**/.vscode/
+**/.settings/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.factorypath
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local logs and temporary files (release archives belong under ignored build/)
+*.log
+*.class
+*.tmp
+*.bak
+*.swp
+*.swo
+*.hprof
+*.pid
+
+# Local secrets, overrides and machine-specific files
+.env
+.env.*
+!.env.example
+*.local.properties
+local.properties
+*.keystore
+*.p12
+*.pfx
+*.jks
+*.pem
+*.key
+
+# Python probes and diagnostic cache
+**/__pycache__/
+*.pyc
+.pytest_cache/
