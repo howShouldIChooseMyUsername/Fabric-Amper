@@ -1,7 +1,0 @@
-{
-  "required": true,
-  "package": "org.example.g27.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "client": ["G27ClientMixin"],
-  "injectors": { "defaultRequire": 1 }
-}

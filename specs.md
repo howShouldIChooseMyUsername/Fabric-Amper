@@ -997,8 +997,8 @@ examplemod/
 #### 12.12.1. 명령·기본 로더·`product` 결정
 
 ```text
-fabric-amper.bat init <mod_id> [new_folder] [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1]
-fabric-amper.bat init <mod_id> --here [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets] [--legacy-schema1]
+fabric-amper.bat init <mod_id> [new_folder] [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
+fabric-amper.bat init <mod_id> --here [mod|api] [--mod-fabric] [--mod-neoforge] [--architectury] [--kotlin] [--splitEnvironmentSourceSets]
 ```
 
 기존 위치 인자 `mod|api`를 생략하면 `mod`, 두 로더 선택 플래그를 **모두 생략하면 Fabric 단독**을 기본으로 한다. 두 로더 플래그는 서로 배타적이지 않다. 선택 플래그는 기존 선택 인자 뒤에서 다른 옵션과 순서 무관하게 사용할 수 있고 각 플래그는 최대 1회 허용한다. `--here`, 폴더명, `mod|api`와 이미 지원하는 옵션의 파싱·에러 동작도 보존한다.
@@ -1010,7 +1010,7 @@ fabric-amper.bat init <mod_id> --here [mod|api] [--mod-fabric] [--mod-neoforge] 
 | 없음 | 있음 | NeoForge 단독 | `neoforge/mod` | `neoforge/api` |
 | 있음 | 있음 | Fabric + NeoForge | `[fabric/mod, neoforge/mod]` | `[fabric/api, neoforge/api]` |
 
-- **현행 기본 BAT `init`은 Fabric 단독·NeoForge 단독·dual 모두 `schema: "1.1"`을 명시**한다. 기본 Fabric 단독도 `fabric.loader`, `fabric.entrypoints`, `fabric.loom` 등의 새 이름공간을 사용한다. **Fabric 단독에서 `--legacy-schema1`을 명시한 경우만 정수 `schema: 1`을 생성**하여 `minecraft.loader`, `mod.entrypoints`, `settings.loom` 등 역사적 위치를 보존한다. NeoForge 단독/dual과 `--legacy-schema1`을 함께 사용하면 파일 생성 전에 사용법 오류로 거부한다. `migrate`는 기존 Fabric Gradle 변환을 위해 여전히 `schema: 1`을 생성한다. 파서의 현행 생략 기본값도 1.1이므로 손으로 쓴 동일 1.1 문서는 `schema`를 생략할 수 있다. 두 로더를 선택할 경우 `product`는 정확히 두 항목의 배열이고, 하나만 선택하면 문자열이다. 이전부터 존재하는 `schema: 1` Fabric 소비자는 구문과 빌드 의미를 유지한다. **스키마 없는 구형 Fabric YAML은 자동 v1로 폴백되지 않으며 FA003**으로 거부된다. `fabric/library`는 `fabric/api`의 별칭이다. `product: [fabric/api, neoforge/mod]` 등의 혼합 종류 배열은 YAML 문법으로 유효하지만, 단일 `mod|api` 인자를 받는 BAT 초기화는 두 타깃에 같은 종류를 지정한다.
+- **현행 BAT `init`은 Fabric 단독·NeoForge 단독·dual 모두 `schema: "1.1"`을 명시**한다. Fabric 단독에서도 `fabric.loader`, `fabric.entrypoints`, `fabric.loom` 등의 새 이름공간을 사용한다. **초기화에서 구형 스키마 1을 선택하는 옵션은 제거되었고, `init`은 항상 1.1을 생성한다.** 기존 Fabric YAML의 `minecraft.loader`, `mod.entrypoints`, `settings.loom` 등 역사적 위치는 정수 `schema: 1`을 명시한 문서에 한하여 디코더가 계속 지원한다. `migrate`는 기존 Fabric Gradle 변환을 위해 여전히 `schema: 1`을 생성한다. 파서의 현행 생략 기본값도 1.1이므로 손으로 쓴 동일 1.1 문서는 `schema`를 생략할 수 있다. 두 로더를 선택할 경우 `product`는 정확히 두 항목의 배열이고, 하나만 선택하면 문자열이다. 이전부터 존재하는 `schema: 1` Fabric 소비자는 구문과 빌드 의미를 유지한다. **스키마 없는 구형 Fabric YAML은 자동 v1로 폴백되지 않으며 FA003**으로 거부된다. `fabric/library`는 `fabric/api`의 별칭이다. `product: [fabric/api, neoforge/mod]` 등의 혼합 종류 배열은 YAML 문법으로 유효하지만, 단일 `mod|api` 인자를 받는 BAT 초기화는 두 타깃에 같은 종류를 지정한다.
 - NeoForge 단독·다중 로더에서 루트 `mod.id`는 NeoForge에도 유효한 규칙(`^[a-z][a-z0-9_]{1,63}$`)으로 검증한다. Fabric 단독은 기존 Fabric ID 규칙(하이픈 허용)을 유지한다. 플랫폼별 공통 `mod.license`, `minecraft.version=26.3` 초기 범위, Java 25 및 NeoForge 고정 후보 버전도 초기화 **전에** 검사한다. 기존 `--here` 빈 프로젝트 정책과 이미 있는 파일 보존 규칙은 변경하지 않는다.
 - `init`은 소비자 루트에 `settings.gradle.kts`와 **`mod.yaml` 한 파일**을 작성하는 기본값을 유지한다. **수동으로 작성·선택한 `mod.yml`도 모든 단일/배열 `product`와 NeoForge 백엔드에서 `mod.yaml`과 동등한 입력**이다. 한 루트에 두 확장자가 동시에 있으면 실패한다. 다중 프로젝트 각 `fabric/`·`neoforge/`·`common/`에 중복 YAML을 요구하거나 생성하지 않는다. 임의 `neoforge/mod.yml`로 루트 설정을 덮어쓰지 않는다.
 - `settings.gradle.kts`의 `dev.fabric-amper.settings` **단일 적용**이 루트 YAML을 읽고, 단일 타깃이면 기존 단일 프로젝트 동작을, 두 타깃이면 필요한 `:fabric`·`:neoforge` 및 조건부 `:common`을 구성한다. 어느 출력에도 소비자 작성 `build.gradle(.kts)`나 수동 `fabric.mod.json`/`META-INF/neoforge.mods.toml`, 임의의 추가 Gradle 플러그인 선언을 만들지 않는다.

@@ -177,7 +177,6 @@ The [v0.3.1 release](https://github.com/howShouldIChooseMyUsername/Fabric-Amper/
 ```bat
 fabric-amper.bat --version
 fabric-amper.bat init my_mod
-fabric-amper.bat init my_legacy_mod MyLegacyMod mod --legacy-schema1
 fabric-amper.bat init my_neo MyNeo mod --mod-neoforge --kotlin
 fabric-amper.bat init my_dual MyDual mod --mod-fabric --mod-neoforge --architectury
 fabric-amper.bat -C "MyDual" build
@@ -187,7 +186,7 @@ fabric-amper.bat -C "C:\path\to\legacy-mod" migrate --dry-run
 fabric-amper.bat -C "MyDual" doctor
 ```
 
-- **Every default `init`** (Fabric-only, NeoForge-only or dual-loader) generates explicit **`schema: "1.1"`** and the corresponding loader-specific YAML block(s). For an intentionally historical Fabric-only starter, pass `--legacy-schema1` to generate explicit integer `schema: 1` and the old field locations; NeoForge and dual-loader combinations reject that flag. The `migrate` command still pins schema 1 when converting existing Fabric Gradle projects.
+- **Every `init`** (Fabric-only, NeoForge-only or dual-loader) generates explicit **`schema: "1.1"`** and the corresponding loader-specific YAML block(s). Historical integer `schema: 1` remains supported by the YAML decoder for existing Fabric projects, and `migrate` still pins schema 1 when converting existing Fabric Gradle projects; `init` never generates schema 1.
 - `--kotlin` creates Kotlin sources. `--architectury` enables a shared `:common` project for dual-loader mode. Fabric's `--splitEnvironmentSourceSets` is not a general NeoForge client-split feature.
 - Dual-loader `run` / `server` requires **exactly one** `--mod-fabric` or `--mod-neoforge` selector; `build` validates and builds the selected project's loader outputs.
 - `migrate` performs a conservative static conversion of an existing Fabric Gradle project. Preview with `--dry-run`; the normal path backs up originals under `gradle_backup/`. It does not port Java/Kotlin gameplay code automatically.

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="dev.fabricamper.unit.FabricAmperInitSchemaUnitTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-14T05:27:29.224Z" hostname="DESKTOP-QBR2EQC" time="0.822">
-  <properties/>
-  <testcase name="init copies current producer schema and omits pinned YAML schema for mod and api()" classname="dev.fabricamper.unit.FabricAmperInitSchemaUnitTest" time="0.821"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
