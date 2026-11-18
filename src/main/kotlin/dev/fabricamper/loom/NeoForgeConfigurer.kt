@@ -73,7 +73,9 @@ object NeoForgeConfigurer {
 
         val sourceSets = project.extensions.getByType(SourceSetContainer::class.java)
         val main = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-        val clientRequested = (model.dependencies + neo.gradleDependencies).any { it.target == "client" } ||
+        val selectedDependencies = model.dependencies.filter { it.loader == null || it.loader == "neoforge" }
+            .map { it.copy(loader = null) } + neo.gradleDependencies
+        val clientRequested = selectedDependencies.any { it.target == "client" } ||
             project.layout.projectDirectory.dir("src/client").asFile.isDirectory
         val client = if (clientRequested) sourceSets.maybeCreate("client") else null
 
@@ -111,7 +113,7 @@ object NeoForgeConfigurer {
             .map { if (it.kind == "maven") GradleRepositoryDeclaration.Maven(
                 it.url ?: throw GradleException("FabricAmper FA003 repositories: missing HTTPS Maven URL"),
             ) else GradleRepositoryDeclaration.Named(it.kind) })
-        NeoForgeDependencyConfigurer.configure(project, model.dependencies + neo.gradleDependencies, model.testDependencies)
+        NeoForgeDependencyConfigurer.configure(project, selectedDependencies, model.testDependencies)
 
         // A test-only JUnit engine is not an instruction to launch a Minecraft
         // world. Keep default Gradle test discovery and NeoForge game runs separate.

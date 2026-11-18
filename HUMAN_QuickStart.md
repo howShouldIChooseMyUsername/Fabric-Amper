@@ -1,6 +1,6 @@
 # Fabric Amper — Quick Start (Moved)
 
-The former Quick Start has been **merged into the English [Quick Guide](HUMAN_QuickGuide.md)**. The Quick Guide is now the single, maintained source for both a five-minute first build and feature-by-feature YAML/command cheat sheets.
+The former Quick Start has been **merged into the English [Quick Guide](HUMAN_QuickGuide.md)**. The Quick Guide is now the single, maintained source for both a five-minute first build and feature-by-feature YAML/command cheat sheets. Its current bootstrap examples target **v0.3.1** (release verification pending) and document optional schema 1.1 root `dependencies[].loader: fabric|neoforge` selection; earlier published v0.3.0 evidence stays dated.
 
 - **Start immediately:** [The two-minute command path](HUMAN_QuickGuide.md#the-two-minute-command-path)
 - **Copy a complete project:** [Minimal project: copy and run](HUMAN_QuickGuide.md#minimal-project-copy-and-run)

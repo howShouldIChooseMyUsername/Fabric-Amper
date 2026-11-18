@@ -284,4 +284,6 @@ data class DependencySpec(
     val target: String = "main",
     val exported: Boolean = false,
     val include: Boolean = false,
+    /** Schema 1.1 root-only discriminator; null is shared by all selected loaders. */
+    val loader: String? = null,
 )

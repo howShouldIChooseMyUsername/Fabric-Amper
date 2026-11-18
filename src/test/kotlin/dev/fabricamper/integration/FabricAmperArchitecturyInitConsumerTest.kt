@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.readText
 
 /** Compile real Windows init starter sources against the in-development settings plugin.
- * The generated v0.3.0 plugin pin is replaced with TestKit's local classpath;
+ * The generated v0.3.1 plugin pin is replaced with TestKit's local classpath;
  * this test does not depend on the prerelease having been published.
  */
 @EnabledOnOs(OS.WINDOWS)
@@ -48,7 +48,7 @@ class FabricAmperArchitecturyInitConsumerTest {
             val output = process.inputStream.bufferedReader().readText()
             assertEquals(0, process.exitValue(), "init failed: $output")
             val generated = consumer.resolve("settings.gradle.kts").readText()
-            assertTrue(generated.contains("v0.3.0"), "BAT must pin the current v0.3.0 prerelease")
+            assertTrue(generated.contains("v0.3.1"), "BAT must pin the current v0.3.1 prerelease")
             // Exercise the current local plugin without downloading the prerelease.
             // No build.gradle file.
             f.write(consumer, "settings.gradle.kts", "plugins { id(\"dev.fabric-amper.settings\") }\n")

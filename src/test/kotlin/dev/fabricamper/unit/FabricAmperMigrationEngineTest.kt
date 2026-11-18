@@ -51,7 +51,7 @@ class FabricAmperMigrationEngineTest {
         assertFalse(Files.exists(fixture.root.resolve(fixture.build)))
         assertFalse(Files.exists(fixture.root.resolve(fixture.metadata)))
         assertMigrated(fixture)
-        assertTrue(Files.readString(fixture.root.resolve("settings.gradle.kts")).contains("Fabric-Amper:v0.3.0"))
+        assertTrue(Files.readString(fixture.root.resolve("settings.gradle.kts")).contains("Fabric-Amper:v0.3.1"))
         assertPreserved(fixture, original)
         assertNoStage(fixture.root)
     }

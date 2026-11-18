@@ -100,7 +100,7 @@ class FabricAmperDocumentationContractUnitTest {
             "## Windows command cheat sheet",
             "## Troubleshooting and next steps",
             "fabric-amper.bat init quick_mod",
-            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0",
+            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1",
             "fabric-amper.bat plan",
             "publish.common",
         ).forEach { expected ->

@@ -97,7 +97,7 @@ internal object FabricAmperCommonConfigurer {
         }
         // Common-neutral dependencies can compile against public contracts;
         // loader-specific declarations belong exclusively to their projects.
-        model.dependencies.forEach { dependency ->
+        model.dependencies.filter { it.loader == null }.forEach { dependency ->
             if (dependency.kind != "library" || dependency.target != "main" || dependency.include) {
                 throw GradleException("FabricAmper FA007 dependencies: common project requires main, unembedded libraries")
             }

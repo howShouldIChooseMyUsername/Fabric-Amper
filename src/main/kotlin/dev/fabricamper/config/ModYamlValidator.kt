@@ -370,6 +370,7 @@ object ModYamlValidator {
         }
         val hasFabric = raw.targets.any { it.loader == "fabric" }
         val hasNeo = raw.targets.any { it.loader == "neoforge" }
+        val selectedLoaders = raw.targets.map { it.loader }.toSet()
         if ((raw.fabric != null) != hasFabric || (raw.neoforge != null) != hasNeo) {
             fail("FA003", "product", "each selected loader must have exactly its matching configuration", file)
         }
@@ -447,38 +448,44 @@ object ModYamlValidator {
             "neoforge.gradleDependencies" to raw.neoforge?.gradleDependencies.orEmpty(),
         )
         allDependencyGroups.forEach { (path, deps) ->
-            // Client Gradle dependencies belong to Fabric's split source set only.
-            // A dual-loader root dependency is shared with NeoForge, so it can
-            // never target Fabric's client even when Fabric has split enabled.
-            // In dual Architectury mode --split is ignored for both backends.
-            val clientSourceSetEnabled = hasFabric &&
+            // In dual mode a root dependency with no loader is truly common;
+            // scoped root dependencies instead follow the selected backend's
+            // validation rules, just like its namespaced gradleDependencies.
+            val fabricClientSplit = hasFabric &&
                 raw.fabric?.loom?.splitEnvironmentSourceSets == true &&
                 mc.profile == MinecraftProfile.NON_REMAPPING &&
-                (path == "fabric.gradleDependencies" ||
-                    (path == "dependencies" && !raw.isMultiLoader)) &&
                 (!raw.isMultiLoader || !raw.architectury.enabled)
+            fun isFabricOnly(dep: DependencySpec): Boolean = hasFabric &&
+                (path == "fabric.gradleDependencies" ||
+                    (path == "dependencies" &&
+                        (dep.loader == "fabric" || (!raw.isMultiLoader && dep.loader == null))))
             deps.forEachIndexed { index, dep ->
-                if (dep.target == "client" && !clientSourceSetEnabled) {
+                if (dep.loader != null && path != "dependencies") {
+                    fail("FA003", "$path[$index].loader", "loader is supported only in schema 1.1 root dependencies", file)
+                }
+                if (path == "dependencies" && dep.loader != null) {
+                    if (dep.loader !in setOf("fabric", "neoforge") || dep.loader !in selectedLoaders) {
+                        fail("FA003", "$path[$index].loader", "loader must name a selected Fabric or NeoForge target", file)
+                    }
+                }
+                if (dep.target == "client" && !(fabricClientSplit && isFabricOnly(dep))) {
                     fail("FA014", "$path[$index].target",
-                        "client Gradle dependencies require Fabric's split source set; " +
-                            "multi-loader common/NeoForge and dual Architectury clients are not supported", file)
+                        "client Gradle dependencies require a Fabric-scoped dependency and split source set; " +
+                            "common, NeoForge and dual Architectury clients are not supported", file)
                 }
-                // Fabric's Loom include/JIJ is valid in its own dependency group,
-                // even when this YAML also produces a separate NeoForge target.
-                // Common dependencies of a dual-loader build and NeoForge's MDG
-                // JarJar must never inherit Fabric's include semantics.
-                val fabricOnlyInclude = hasFabric && (path == "fabric.gradleDependencies" ||
-                    (path == "dependencies" && !hasNeo && !raw.isMultiLoader))
-                if (dep.include && !fabricOnlyInclude) {
+                // The Fabric include/JIJ contract may be selected by a Fabric
+                // discriminator. Neutral and NeoForge declarations cannot
+                // acquire Fabric's JIJ behavior accidentally.
+                if (dep.include && !isFabricOnly(dep)) {
                     fail("FA007", "$path[$index].include",
-                        "include requires a Fabric-only dependency group; NeoForge JarJar needs verified bounds", file)
+                        "include requires a Fabric-scoped dependency; NeoForge JarJar needs verified bounds", file)
                 }
-                if (raw.isMultiLoader && path == "dependencies" &&
+                if (raw.isMultiLoader && path == "dependencies" && dep.loader == null &&
                     (dep.kind == "mod" || dep.include || dep.target != "main")) {
                     fail("FA007", "$path[$index]", "multi-loader common dependencies must be neutral main libraries", file)
                 }
             }
-            validateDependencies(deps, raw, path, clientSourceSetEnabled)
+            validateDependencies(deps, raw, path) { dep -> fabricClientSplit && isFabricOnly(dep) }
         }
         val fabric = raw.fabric?.let { f ->
             if (!VersionSyntax.isFixedGradleVersion(f.loader)) {
@@ -984,11 +991,14 @@ object ModYamlValidator {
 
     private fun validateDependencies(
         items: List<DependencySpec>, model: ModYamlModel, prefix: String,
-        clientSourceSetEnabled: Boolean = model.settings.loom.splitEnvironmentSourceSets,
+        clientSourceSetEnabled: (DependencySpec) -> Boolean = { model.settings.loom.splitEnvironmentSourceSets },
     ) {
-        val seen = mutableMapOf<Pair<String, String>, Pair<Int, DependencySpec>>()
+        val seen = mutableMapOf<Pair<String, String>, MutableList<Pair<Int, DependencySpec>>>()
         items.forEachIndexed { index, dep ->
             val p = "$prefix[$index]"
+            if (model.schemaVersion != "1.1" && dep.loader != null) {
+                fail("FA003", "$p.loader", "loader discriminator requires schema 1.1", model.source)
+            }
             if (dep.kind !in setOf("library", "mod")) fail("FA003", "$p.kind", "expected 'library' or 'mod'", model.source)
             if (dep.scope !in setOf("all", "compile-only", "runtime-only")) {
                 fail("FA003", "$p.scope", "unknown dependency scope", model.source)
@@ -1001,18 +1011,25 @@ object ModYamlValidator {
                 fail("FA007", "$p.include", "include=true requires scope=all", model.source)
             }
             if (dep.target == "client" &&
-                (!clientSourceSetEnabled || dep.exported || dep.include ||
+                (!clientSourceSetEnabled(dep) || dep.exported || dep.include ||
                     model.minecraft.profile == MinecraftProfile.REMAPPING)
             ) {
                 fail("FA014", "$p.target",
                     "client requires splitEnvironmentSourceSets, non-remap profile, no exported/include", model.source)
             }
-            val previous = seen.putIfAbsent(dep.coordinate to dep.target, index to dep)
+            // Neutral dependencies apply to every selected backend. Treat a
+            // neutral + loader-scoped declaration as overlapping, but keep
+            // two distinct loader-scoped declarations independent.
+            val previousDeclarations = seen.getOrPut(dep.coordinate to dep.target) { mutableListOf() }
+            val previous = previousDeclarations.firstOrNull { (_, prior) ->
+                prior.loader == null || dep.loader == null || prior.loader == dep.loader
+            }
             if (previous != null && previous.second != dep) {
                 fail("FA012", p,
                     "conflicting declarations at $prefix[${previous.first}] and $prefix[$index] " +
                         "for ${dep.coordinate} target ${dep.target}", model.source)
             }
+            previousDeclarations.add(index to dep)
         }
     }
 

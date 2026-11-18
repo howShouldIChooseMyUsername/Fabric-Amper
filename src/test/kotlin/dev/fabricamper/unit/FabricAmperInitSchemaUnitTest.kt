@@ -63,8 +63,8 @@ class FabricAmperInitSchemaUnitTest {
             assertTrue(settings.contains("mavenCentral()"))
             assertTrue(settings.contains("resolutionStrategy {"))
             assertTrue(settings.contains("if (requested.id.id == \"dev.fabric-amper.settings\") {"))
-            assertTrue(settings.contains("useModule(\"com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0\")"))
-            assertTrue(settings.contains("id(\"dev.fabric-amper.settings\") version \"0.3.0\""))
+            assertTrue(settings.contains("useModule(\"com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1\")"))
+            assertTrue(settings.contains("id(\"dev.fabric-amper.settings\") version \"0.3.1\""))
             assertFalse(settings.contains("build/g29-probe"), "init must not rely on local Maven setup")
             assertFalse(settings.contains("https://fabricmc.net\""), "Fabric Maven requires maven.fabricmc.net")
             assertTrue(Files.isRegularFile(consumer.resolve("src/main/java/org/example/ExampleMod.java")))
@@ -353,7 +353,7 @@ class FabricAmperInitSchemaUnitTest {
         ).directory(root.toFile()).redirectErrorStream(true)
         powershell.environment()["FA_ROOT"] = root.toString()
         powershell.environment()["FA_CONSUMER"] = folder.toString()
-        powershell.environment()["FA_VERSION"] = "0.3.0"
+        powershell.environment()["FA_VERSION"] = "0.3.1"
         val process = powershell.start()
         assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Forced-missing preview must not start a download")
         val output = process.inputStream.bufferedReader().readText()
@@ -422,7 +422,7 @@ class FabricAmperInitSchemaUnitTest {
         val missingPreview = runBat(batch, "doctor --fix --dry-run")
         assertEquals(0, missingPreview.first, "Missing helper must preview without fetching: ${missingPreview.second}")
         assertTrue(missingPreview.second.contains("Would fetch exactly fabric-amper-doctor-fix.ps1"))
-        assertTrue(missingPreview.second.contains("/releases/download/v0.3.0/fabric-amper-doctor-fix.ps1"))
+        assertTrue(missingPreview.second.contains("/releases/download/v0.3.1/fabric-amper-doctor-fix.ps1"))
         assertFalse(Files.exists(folder.resolve("scripts/fabric-amper-doctor-fix.ps1")))
         assertEquals(2, runBat(batch, "doctor --fix --unknown").first)
 

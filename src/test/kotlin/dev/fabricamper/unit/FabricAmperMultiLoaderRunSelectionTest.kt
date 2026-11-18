@@ -176,7 +176,7 @@ class FabricAmperMultiLoaderRunSelectionTest {
     private fun consumer(name: String, yaml: String): Path {
         val root = Files.createDirectories(workspace.resolve(name))
         Files.writeString(root.resolve("settings.gradle.kts"),
-            """plugins { id("dev.fabric-amper.settings") version "0.3.0" }""" + "\n")
+            """plugins { id("dev.fabric-amper.settings") version "0.3.1" }""" + "\n")
         Files.writeString(root.resolve("mod.yaml"), yaml + "\n", StandardCharsets.UTF_8)
         Files.writeString(root.resolve("gradlew.bat"), """
             @echo off

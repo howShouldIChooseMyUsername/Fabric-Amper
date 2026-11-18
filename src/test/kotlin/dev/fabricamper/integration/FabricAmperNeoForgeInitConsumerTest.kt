@@ -292,7 +292,7 @@ class FabricAmperNeoForgeInitConsumerTest {
             "BAT must supply its pinned editor schema")
         val originalSettings = Files.readString(consumer.resolve("settings.gradle.kts"))
         assertTrue(originalSettings.contains("dev.fabric-amper.settings"), originalSettings)
-        assertTrue(originalSettings.contains("v0.3.0"),
+        assertTrue(originalSettings.contains("v0.3.1"),
             "The generated current prerelease pin must remain visible before replacing it for local TestKit")
         // The only rewritten consumer file is settings.gradle.kts; preserve
         // the BAT's actual YAML, Kotlin examples, schema and folder layout.

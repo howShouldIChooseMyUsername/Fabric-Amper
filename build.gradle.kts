@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.fabricamper"
-version = "0.3.0"
+version = "0.3.1"
 description = "Fabric Amper: YAML-driven Fabric Gradle Settings and Project plugins"
 
 repositories {
