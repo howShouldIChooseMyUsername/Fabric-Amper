@@ -109,11 +109,11 @@ class FabricAmperG19RealKotlinCollisionConsumerTest {
         val repository = buildRoot.resolve("g29-probe/maven-repo").toRealPath()
         require(repository.startsWith(buildRoot)) { "G29 publication must remain inside producer build/" }
         val marker = repository.resolve(
-            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.3.0/" +
-                "dev.fabric-amper.settings.gradle.plugin-0.3.0.pom",
+            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.3.1/" +
+                "dev.fabric-amper.settings.gradle.plugin-0.3.1.pom",
         )
-        val pom = repository.resolve("dev/fabricamper/fabric-amper/0.3.0/fabric-amper-0.3.0.pom")
-        val jar = repository.resolve("dev/fabricamper/fabric-amper/0.3.0/fabric-amper-0.3.0.jar")
+        val pom = repository.resolve("dev/fabricamper/fabric-amper/0.3.1/fabric-amper-0.3.1.pom")
+        val jar = repository.resolve("dev/fabricamper/fabric-amper/0.3.1/fabric-amper-0.3.1.jar")
         require(listOf(marker, pom, jar).all { Files.isRegularFile(it) }) {
             "G19 requires Prime's already published G29 local marker, plugin POM and JAR"
         }
@@ -131,7 +131,7 @@ class FabricAmperG19RealKotlinCollisionConsumerTest {
                     mavenCentral()
                 }
             }
-            plugins { id("dev.fabric-amper.settings") version "0.3.0" }
+            plugins { id("dev.fabric-amper.settings") version "0.3.1" }
         """.trimIndent() + "\n"
     }
 

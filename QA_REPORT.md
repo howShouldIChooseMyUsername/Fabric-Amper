@@ -1522,3 +1522,44 @@ FA003 수정 뒤 원본 프로젝트에서 `analysis/final-post-missing-credenti
 **실제 Gradle 실행:** Gradle **9.7.1**, JDK **25**, `clean build validatePlugins --offline --no-daemon --no-build-cache --console=plain`의 최신 후보 실행이 **BUILD SUCCESSFUL (2m22s)**. JUnit XML 71 suites / **371 tests = 314 PASS, 57 SKIP, 0 FAIL, 0 ERROR**. 스키마·문서 YAML 파서·BAT 명령 테스트의 이전 실패는 구형 계약 단언, 문서에서 누락한 NeoForge 필수 license와 구형 필드, Windows stdout 파이프 충돌 문제였으며 모두 수정하고 동일 필터/전체 명령에서 재검증했다. 57 SKIP는 PASS로 간주하지 않는다. 기존 364 tests(307 PASS, 57 SKIP) 기록은 **변경 전 기준선**이므로 덮어쓰지 않는다.
 
 **미수락:** 전체 G1–G30/NF1–NF26, Minecraft 26.3 클라이언트/전용 서버의 실제 NeoForge/듀얼 런타임, IntelliJ GUI Sync, 인증된 Modrinth/CurseForge 게시, 공개 JitPack `v0.3.0` 해석은 별도 시험 필요. dual Architectury `:common` JAR 첫 물질화로 구성 캐시 **콜드 두 번째 실행 1회 MISS**였고, 같은 상태의 세 번째 실행 HIT는 성공했으나 즉시 두 번째 HIT 엄격 기준은 **미충족**. 릴리스 전 원격 공개/실제 소비자 검증을 이미 통과했다고 주장하지 않는다.
+
+## 41. v0.3.0 공개 프리릴리즈·JitPack 실소비자 후속 검증 및 main 버전 정렬 (2026-11-17)
+
+**§40 이후 완료된 별도 릴리즈 작업의 증거:** GitHub annotated `v0.3.0` 태그는 `7ca37388195e2bfbde376920052431553b8cad82` 커밋을 가리킨다. GitHub Release는 `draft: false`, `prerelease: true`로 공개되었고, 자산 **9개**를 실제 게시한 뒤 **원격에서 다시 다운로드하여 SHA-256 전부 일치**를 확인했다. 이 사실은 §40의 당시 미수락 상태를 소급 변경하는 것이 아니라 **이후에 완료된 별도 검증**이다. 배포물은 다음과 같다.
+
+| 공개 자산 | 확인한 SHA-256 |
+| --- | --- |
+| `fabric-amper-0.3.0.jar` | `e9567ce0d80512c60b3d379c7af7c8e3dcce4947625af81204eb0b9f6852e2c0` |
+| `fabric-amper-0.3.0-sources.jar` | `00c9b02e77aec450259cfd35a26b3720cdd1f4eb827065ed5cc579f8936ab996` |
+| `fabric-amper-0.3.0-maven-repository.zip` | `5e76888a5be3b72852ea81f29cbcdbaa340f645b0d4c96191df864b8daaf7ae7` |
+| `fabric-amper-0.3.0-windows-tools.zip` | `e87125f99a6571b96470e00697098284bffb1da176ce0de382bbe2bf8cb9e2d5` |
+| `fabric-amper-doctor-fix.ps1` | `c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053` |
+| `fabric-amper-migrate.ps1` | `68cf6834064ded80dc30ae7f99366de3c284c9cca7c1b8029f12c59343f6313a` |
+| `fabric-amper.bat` | `bdb80fe9d307460553683aee04c7b49a911c7e3012cb5d292fa5a78759e0df43` |
+| `fabric-amper.schema.json` | `453620efca0115d5b584ddf71c515da1a8908b4c4ce4bc084a82c8d3b9764573` |
+
+9번째 업로드 자산은 위 파일들의 해시 목록 `SHA256SUMS.txt`이다. BAT에 고정된 doctor/migrate/schema 해시는 각 공개 파일의 바이트와 일치한다. 기존 SHA-pinned 파일의 오래된 버전 주석은 역사적 정보로 보존하며 바이트를 변경하지 않는다.
+
+**공개 JitPack 확인:** `/api/builds/com.github.howShouldIChooseMyUsername/Fabric-Amper/v0.3.0`의 응답은 `status: ok`, `version: v0.3.0`, `isTag: true`, 커밋 `7ca3738...`이고 Java 25 빌드에서 `dev.fabric-amper.project.gradle.plugin`, `dev.fabric-amper.settings.gradle.plugin`, `fabric-amper` 세 모듈을 생성했다. 원격 `Fabric-Amper-v0.3.0.pom` 조회는 **HTTP 200**이다.
+
+**실제 공개 좌표 소비자:** 공개 BAT의 `init myneo ... --mod-neoforge --architectury --kotlin`으로 신규 프로젝트 생성, JitPack `v0.3.0` 원본 Settings를 그대로 사용. `gradle help` **BUILD SUCCESSFUL**, 이어 `validateFabricAmper build verifyFabricAmperJar --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 3m23s (8 tasks executed)**. 실제 `generateNeoForgeModsToml`, `createMinecraftArtifacts`, `compileKotlin`, `jar`, `verifyFabricAmperJar`를 수행한 원격 소비자 빌드 증거이며, 게임 실행 증거는 아니다.
+
+**이번 main 후속 정리:** `settings.gradle.kts`의 과거 생산자 릴리즈 메타데이터 `0.1.2`를 `build.gradle.kts` 및 BAT와 일치하는 `0.3.0`으로 수정하고 현재 문서의 미게시/개발 예정 진술을 위의 확인된 공개 상태로 갱신했다. **이미 게시된 `v0.3.0` 태그/Release 자산의 바이트·SHA·대상 커밋은 그대로 보존**한다. 이 후속 소스 커밋은 기존 Git 태그가 가리키는 배포 스냅샷과 구분한다.
+
+**미수락 유지:** 전체 G1–G30/NF1–NF26, 실제 Minecraft 26.3 client/server 모드 런타임, IntelliJ 실제 GUI Sync, 엄격한 콜드 두 번째 실행 configuration-cache HIT, 인증된 외부 Modrinth/CurseForge 게시. §40의 57 SKIP·콜드 CC MISS 등 역사적 사실을 덮어쓰지 않는다.
+
+**동일 main 후속 문서 정합성 검증 (2026-11-18 KST):** 사용자의 추가 요청에 따라 `README.md` 전부를 영어로 전환(한글 잔존 **0건**), 5개 인간/AI 문서에서 **현재 복사 가능한 완전한 YAML 예제는 스키마 1.1**로 정리하고 구형 `schema: 1` 완전 예제는 문서마다 **단일 역사 섹션** 안에만 유지했다. 루트 `repositories`/`dependencies`/`test-dependencies`가 **v1·v1.1 모두 배열**이며, v1 `mod.depends`/v1.1 `fabric.depends`는 맵, `neoforge.dependencies`는 배열이라는 파서/스키마 사실을 명시했다. 실제 BAT Fabric 전용 `init`은 `--mod-fabric` 단독을 포함해 여전히 명시적 `schema: 1`을 생성한다는 호환 예외도 기록했다. `FabricAmperDocumentationContractUnitTest`에 README 영문 유지·QuickGuide 1.1 예제·5개 문서 역사 섹션 단일성 회귀를 추가. 중간 문서 YAML 파서 시험의 두 실패(1.1 예제의 구형 필드 위치, 역사 예제의 미존재 파일 참조)는 예제/테스트 계약을 수정한 뒤 **선택 16 tests / 0 FAIL / BUILD SUCCESSFUL in 9s**로 재실행 확인. 이어 JDK25/Gradle9.7.1 `clean build validatePlugins --offline --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 2m23s / 11 tasks executed**, `validatePlugins` PASS. 본 검증 역시 Minecraft 실제 게임·IDE GUI나 전체 NF/G 게이트의 추가 승인은 아니다.
+
+## 42. v0.3.1 프리릴리즈 후보 — 통합 dependencies[].loader 및 빌드/자산 검증 (2026-11-18)
+
+**변경 계약:** 현행 스키마 1.1 루트 `dependencies[]` 객체 항목에 선택적 `loader: fabric|neoforge`를 추가했다. 생략한 항목은 선택된 로더들의 공통 Gradle 라이브러리이며, 명시된 로더의 항목은 그 로더에서만 사용하고 Architectury `:common`에서 제외한다. 두 로더의 동일 모드에 서로 다른 Maven 버전을 지정할 수 있다. 단일 로더에서도 실제 선택된 로더와 일치하면 허용하며, 알 수 없거나 선택되지 않은 로더는 FA003으로 거절한다. 공통+특정 로더가 같은 좌표/대상을 중복 선언한 충돌은 FA012. 스키마 1의 기존 입력, Loader 런타임 관계 필드 `fabric.depends`·`neoforge.dependencies`, 기존 `fabric.gradleDependencies`·`neoforge.gradleDependencies`는 보존한다.
+
+**문서/도구:** 영문 README 최상단 `Write mods, not build scripts` 및 원본 JitPack 이미지 배지를 유지한 채 254줄로 재구성했고, 현재 bootstrap 예시·플러그인 버전·BAT·마이그레이션 도구를 0.3.1 / v0.3.1로 정렬했다. 과거 v0.3.0의 실제 공개 검증·자산 SHA 기록은 날짜가 있는 역사적 자료로 보존했다. JSON Schema Draft-07 구조와 9개 허용/거부 시나리오 PASS. BAT는 schema SHA-256 `dd84e7af00ce9bde155ec7d13d672d040f43d8c46f5f1145131cdbee5f9c6d3c`, migrate SHA `20ff79e813933b724b8032789253c89747cd36df5895d05d1321ffb8133d0b2d`, 원래 doctor SHA `c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053`를 실제 파일 바이트와 맞춘다. Fabric 단독(schema 1), NeoForge 단독(1.1), 듀얼(1.1) BAT init 3/3 스모크 PASS 및 생성 Settings JitPack v0.3.1 확인.
+
+**검증:** 새 루트 로더 선택/겹치는 좌표/모드 형식/클라이언트 분리를 포함한 단위 선택 28/28 PASS. 실제 TestKit 독립 및 Architectury 듀얼의 Fabric/NeoForge 버전 분리, 중립 :common 의존성, Fabric 전용 include/JIJ 비누출 **2/2 PASS**. 필터 시험 중 YAML 들여쓰기와 테스트 fixture 소스 디렉터리 부재로 일시 실패했던 두 경우는 **테스트 fixture만** 수정해 재실행 PASS. 기존 IDE 스키마 자동완성 단언은 새 `loader` 필드의 구조/enum을 정확히 확인하도록 갱신한 뒤 11/11 PASS.
+
+**생산자 전체 빌드:** Gradle 9.7.1/JDK25, `clean build validatePlugins -PfabricAmperProbeMavenRepo=true --offline --no-daemon --no-build-cache --console=plain` **BUILD SUCCESSFUL in 2m**, JUnit XML 73 suites / **383 tests = 324 PASS + 59 SKIP + 0 FAIL + 0 ERROR**, `validatePlugins` PASS. G29 `publishAllPublicationsToG29ProbeRepository`도 **BUILD SUCCESSFUL**, 두 Gradle Plugin Marker POM 및 구현 JAR/소스 JAR, POM, `.module`을 로컬 Maven으로 게시하고 실제 바이너리와 바이트 동일성을 확인했다.
+
+**v0.3.1 배포 후보:** 새 컴파일 결과에서 구버전 바이너리 이름을 바꾸지 않고 플러그인 JAR / sources JAR / 로컬 Maven ZIP / Windows 도구 ZIP / 4개 단독 도구·스키마 / SHA256SUMS 총 **9개 자산**을 구성했다. 별도 검증 스크립트가 8개 해시, Maven ZIP 양쪽 Plugin Marker, Windows ZIP 9개 정확한 구성요소와 고정된 helper/schema SHA, Maven/JAR byte identity를 검사해 **PASS**. 이 절의 검증은 로컬 후보 자산 검사로, GitHub 원격 재다운로드 및 JitPack v0.3.1 공개 소비자 빌드 결과와 구분한다.
+
+**미수락 상태:** Minecraft 실제 클라이언트/서버 런타임, IntelliJ 실제 GUI Sync, 엄격한 콜드 두 번째 config-cache HIT, 외부 플랫폼 인증 게시, 모든 G1–G30/NF1–NF26은 여전히 별도 출하 게이트다. 59 SKIP는 PASS가 아니다.

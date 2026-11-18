@@ -187,7 +187,7 @@ object ModYamlDecoder {
             repositories = parseRepositories(optionalNode(tree, "repositories", "", source), source,
                 allowNeoForge = true),
             dependencies = parseDependencies(optionalNode(tree, "dependencies", "", source),
-                "dependencies", source, false),
+                "dependencies", source, false, allowLoader = true),
             testDependencies = parseDependencies(optionalNode(tree, "test-dependencies", "", source),
                 "test-dependencies", source, true),
             publishing = parsePublishing(optionalNode(tree, "publishing", "", source), source),
@@ -557,7 +557,9 @@ object ModYamlDecoder {
         }.distinct()
     }
 
-    private fun parseDependencies(node: Any?, name: String, file: Path, test: Boolean): List<DependencySpec> {
+    private fun parseDependencies(
+        node: Any?, name: String, file: Path, test: Boolean, allowLoader: Boolean = false,
+    ): List<DependencySpec> {
         if (node == null) return emptyList()
         return list(node, name, file).mapIndexed { index, value ->
             val p = "$name[$index]"
@@ -565,7 +567,8 @@ object ModYamlDecoder {
                 DependencySpec("library", coordinate(value, p, file))
             } else {
                 val m = map(value, p, file)
-                if (m.size == 1 && !m.containsKey("maven") && !m.containsKey("modrinth")) {
+                if (m.size == 1 && !m.containsKey("maven") && !m.containsKey("modrinth") &&
+                    !m.containsKey("loader")) {
                     val (rawCoord, rawScope) = m.entries.single()
                     val shortcut = rawScope as? String
                         ?: error("FA003", p, "shorthand dependency scope must be string", file)
@@ -577,7 +580,8 @@ object ModYamlDecoder {
                     DependencySpec("library", coordinate(rawCoord, p, file), scope, "main",
                         exported = shortcut == "exported", include = shortcut == "include")
                 } else {
-                    keys(m, setOf("maven", "modrinth", "kind", "scope", "target", "exported", "include"), p, file)
+                    keys(m, setOf("maven", "modrinth", "kind", "scope", "target", "exported", "include") +
+                        if (allowLoader) setOf("loader") else emptySet(), p, file)
                     val hasMaven = m.containsKey("maven")
                     val hasModrinth = m.containsKey("modrinth")
                     if (hasMaven == hasModrinth) {
@@ -597,7 +601,8 @@ object ModYamlDecoder {
                     val target = string(m, "target", p, file) ?: "main"
                     DependencySpec(kind, coordinate, scope, target,
                         boolean(m, "exported", p, file) ?: false,
-                        boolean(m, "include", p, file) ?: false)
+                        boolean(m, "include", p, file) ?: false,
+                        loader = if (allowLoader) string(m, "loader", p, file) else null)
                 }
             }.also { dep ->
                 if (test && (dep.include || dep.exported || dep.target != "main")) {

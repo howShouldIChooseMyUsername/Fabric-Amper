@@ -56,7 +56,10 @@ object FabricV11Projection {
                 resources = fabric.resources,
             ),
             repositories = model.repositories + fabric.repositories,
-            dependencies = model.dependencies + fabric.gradleDependencies,
+            // Root declarations without a discriminator reach both backends;
+            // NeoForge-scoped coordinates must never reach Fabric/Loom.
+            dependencies = model.dependencies.filter { it.loader == null || it.loader == "fabric" }
+                .map { it.copy(loader = null) } + fabric.gradleDependencies,
             authoredDependsKeys = fabric.depends.keys.toSet(),
         )
     }

@@ -5,17 +5,17 @@ rem No Gradle build script or authored fabric.mod.json is needed in consumers.
 set "FA_ROOT=%~dp0"
 set "FA_CONSUMER=%CD%"
 set "FA_GRADLE="
-set "FA_VERSION=0.3.0"
+set "FA_VERSION=0.3.1"
 set "FA_MIGRATE_PROJECT_PREFIX=0"
 set "FA_HELPER_SOURCE=release"
 rem Release-pinned helper downloads always go into the scripts directory.
 set "FA_SCRIPTS_DIR=%FA_ROOT%scripts"
 rem Release-pinned helper hashes must match the exact uploaded bytes.
-rem Reusing a helper requires the v0.3.0 release to publish the same verified
+rem Reusing a helper requires the v0.3.1 release to publish the same verified
 rem bytes; never assume a helper was updated just because FA_VERSION changed.
 set "FA_DOCTOR_SHA256=c8fa4389ba8e8fe3b1d8430fb77313c41d3f042c2f8d06e4630e969643903053"
-set "FA_MIGRATE_SHA256=68cf6834064ded80dc30ae7f99366de3c284c9cca7c1b8029f12c59343f6313a"
-set "FA_SCHEMA_SHA256=453620efca0115d5b584ddf71c515da1a8908b4c4ce4bc084a82c8d3b9764573"
+set "FA_MIGRATE_SHA256=20ff79e813933b724b8032789253c89747cd36df5895d05d1321ffb8133d0b2d"
+set "FA_SCHEMA_SHA256=dd84e7af00ce9bde155ec7d13d672d040f43d8c46f5f1145131cdbee5f9c6d3c"
 
 if /i "%~1"=="-C" goto :projectOption
 if /i "%~1"=="--project" goto :projectOption

@@ -64,6 +64,27 @@ class FabricAmperDocumentationContractUnitTest {
     }
 
     @Test
+    fun `legacy schema 1 standalone examples stay in one dedicated reference per guide`() {
+        val root = Path.of(System.getProperty("user.dir"))
+        val legacyHeadings = mapOf(
+            "README.md" to "## Historical schema 1 reference",
+            "HUMAN.md" to "## Historical schema 1 reference",
+            "HUMAN_QuickGuide.md" to "## Historical schema 1 reference",
+            "FabricAmperSKILL.md" to "## Legacy schema 1 (Fabric-only reference)",
+            "FabricAmperSKILL_SYN.md" to "## Legacy schema 1 (Fabric-only reference)",
+        )
+        for ((filename, heading) in legacyHeadings) {
+            val text = Files.readString(root.resolve(filename), StandardCharsets.UTF_8)
+            val section = text.indexOf(heading)
+            assertTrue(section >= 0, "$filename must have one historical schema 1 section")
+            val examples = Regex("(?m)^schema: 1\\r?$").findAll(text).toList()
+            assertEquals(1, examples.size, "$filename must have one explicit legacy YAML example")
+            assertTrue(examples.single().range.first > section,
+                "$filename must place its legacy YAML example inside the historical section")
+        }
+    }
+
+    @Test
     fun `english quick guide combines first-run instructions and feature cheat sheets`() {
         val root = Path.of(System.getProperty("user.dir"))
         val quickGuide = Files.readString(root.resolve("HUMAN_QuickGuide.md"), StandardCharsets.UTF_8)
@@ -79,20 +100,22 @@ class FabricAmperDocumentationContractUnitTest {
             "## Windows command cheat sheet",
             "## Troubleshooting and next steps",
             "fabric-amper.bat init quick_mod",
-            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.0",
+            "com.github.howShouldIChooseMyUsername:Fabric-Amper:v0.3.1",
             "fabric-amper.bat plan",
             "publish.common",
         ).forEach { expected ->
             assertTrue(quickGuide.contains(expected), "Merged English Quick Guide is missing '$expected'")
         }
         assertTrue(
-            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\n# \$schema: ./schemas/mod.schema.json\nschema: 1\nproduct: fabric/mod"),
-            "Quick Guide must provide a complete starter YAML with both YAML Language Server and IntelliJ schema directives",
+            quickGuide.contains("```yaml\n# yaml-language-server: \$schema=./schemas/mod.schema.json\n# \$schema: ./schemas/mod.schema.json\nschema: \"1.1\"\nproduct: fabric/mod"),
+            "Quick Guide must provide a schema 1.1 starter YAML with both YAML Language Server and IntelliJ schema directives",
         )
         assertTrue(quickGuide.contains("```kotlin\npluginManagement"), "Quick Guide must provide Settings bootstrap")
         assertTrue(!quickGuide.contains("fabric-amper.bat setup"), "Quick Guide must not recommend removed setup command")
         assertTrue(quickGuide.contains("```java\npackage org.example;"), "Quick Guide must provide the starter source")
         assertTrue(!Regex("[\\uAC00-\\uD7A3]").containsMatchIn(quickGuide), "Quick Guide must be English-only")
+        val readme = Files.readString(root.resolve("README.md"), StandardCharsets.UTF_8)
+        assertTrue(!Regex("[\\uAC00-\\uD7A3]").containsMatchIn(readme), "README must be English-only")
         assertTrue(quickStart.contains("[Quick Guide](HUMAN_QuickGuide.md)"), "Old Quick Start path must link to merged guide")
         assertTrue(!quickStart.contains("```yaml"), "Quick Start must not retain a duplicate configuration tutorial")
     }

@@ -143,10 +143,22 @@ class FabricAmperSchemaContractUnitTest {
         val item = definitions.getAsJsonObject("dependency")
         assertEquals(listOf("object", "string"), item.getAsJsonArray("type").map { it.asString })
         val keys = item.getAsJsonObject("properties")
-        assertEquals(setOf("maven", "modrinth", "kind", "scope", "target", "exported", "include"),
+        assertEquals(setOf("maven", "modrinth", "kind", "scope", "target", "loader", "exported", "include"),
             keys.keySet(), "Autocomplete must expose the supported keys at the array item, not just under oneOf")
-        assertEquals(definitions.getAsJsonObject("dependencyObject").getAsJsonObject("properties"), keys,
-            "IDE completion properties must never drift from strict object validation")
+        val strictKeys = definitions.getAsJsonObject("dependencyObject").getAsJsonObject("properties")
+        assertEquals(strictKeys.keySet(), keys.keySet(),
+            "IDE completion must expose the same fields as strict object validation")
+        strictKeys.keySet().forEach { key ->
+            if (key == "loader") {
+                assertEquals(strictKeys.getAsJsonObject(key).get("type"), keys.getAsJsonObject(key).get("type"))
+                assertEquals(strictKeys.getAsJsonObject(key).get("enum"), keys.getAsJsonObject(key).get("enum"))
+            } else {
+                assertEquals(strictKeys.get(key), keys.get(key),
+                    "IDE completion and strict object validation must agree for $key")
+            }
+        }
+        assertEquals(setOf("fabric", "neoforge"), keys.getAsJsonObject("loader").stringSet("enum"),
+            "Root schema 1.1 completion should expose only actual loader discriminators")
         assertEquals(setOf("mod", "library"), keys.getAsJsonObject("kind").stringSet("enum"))
         assertEquals("boolean", keys.getAsJsonObject("include").get("type").asString)
         assertEquals(3, item.getAsJsonArray("oneOf").size(),

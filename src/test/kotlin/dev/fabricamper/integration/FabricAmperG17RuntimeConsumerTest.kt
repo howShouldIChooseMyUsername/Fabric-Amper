@@ -197,10 +197,10 @@ class FabricAmperG17RuntimeConsumerTest {
         val published = buildRoot.resolve("g29-probe/maven-repo").toRealPath()
         require(published.startsWith(buildRoot)) { "Published plugin repository escaped build root" }
         val marker = published.resolve(
-            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.3.0/" +
-                "dev.fabric-amper.settings.gradle.plugin-0.3.0.pom",
+            "dev/fabric-amper/settings/dev.fabric-amper.settings.gradle.plugin/0.3.1/" +
+                "dev.fabric-amper.settings.gradle.plugin-0.3.1.pom",
         )
-        val moduleJar = published.resolve("dev/fabricamper/fabric-amper/0.3.0/fabric-amper-0.3.0.jar")
+        val moduleJar = published.resolve("dev/fabricamper/fabric-amper/0.3.1/fabric-amper-0.3.1.jar")
         require(Files.isRegularFile(marker) && Files.isRegularFile(moduleJar)) {
             "Prime must publish the G29 local plugin marker/POM/JAR before running isolated G17"
         }
@@ -214,7 +214,7 @@ class FabricAmperG17RuntimeConsumerTest {
                     mavenCentral()
                 }
             }
-            plugins { id("dev.fabric-amper.settings") version "0.3.0" }
+            plugins { id("dev.fabric-amper.settings") version "0.3.1" }
         """.trimIndent() + "\n")
         val yaml = requireNotNull(
             javaClass.getResourceAsStream("/integration/runtime/g17-loader.yaml"),

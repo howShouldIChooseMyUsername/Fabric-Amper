@@ -37,7 +37,7 @@
     },
     "dependencies": {
       "type": "array",
-      "description": "Main or split-client dependencies. exported controls API visibility; include additionally embeds a non-transitive JAR-in-JAR.",
+      "description": "Main or split-client dependencies. Schema 1.1 object entries can select loader: fabric or neoforge for one backend; omitting loader shares an entry across selected backends. Schema 1 forbids loader. exported controls API visibility; include additionally embeds a non-transitive Fabric JAR-in-JAR.",
       "items": { "$ref": "#/definitions/dependency" },
       "default": []
     },
@@ -274,7 +274,11 @@
       "else": {
         "properties": {
           "product": { "type": "string", "enum": ["fabric/mod", "fabric/api", "fabric/library"] },
-          "minecraft": { "$ref": "#/definitions/minecraft" }
+          "minecraft": { "$ref": "#/definitions/minecraft" },
+          "dependencies": {
+            "type": "array",
+            "items": { "not": { "type": "object", "required": ["loader"] } }
+          }
         },
         "not": {
           "anyOf": [{ "required": ["fabric"] }, { "required": ["neoforge"] }]
@@ -354,7 +358,7 @@
           }
         },
         "resources": { "$ref": "#/definitions/settings/properties/resources" },
-        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/dependency" } },
+        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/platformDependency" } },
         "repositories": { "type": "array", "items": { "$ref": "#/definitions/repositoryV11" } }
       }
     },
@@ -376,7 +380,7 @@
         "updateJSONURL": { "type": "string", "format": "uri" },
         "modProperties": { "$ref": "#/definitions/stringMap" },
         "features": { "$ref": "#/definitions/stringMap" },
-        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/dependency" } },
+        "gradleDependencies": { "type": "array", "items": { "$ref": "#/definitions/platformDependency" } },
         "repositories": { "type": "array", "items": { "$ref": "#/definitions/repositoryV11" } }
       }
     },
@@ -814,6 +818,11 @@
         },
         "scope": { "$ref": "#/definitions/scope" },
         "target": { "type": "string", "enum": ["main", "client"], "default": "main" },
+        "loader": {
+          "type": "string",
+          "enum": ["fabric", "neoforge"],
+          "description": "Schema 1.1 root dependencies object only: select one configured backend; omitted means all selected backends. Not supported in explicit schema 1, test-dependencies, or loader-specific gradleDependencies."
+        },
         "exported": { "type": "boolean", "default": false },
         "include": { "type": "boolean", "default": false }
       },
@@ -851,6 +860,7 @@
         },
         "scope": { "$ref": "#/definitions/scope" },
         "target": { "type": "string", "enum": ["main", "client"], "default": "main" },
+        "loader": { "type": "string", "enum": ["fabric", "neoforge"] },
         "exported": { "type": "boolean", "default": false },
         "include": { "type": "boolean", "default": false }
       },
@@ -875,7 +885,15 @@
         }
       ]
     },
+    "platformDependency": {
+      "description": "Loader-specific Gradle dependency entries have an implicit backend; loader must only occur on schema 1.1 root dependencies objects.",
+      "allOf": [
+        { "$ref": "#/definitions/dependency" },
+        { "not": { "type": "object", "required": ["loader"] } }
+      ]
+    },
     "testDependency": {
+      "not": { "type": "object", "required": ["loader"] },
       "oneOf": [
         { "$ref": "#/definitions/coordinate" },
         {
